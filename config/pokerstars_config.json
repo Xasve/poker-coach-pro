@@ -1,0 +1,42 @@
+{
+  "platform": "pokerstars",
+  "settings": {
+    "table_colors": {
+      "background": "#006633",
+      "cards_background": "#FFFFFF",
+      "pot_color": "#FF9900"
+    },
+    "card_recognition": {
+      "template_folder": "data/card_templates/pokerstars",
+      "card_width": 68,
+      "card_height": 94,
+      "suit_colors": {
+        "hearts": "red",
+        "diamonds": "red",
+        "clubs": "black",
+        "spades": "black"
+      }
+    },
+    "bet_sizes": {
+      "preflop_open": 2.5,
+      "3bet_oop": 3.8,
+      "3bet_ip": 3.2,
+      "small_blind": 0.5,
+      "big_blind": 1.0
+    },
+    "table_positions": {
+      "6max": ["UTG", "MP", "CO", "BTN", "SB", "BB"],
+      "9max": ["UTG", "UTG+1", "UTG+2", "MP", "MP+1", "HJ", "CO", "BTN", "SB", "BB"]
+    },
+    "features": {
+      "spin_and_go": true,
+      "battle_royale": false,
+      "zoom_poker": true
+    }
+  },
+  "strategy_notes": {
+    "preflop": "PokerStars tradicional con open de 2.5BB",
+    "postflop": "Jugadores más regulares, ajustar a población TAG",
+    "tournaments": "Estructuras profundas, más juego postflop"
+  }
+}

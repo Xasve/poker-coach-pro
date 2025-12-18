@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "system": {
+    "update_interval_ms": 1000,
+    "confidence_threshold": 0.85,
+    "log_level": "INFO",
+    "save_hand_history": true
+  },
+  "overlay": {
+    "position": "top_right",
+    "transparency": 0.9,
+    "font_size": 14,
+    "theme": "dark",
+    "show_timer": true,
+    "show_confidence": true,
+    "animation_speed": "normal"
+  },
+  "strategy": {
+    "aggression_factor": 1.0,
+    "tightness_factor": 1.0,
+    "default_bet_sizes": {
+      "preflop_open": 2.2,
+      "3bet": 3.0,
+      "cbet_flop": 0.33,
+      "turn_barrel": 0.65,
+      "river_value": 0.70
+    },
+    "auto_adjust": true
+  },
+  "platforms": {
+    "default": "ggpoker",
+    "available": ["ggpoker", "pokerstars"]
+  }
+}

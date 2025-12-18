@@ -1,0 +1,42 @@
+{
+  "platform": "ggpoker",
+  "settings": {
+    "table_colors": {
+      "background": "#0A1E32",
+      "cards_background": "#1E3A5F",
+      "pot_color": "#FFD700"
+    },
+    "card_recognition": {
+      "template_folder": "data/card_templates/ggpoker",
+      "card_width": 71,
+      "card_height": 96,
+      "suit_colors": {
+        "hearts": "red",
+        "diamonds": "red", 
+        "clubs": "black",
+        "spades": "black"
+      }
+    },
+    "bet_sizes": {
+      "preflop_open": 2.2,
+      "3bet_oop": 3.5,
+      "3bet_ip": 3.0,
+      "small_blind": 0.5,
+      "big_blind": 1.0
+    },
+    "table_positions": {
+      "6max": ["UTG", "MP", "CO", "BTN", "SB", "BB"],
+      "9max": ["UTG", "UTG+1", "UTG+2", "MP", "MP+1", "MP+2", "CO", "BTN", "SB", "BB"]
+    },
+    "features": {
+      "all_in_insurance": true,
+      "rush_and_cash": false,
+      "spin_and_gold": false
+    }
+  },
+  "strategy_notes": {
+    "preflop": "GG Poker usa open sizes de 2.2BB estándar",
+    "postflop": "Jugadores más loose en general, ajustar value ranges",
+    "tournaments": "Estructura rápida, jugar más agresivo burbuja"
+  }
+}

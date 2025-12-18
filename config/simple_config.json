@@ -1,0 +1,10 @@
+{
+    "version": "1.0",
+    "platform": "ggpoker",
+    "mode": "cash",
+    "stakes": "NL10",
+    "overlay": {
+        "position": "top_right",
+        "transparency": 0.9
+    }
+}

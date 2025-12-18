@@ -1,0 +1,90 @@
+{
+  "stealth_system": {
+    "global_stealth_level": "MAXIMUM",
+    "auto_adjust_stealth": true,
+    "panic_button": "F12",
+    "emergency_shutdown": true,
+    "max_session_hours": 3
+  },
+  
+  "process_protection": {
+    "hide_process": true,
+    "protect_from_termination": true,
+    "camouflage_name": "svchost.exe",
+    "watchdog_enabled": true,
+    "self_healing": true
+  },
+  
+  "anti_debugging": {
+    "detect_debuggers": true,
+    "anti_debugger_techniques": ["timing", "exception", "hardware"],
+    "debugger_response": "benign_mode",
+    "exit_on_debug": false
+  },
+  
+  "screen_capture": {
+    "method_rotation": true,
+    "primary_method": "windows_api_indirect",
+    "fallback_method": "mss",
+    "min_capture_delay": 1.2,
+    "max_capture_delay": 3.0,
+    "random_delay": true,
+    "partial_capture": true,
+    "adaptive_capture": true
+  },
+  
+  "human_behavior_simulation": {
+    "mouse_movement": true,
+    "mouse_jitter": 3,
+    "random_clicks": false,
+    "typing_simulation": false,
+    "human_timing_patterns": true,
+    "activity_variance": 0.4
+  },
+  
+  "memory_obfuscation": {
+    "encrypt_sensitive_data": true,
+    "random_memory_layout": true,
+    "memory_noise": true,
+    "clean_memory_on_exit": true,
+    "obfuscation_level": "HIGH"
+  },
+  
+  "network_stealth": {
+    "encrypt_communications": true,
+    "spoof_identity": false,
+    "proxy_support": false,
+    "dns_spoofing": false
+  },
+  
+  "platform_specific": {
+    "ggpoker": {
+      "stealth_level": "MEDIUM",
+      "capture_delay": 1.5,
+      "use_mouse_movement": true,
+      "aggressive_mode": false
+    },
+    "pokerstars": {
+      "stealth_level": "MAXIMUM",
+      "capture_delay": 2.5,
+      "use_mouse_movement": false,
+      "aggressive_mode": true
+    }
+  },
+  
+  "emergency_protocols": {
+    "max_warnings": 3,
+    "warning_response": "reduce_activity",
+    "critical_response": "shutdown",
+    "auto_recovery": true,
+    "recovery_delay_minutes": 15
+  },
+  
+  "logging": {
+    "log_level": "ERROR",
+    "log_to_file": false,
+    "encrypt_logs": true,
+    "max_log_size_mb": 10,
+    "clean_logs_on_exit": true
+  }
+}

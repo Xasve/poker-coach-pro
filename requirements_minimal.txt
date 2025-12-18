@@ -1,0 +1,8 @@
+opencv-python
+numpy
+pillow
+pyautogui
+mss
+psutil
+pandas
+tinydb
