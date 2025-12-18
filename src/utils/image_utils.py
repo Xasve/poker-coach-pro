@@ -5,7 +5,7 @@ image_utils.py - Utilidades para procesamiento de imágenes
 import cv2
 import numpy as np
 import os
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 class ImageUtils:
     """Clase de utilidades para procesamiento de imágenes"""
@@ -57,6 +57,12 @@ class ImageUtils:
         abs_y1 = int(h * y1)
         abs_x2 = int(w * x2)
         abs_y2 = int(h * y2)
+        
+        # Asegurar límites válidos
+        abs_x1 = max(0, min(abs_x1, w))
+        abs_x2 = max(0, min(abs_x2, w))
+        abs_y1 = max(0, min(abs_y1, h))
+        abs_y2 = max(0, min(abs_y2, h))
         
         return image[abs_y1:abs_y2, abs_x1:abs_x2]
     
@@ -136,3 +142,40 @@ class ImageUtils:
         except Exception as e:
             print(f"Error guardando imagen: {e}")
             return False
+    
+    @staticmethod
+    def show_image(image: np.ndarray, title: str = "Image", 
+                  wait_time: int = 0):
+        """
+        Mostrar imagen (solo para debugging)
+        
+        Args:
+            image: Imagen a mostrar
+            title: Título de la ventana
+            wait_time: Tiempo de espera en ms (0=espera indefinida)
+        """
+        cv2.imshow(title, image)
+        cv2.waitKey(wait_time)
+        if wait_time == 0:
+            cv2.destroyAllWindows()
+    
+    @staticmethod
+    def draw_rectangles(image: np.ndarray, rectangles: List[Tuple], 
+                       color: Tuple = (0, 255, 0), thickness: int = 2) -> np.ndarray:
+        """
+        Dibujar rectángulos en una imagen
+        
+        Args:
+            image: Imagen original
+            rectangles: Lista de rectángulos (x, y, w, h)
+            color: Color BGR
+            thickness: Grosor de línea
+            
+        Returns:
+            Imagen con rectángulos dibujados
+        """
+        result = image.copy()
+        for rect in rectangles:
+            x, y, w, h = rect
+            cv2.rectangle(result, (x, y), (x + w, y + h), color, thickness)
+        return result

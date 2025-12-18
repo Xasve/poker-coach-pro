@@ -12,9 +12,6 @@ from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass
 import logging
 
-from ..utils.image_utils import ImageUtils
-from ..quality.quality_checker import QualityChecker
-
 @dataclass
 class Card:
     """Clase que representa una carta de poker"""
@@ -44,7 +41,13 @@ class CardRecognizer:
         self.platform = platform.lower()
         self.stealth_level = stealth_level
         self.logger = logging.getLogger(__name__)
-        self.quality_checker = QualityChecker()
+        
+        # Configurar logging básico si no existe
+        if not self.logger.handlers:
+            logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
         
         # Umbrales de confianza por nivel de stealth
         self.confidence_thresholds = {
@@ -55,7 +58,7 @@ class CardRecognizer:
         
         # Cargar templates de cartas
         self.templates = self._load_card_templates()
-        self.logger.info(f"CardRecognizer inicializado para {platform}")
+        self.logger.info(f"CardRecognizer inicializado para {platform} (stealth: {stealth_level})")
         
         # Estadísticas
         self.stats = {
@@ -75,37 +78,72 @@ class CardRecognizer:
         templates = {}
         template_dir = "data/card_templates"
         
-        if not os.path.exists(template_dir):
+        # Primero verificar si existe el directorio de templates de la plataforma
+        platform_template_dir = os.path.join(template_dir, self.platform)
+        
+        if os.path.exists(platform_template_dir):
+            template_dir = platform_template_dir
+            self.logger.info(f"Usando templates específicos para {self.platform}")
+        elif not os.path.exists(template_dir):
             self.logger.warning(f"Directorio de templates no encontrado: {template_dir}")
             # Crear directorio si no existe
             os.makedirs(template_dir, exist_ok=True)
-            # En una implementación real, aquí se generarían los templates
+            self.logger.info(f"Directorio creado: {template_dir}")
             return templates
         
         ranks = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2']
         suits = ['s', 'h', 'd', 'c']  # spades, hearts, diamonds, clubs
         
+        templates_loaded = 0
         for rank in ranks:
             for suit in suits:
                 card_name = f"{rank}{suit}"
-                template_path = os.path.join(template_dir, f"{card_name}.png")
-                
-                if os.path.exists(template_path):
-                    try:
-                        template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
-                        if template is not None:
-                            # Redimensionar a tamaño estándar
-                            template = cv2.resize(template, (80, 120))
-                            templates[card_name] = template
-                            self.logger.debug(f"Template cargado: {card_name}")
-                        else:
-                            self.logger.warning(f"No se pudo cargar template: {card_name}")
-                    except Exception as e:
-                        self.logger.error(f"Error cargando template {card_name}: {e}")
-                else:
-                    self.logger.debug(f"Template no encontrado: {card_name}")
+                # Probar diferentes extensiones
+                for ext in ['.png', '.jpg', '.jpeg']:
+                    template_path = os.path.join(template_dir, f"{card_name}{ext}")
+                    
+                    if os.path.exists(template_path):
+                        try:
+                            # Leer en escala de grises
+                            template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
+                            if template is not None:
+                                # Redimensionar a tamaño estándar
+                                template = cv2.resize(template, (80, 120))
+                                templates[card_name] = template
+                                templates_loaded += 1
+                                self.logger.debug(f"Template cargado: {card_name}")
+                                break  # Salir del bucle de extensiones
+                            else:
+                                self.logger.warning(f"No se pudo leer template: {card_name}")
+                        except Exception as e:
+                            self.logger.error(f"Error cargando template {card_name}: {e}")
         
-        self.logger.info(f"Templates cargados: {len(templates)}/52")
+        self.logger.info(f"Templates cargados: {templates_loaded}/52")
+        
+        # Si no hay templates, crear algunos de ejemplo (solo para desarrollo)
+        if templates_loaded == 0:
+            self.logger.warning("No se encontraron templates. Creando ejemplos básicos...")
+            templates = self._create_basic_templates()
+        
+        return templates
+    
+    def _create_basic_templates(self) -> Dict[str, np.ndarray]:
+        """Crear templates básicos para desarrollo (sin imágenes reales)"""
+        templates = {}
+        ranks = ['A', 'K', 'Q']
+        suits = ['h', 's']  # Solo corazones y picas para ejemplo
+        
+        for rank in ranks:
+            for suit in suits:
+                card_name = f"{rank}{suit}"
+                # Crear una imagen simple con texto
+                template = np.zeros((120, 80), dtype=np.uint8)
+                cv2.putText(template, card_name, (10, 60), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, 255, 2)
+                cv2.rectangle(template, (5, 5), (75, 115), 255, 2)
+                templates[card_name] = template
+        
+        self.logger.info(f"Templates básicos creados: {len(templates)}")
         return templates
     
     def recognize_cards_in_region(self, screenshot: np.ndarray, 
@@ -155,7 +193,8 @@ class CardRecognizer:
         processing_time = time.time() - start_time
         self._update_stats(processing_time, recognized_cards)
         
-        self.logger.debug(f"Reconocidas {len(recognized_cards)} cartas en {processing_time:.3f}s")
+        confidence_str = f"{np.mean([c.confidence for c in recognized_cards]):.3f}" if recognized_cards else "N/A"
+        self.logger.debug(f"Reconocidas {len(recognized_cards)} cartas en {processing_time:.3f}s (confianza: {confidence_str})")
         return recognized_cards
     
     def _apply_stealth_delay(self):
@@ -203,6 +242,7 @@ class CardRecognizer:
                 return None
             
             roi = screenshot[y1:y2, x1:x2]
+            self.logger.debug(f"ROI extraída: {roi.shape} desde ({x1},{y1})-({x2},{y2})")
             return roi
             
         except Exception as e:
@@ -219,25 +259,30 @@ class CardRecognizer:
         Returns:
             Imagen preprocesada
         """
-        # Convertir a escala de grises
-        if len(image.shape) == 3:
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        else:
-            gray = image
-        
-        # Aplicar filtro bilateral para reducir ruido manteniendo bordes
-        filtered = cv2.bilateralFilter(gray, 9, 75, 75)
-        
-        # Aumentar contraste
-        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
-        enhanced = clahe.apply(filtered)
-        
-        # Umbralización adaptativa
-        thresh = cv2.adaptiveThreshold(enhanced, 255, 
-                                      cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                      cv2.THRESH_BINARY, 11, 2)
-        
-        return thresh
+        try:
+            # Convertir a escala de grises si es necesario
+            if len(image.shape) == 3:
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            else:
+                gray = image
+            
+            # Aplicar filtro bilateral para reducir ruido manteniendo bordes
+            filtered = cv2.bilateralFilter(gray, 9, 75, 75)
+            
+            # Aumentar contraste con CLAHE
+            clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+            enhanced = clahe.apply(filtered)
+            
+            # Umbralización adaptativa
+            thresh = cv2.adaptiveThreshold(enhanced, 255, 
+                                          cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                          cv2.THRESH_BINARY, 11, 2)
+            
+            return thresh
+            
+        except Exception as e:
+            self.logger.error(f"Error en preprocesamiento: {e}")
+            return image if len(image.shape) == 2 else cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
     def _detect_individual_cards(self, roi: np.ndarray) -> List[np.ndarray]:
         """
@@ -259,14 +304,14 @@ class CardRecognizer:
             for contour in contours:
                 # Filtrar por área
                 area = cv2.contourArea(contour)
-                if area < 100:  # Muy pequeño para ser una carta
+                if area < 100 or area > 10000:  # Muy pequeño o muy grande
                     continue
                 
                 # Obtener rectángulo delimitador
                 x, y, w, h = cv2.boundingRect(contour)
                 
                 # Filtrar por relación de aspecto (cartas típicas ~2:3)
-                aspect_ratio = h / w if h > 0 else 0
+                aspect_ratio = h / w if w > 0 else 0
                 if not (1.2 < aspect_ratio < 2.0):
                     continue
                 
@@ -280,10 +325,11 @@ class CardRecognizer:
         except Exception as e:
             self.logger.error(f"Error detectando cartas individuales: {e}")
         
-        # Ordenar de izquierda a derecha
-        card_images.sort(key=lambda img: np.mean(np.where(img > 0)[1]) 
-                        if img.size > 0 else 0)
+        # Ordenar de izquierda a derecha basado en posición X
+        if card_images:
+            card_images.sort(key=lambda img: img.shape[1] // 2)
         
+        self.logger.debug(f"Detectadas {len(card_images)} cartas individuales")
         return card_images
     
     def _recognize_single_card(self, card_image: np.ndarray) -> Optional[Card]:
@@ -301,6 +347,7 @@ class CardRecognizer:
         
         best_match = None
         best_confidence = 0.0
+        best_position = (0, 0)
         
         for card_name, template in self.templates.items():
             try:
@@ -311,6 +358,7 @@ class CardRecognizer:
                 if max_val > best_confidence and max_val > self.confidence_thresholds.get(self.stealth_level, 0.85):
                     best_confidence = max_val
                     best_match = card_name
+                    best_position = max_loc
                     
             except Exception as e:
                 self.logger.debug(f"Error en template matching para {card_name}: {e}")
@@ -321,14 +369,11 @@ class CardRecognizer:
             rank = best_match[:-1]
             suit = best_match[-1]
             
-            # Obtener posición aproximada
-            position = (np.mean(np.where(card_image > 0)[1]), 
-                       np.mean(np.where(card_image > 0)[0]))
-            
             return Card(rank=rank, suit=suit, 
                        confidence=best_confidence,
-                       position=position)
+                       position=best_position)
         
+        self.logger.debug(f"Carta no reconocida (mejor confianza: {best_confidence:.3f})")
         return None
     
     def _adjust_position(self, position: Tuple[float, float],
@@ -347,10 +392,9 @@ class CardRecognizer:
         Returns:
             Posición ajustada en coordenadas globales
         """
-        # En una implementación real, esto ajustaría basado en la ROI
-        # Por ahora, retornar posición aproximada
-        x_offset = card_index * 30  # Espaciado aproximado entre cartas
-        return (int(position[0] + x_offset), int(position[1]))
+        # Simplemente devolver la posición original por ahora
+        # En una implementación completa, ajustaríamos según las coordenadas de la ROI
+        return (int(position[0]), int(position[1]))
     
     def _validate_recognition(self, cards: List[Card]) -> bool:
         """
@@ -363,18 +407,20 @@ class CardRecognizer:
             True si la validación pasa
         """
         if not cards:
+            self.logger.debug("Validación fallida: lista de cartas vacía")
             return False
         
         # Verificar que no haya cartas duplicadas
         card_strings = [str(card) for card in cards]
         if len(card_strings) != len(set(card_strings)):
-            self.logger.warning("Cartas duplicadas detectadas")
+            self.logger.warning(f"Cartas duplicadas detectadas: {card_strings}")
             return False
         
         # Verificar confianza mínima
-        min_confidence = min(card.confidence for card in cards)
-        if min_confidence < self.confidence_thresholds.get(self.stealth_level, 0.85):
-            self.logger.warning(f"Confianza muy baja: {min_confidence:.3f}")
+        min_confidence = min(card.confidence for card in cards) if cards else 0
+        threshold = self.confidence_thresholds.get(self.stealth_level, 0.85)
+        if min_confidence < threshold:
+            self.logger.warning(f"Confianza muy baja: {min_confidence:.3f} < {threshold}")
             return False
         
         # Verificar número de cartas (2 para hero, 0-5 para mesa)
@@ -390,25 +436,29 @@ class CardRecognizer:
         
         if cards:
             avg_conf = np.mean([card.confidence for card in cards])
-            self.stats["avg_confidence"] = (
-                self.stats["avg_confidence"] * (self.stats["total_recognitions"] - 1) + avg_conf
-            ) / self.stats["total_recognitions"]
+            # Actualizar promedio móvil
+            prev_avg = self.stats["avg_confidence"]
+            total = self.stats["total_recognitions"]
+            self.stats["avg_confidence"] = (prev_avg * (total - 1) + avg_conf) / total
         
-        self.stats["avg_processing_time"] = (
-            self.stats["avg_processing_time"] * (self.stats["total_recognitions"] - 1) + processing_time
-        ) / self.stats["total_recognitions"]
+        # Actualizar tiempo promedio de procesamiento
+        prev_time_avg = self.stats["avg_processing_time"]
+        total = self.stats["total_recognitions"]
+        self.stats["avg_processing_time"] = (prev_time_avg * (total - 1) + processing_time) / total
     
     def get_stats(self) -> Dict:
         """Obtener estadísticas actuales"""
-        success_rate = (
-            (self.stats["successful_recognitions"] / self.stats["total_recognitions"] * 100)
-            if self.stats["total_recognitions"] > 0 else 0
-        )
+        total = self.stats["total_recognitions"]
+        success = self.stats["successful_recognitions"]
+        
+        success_rate = (success / total * 100) if total > 0 else 0
         
         return {
             **self.stats,
-            "success_rate": success_rate,
-            "templates_loaded": len(self.templates)
+            "success_rate": round(success_rate, 2),
+            "templates_loaded": len(self.templates),
+            "platform": self.platform,
+            "stealth_level": self.stealth_level
         }
     
     def reset_stats(self):
@@ -419,14 +469,9 @@ class CardRecognizer:
             "avg_confidence": 0.0,
             "avg_processing_time": 0.0
         }
-
-
-# Clase auxiliar para manejo de imágenes
-class ImageUtils:
-    """Utilidades para procesamiento de imágenes"""
+        self.logger.info("Estadísticas reiniciadas")
     
-    @staticmethod
-    def save_debug_image(image: np.ndarray, filename: str, 
+    def save_debug_image(self, image: np.ndarray, filename: str,
                         cards: List[Card] = None):
         """
         Guardar imagen para debugging
@@ -449,42 +494,83 @@ class ImageUtils:
         if cards:
             for card in cards:
                 x, y = map(int, card.position)
-                cv2.putText(debug_img, str(card), (x, y), 
+                # Dibujar círculo en la posición
+                cv2.circle(debug_img, (x, y), 10, (0, 255, 0), 2)
+                # Añadir texto con la carta
+                cv2.putText(debug_img, str(card), (x + 15, y + 5), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
                            (0, 255, 0), 2)
         
         # Guardar imagen
-        cv2.imwrite(os.path.join(debug_dir, filename), debug_img)
+        filepath = os.path.join(debug_dir, filename)
+        cv2.imwrite(filepath, debug_img)
+        self.logger.debug(f"Imagen de debug guardada: {filepath}")
+
+# Función de utilidad para mostrar información
+def print_card_info(cards: List[Card], region_name: str = "desconocida"):
+    """Imprimir información de cartas reconocidas"""
+    if not cards:
+        print(f"  No se reconocieron cartas en la región: {region_name}")
+        return
     
-    @staticmethod
-    def show_image(image: np.ndarray, title: str = "Image"):
-        """Mostrar imagen (solo para debugging)"""
-        cv2.imshow(title, image)
-        cv2.waitKey(1)
-        cv2.destroyAllWindows()
+    print(f"  Cartas reconocidas en {region_name} ({len(cards)}):")
+    for card in cards:
+        print(f"    - {card} (confianza: {card.confidence:.3f})")
 
-
-# Ejemplo de uso
+# Ejemplo de uso básico
 if __name__ == "__main__":
-    # Configurar logging
-    logging.basicConfig(level=logging.INFO)
+    print("=" * 50)
+    print("POKER COACH PRO - TEST CARD RECOGNIZER")
+    print("=" * 50)
     
     # Inicializar reconocedor
-    recognizer = CardRecognizer(platform="ggpoker", stealth_level="MEDIUM")
+    recognizer = CardRecognizer(platform="ggpoker", stealth_level="MINIMUM")
     
-    # Simular captura (en producción esto vendría del screen_capture)
-    # test_image = cv2.imread("test_screenshot.png")
+    # Mostrar información de inicialización
+    stats = recognizer.get_stats()
+    print(f"\n✅ Reconocedor inicializado:")
+    print(f"   Plataforma: {stats['platform']}")
+    print(f"   Nivel Stealth: {stats['stealth_level']}")
+    print(f"   Templates cargados: {stats['templates_loaded']}")
     
-    # Configuración de región de ejemplo
-    region_config = {
-        "x1": 0.45,
-        "y1": 0.75,
-        "x2": 0.55,
-        "y2": 0.85
+    print("\n📊 Prueba de funcionalidad básica:")
+    
+    # Crear una imagen de prueba simple
+    test_image = np.zeros((400, 600, 3), dtype=np.uint8)
+    
+    # Dibujar áreas simuladas de cartas
+    cv2.rectangle(test_image, (250, 300), (350, 420), (200, 200, 200), 2)  # Área hero
+    cv2.rectangle(test_image, (200, 180), (400, 260), (150, 150, 150), 2)  # Área mesa
+    
+    # Configuración de región de ejemplo (hero cards)
+    hero_region_config = {
+        "x1": 250/600,  # ~0.416
+        "y1": 300/400,  # 0.75
+        "x2": 350/600,  # ~0.583
+        "y2": 420/400   # 1.05 (ajustado)
     }
     
-    # Ejemplo de reconocimiento
-    # cards = recognizer.recognize_cards_in_region(test_image, region_config)
+    print("\n🧪 Probando extracción de región...")
+    roi = recognizer._extract_roi(test_image, hero_region_config)
+    if roi is not None:
+        print(f"   ✅ ROI extraída: {roi.shape}")
+        
+        # Probar preprocesamiento
+        processed = recognizer._preprocess_image(roi)
+        print(f"   ✅ Imagen preprocesada: {processed.shape}")
+        
+        # Probar reconocimiento (en imagen vacía)
+        cards = recognizer.recognize_cards_in_region(test_image, hero_region_config)
+        print_card_info(cards, "hero")
+    else:
+        print("   ❌ No se pudo extraer ROI")
     
-    print("CardRecognizer listo para usar")
-    print("Estadísticas iniciales:", recognizer.get_stats())
+    print("\n📈 Estadísticas finales:")
+    final_stats = recognizer.get_stats()
+    for key, value in final_stats.items():
+        if key != "platform" and key != "stealth_level":
+            print(f"   {key}: {value}")
+    
+    print("\n" + "=" * 50)
+    print("✅ Prueba completada. Listo para integrar.")
+    print("=" * 50)
