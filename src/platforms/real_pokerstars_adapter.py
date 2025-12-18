@@ -18,7 +18,7 @@ try:
     from screen_capture.text_ocr import TextOCR
     SCREEN_CAPTURE_AVAILABLE = True
 except ImportError as e:
-    print(f\"  No se pudo importar screen_capture: {e}\")
+    print(f"  No se pudo importar screen_capture: {e}")
     SCREEN_CAPTURE_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
