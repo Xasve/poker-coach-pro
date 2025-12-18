@@ -1,364 +1,222 @@
-
-#Archivo: ggpoker_adapter.py
-#Ruta: src/platforms/ggpoker_adapter.py
-#Adaptador específico para GG Poker
-
+# Archivo: src/platforms/ggpoker_adapter.py
+"""
+ggpoker_adapter.py - Adaptador específico para GG Poker
+Analiza screenshots completos y extrae el estado del juego
+"""
 
 import cv2
 import numpy as np
-from PIL import Image, ImageGrab
-import pytesseract
-import re
+import logging
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
 from datetime import datetime
-import os
-import json
 
-from .base_adapter import BasePokerAdapter
+from ..screen_capture.card_recognizer import CardRecognizer
+from ..screen_capture.table_detector import TableDetector
+from ..screen_capture.text_ocr import TextOCR
 
-class GGPokerAdapter(BasePokerAdapter):
+@dataclass
+class GameState:
+    """Estado completo del juego"""
+    hero_cards: List[str]  # Ej: ['Ah', 'Ks']
+    board_cards: List[str]  # Ej: ['Jc', 'Th', '2d']
+    pot_amount: float
+    hero_stack: float
+    villain_stack: float
+    current_street: str  # 'preflop', 'flop', 'turn', 'river'
+    hero_position: str  # 'SB', 'BB', 'UTG', 'MP', 'CO', 'BTN'
+    action_on_hero: bool
+    min_raise: float
+    max_raise: float
+    timestamp: datetime
+
+class GGPokerAdapter:
     """Adaptador específico para GG Poker"""
     
-    def __init__(self):
-        super().__init__()
-        self.platform = "ggpoker"
+    def __init__(self, stealth_level: str = "MEDIUM"):
+        self.stealth_level = stealth_level
+        self.logger = logging.getLogger(__name__)
         
-        # Cargar configuración específica
-        self.load_ggpoker_config()
+        # Inicializar componentes
+        self.card_recognizer = CardRecognizer(
+            platform="ggpoker", 
+            stealth_level=stealth_level
+        )
+        self.table_detector = TableDetector(platform="ggpoker")
+        self.text_ocr = TextOCR(platform="ggpoker")
         
-        # Áreas de captura específicas de GG Poker
-        self.setup_ggpoker_areas()
-        
-        # Patrones específicos de GG Poker
-        self.setup_ggpoker_patterns()
-    
-    def load_ggpoker_config(self):
-        """Cargar configuración de GG Poker"""
-        config_path = os.path.join("config", "ggpoker_config.json")
-        try:
-            with open(config_path, 'r') as f:
-                self.gg_config = json.load(f)
-        except:
-            self.gg_config = {}
-    
-    def setup_ggpoker_areas(self):
-        """Configurar áreas de captura específicas de GG Poker"""
-        
-        # Coordenadas relativas (se ajustan en tiempo de ejecución)
-        self.areas = {
-            'hero_cards': {'x1': 0.45, 'y1': 0.75, 'x2': 0.55, 'y2': 0.85},
-            'board_cards': {'x1': 0.35, 'y1': 0.45, 'x2': 0.65, 'y2': 0.55},
-            'pot_amount': {'x1': 0.48, 'y1': 0.40, 'x2': 0.52, 'y2': 0.44},
-            'hero_stack': {'x1': 0.43, 'y1': 0.82, 'x2': 0.47, 'y2': 0.86},
-            'bet_to_call': {'x1': 0.52, 'y1': 0.60, 'x2': 0.56, 'y2': 0.64},
-            'action_buttons': {'x1': 0.40, 'y1': 0.65, 'x2': 0.60, 'y2': 0.75},
-            'player_positions': {
-                'hero': {'x': 0.50, 'y': 0.80},
-                'btn': {'x': 0.50, 'y': 0.60},
-                'sb': {'x': 0.40, 'y': 0.65},
-                'bb': {'x': 0.60, 'y': 0.65}
-            }
-        }
-    
-    def setup_ggpoker_patterns(self):
-        """Configurar patrones específicos de GG Poker"""
-        
-        # Patrones de texto GG Poker
-        self.patterns = {
-            'pot': r'Pot:\s*([\d,\.]+)',
-            'bet': r'Bet:\s*([\d,\.]+)',
-            'raise': r'Raise to:\s*([\d,\.]+)',
-            'call': r'Call:\s*([\d,\.]+)',
-            'all_in': r'ALL IN',
-            'check': r'CHECK',
-            'fold': r'FOLD'
+        # Configuración de regiones para GG Poker (1920x1080)
+        self.regions = {
+            "hero_cards": {"x1": 0.45, "y1": 0.75, "x2": 0.55, "y2": 0.85},
+            "board_cards": {"x1": 0.35, "y1": 0.45, "x2": 0.65, "y2": 0.55},
+            "pot_amount": {"x1": 0.48, "y1": 0.40, "x2": 0.52, "y2": 0.44},
+            "hero_stack": {"x1": 0.44, "y1": 0.80, "x2": 0.48, "y2": 0.84},
+            "action_buttons": {"x1": 0.42, "y1": 0.85, "x2": 0.58, "y2": 0.92}
         }
         
-        # Colores específicos de GG Poker
-        self.colors = {
-            'button_color': (255, 215, 0),  # Dorado GG
-            'hero_highlight': (0, 100, 255),  # Azul
-            'bet_color': (255, 255, 255),     # Blanco
-            'fold_color': (128, 128, 128)     # Gris
-        }
+        self.logger.info(f"GGPokerAdapter inicializado (stealth: {stealth_level})")
     
-    def analyze_screenshot(self, screenshot):
+    def analyze_screenshot(self, screenshot: np.ndarray) -> Optional[GameState]:
         """
-        Analizar screenshot específico de GG Poker
+        Analizar screenshot completo y extraer estado del juego
         
         Args:
-            screenshot: Imagen PIL de la pantalla
+            screenshot: Captura de pantalla completa
             
         Returns:
-            Dict con estado del juego
+            Estado del juego o None si no se pudo analizar
         """
-        if screenshot is None:
-            return self.get_default_game_state()
-        
         try:
-            # Convertir a OpenCV
-            cv_image = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
+            self.logger.debug("Analizando screenshot de GG Poker")
             
-            # Obtener dimensiones
-            height, width = cv_image.shape[:2]
+            # 1. Reconocer cartas del hero
+            hero_cards_result = self.card_recognizer.recognize_cards_in_region(
+                screenshot, self.regions["hero_cards"]
+            )
+            hero_cards = [str(card) for card in hero_cards_result]
             
-            # Analizar diferentes componentes
-            game_state = {
-                'platform': 'ggpoker',
-                'timestamp': datetime.now().isoformat(),
-                'hero_cards': self.detect_hero_cards(cv_image, width, height),
-                'board_cards': self.detect_board_cards(cv_image, width, height),
-                'pot_size': self.detect_pot_size(cv_image, width, height),
-                'bet_to_call': self.detect_bet_to_call(cv_image, width, height),
-                'hero_stack': self.detect_hero_stack(cv_image, width, height),
-                'street': self.detect_street(cv_image, width, height),
-                'position': self.detect_position(cv_image, width, height),
-                'action_to_us': self.detect_action_to_us(cv_image, width, height),
-                'buttons_visible': self.detect_action_buttons(cv_image, width, height)
-            }
+            # 2. Reconocer cartas del board
+            board_cards_result = self.card_recognizer.recognize_cards_in_region(
+                screenshot, self.regions["board_cards"]
+            )
+            board_cards = [str(card) for card in board_cards_result]
             
-            # Calcular stack en BB
-            if game_state['hero_stack'] and game_state.get('bet_to_call', 0) > 0:
-                game_state['stack_bb'] = game_state['hero_stack'] / game_state['bet_to_call']
-            else:
-                game_state['stack_bb'] = 100  # Valor por defecto
+            # 3. Determinar calle (street) basado en número de cartas del board
+            current_street = self._determine_street(len(board_cards))
             
-            # Validar y limpiar estado
-            game_state = self.validate_game_state(game_state)
+            # 4. Leer montos (implementación básica - en realidad usar OCR)
+            pot_amount = 0.0  # self.text_ocr.read_pot_amount(...)
+            hero_stack = 100.0  # self.text_ocr.read_player_stack(...)
             
+            # 5. Detectar acción disponible
+            action_available = self._detect_action_buttons(screenshot)
+            
+            # 6. Determinar posición (simplificado por ahora)
+            hero_position = self._determine_hero_position(screenshot)
+            
+            # Crear estado del juego
+            game_state = GameState(
+                hero_cards=hero_cards,
+                board_cards=board_cards,
+                pot_amount=pot_amount,
+                hero_stack=hero_stack,
+                villain_stack=50.0,  # Valor por defecto
+                current_street=current_street,
+                hero_position=hero_position,
+                action_on_hero=action_available,
+                min_raise=2.0,  # Valor por defecto
+                max_raise=hero_stack,
+                timestamp=datetime.now()
+            )
+            
+            self.logger.info(f"Estado analizado: {current_street}, Hero: {hero_cards}, Board: {board_cards}")
             return game_state
             
         except Exception as e:
-            print(f"Error analizando GG Poker: {e}")
-            return self.get_default_game_state()
+            self.logger.error(f"Error analizando screenshot: {e}")
+            return None
     
-    def detect_hero_cards(self, cv_image, width, height):
-        """Detectar cartas del héroe en GG Poker"""
-        area = self.areas['hero_cards']
-        x1 = int(width * area['x1'])
-        y1 = int(height * area['y1'])
-        x2 = int(width * area['x2'])
-        y2 = int(height * area['y2'])
-        
-        # Recortar área de cartas
-        card_area = cv_image[y1:y2, x1:x2]
-        
-        # Buscar patrones de cartas (simplificado)
-        # En implementación real usaríamos template matching
-        cards = []
-        
-        # Dividir área en dos cartas
-        card_width = (x2 - x1) // 2
-        
-        # Simular detección para desarrollo
-        return ['Ah', 'Kd']  # Placeholder
+    def _determine_street(self, board_cards_count: int) -> str:
+        """Determinar la calle basado en el número de cartas del board"""
+        if board_cards_count == 0:
+            return "preflop"
+        elif board_cards_count == 3:
+            return "flop"
+        elif board_cards_count == 4:
+            return "turn"
+        elif board_cards_count == 5:
+            return "river"
+        else:
+            return "unknown"
     
-    def detect_board_cards(self, cv_image, width, height):
-        """Detectar cartas comunitarias"""
-        area = self.areas['board_cards']
-        x1 = int(width * area['x1'])
-        y1 = int(height * area['y1'])
-        x2 = int(width * area['x2'])
-        y2 = int(height * area['y2'])
-        
-        board_area = cv_image[y1:y2, x1:x2]
-        
-        # Determinar número de cartas según street
-        street = self.detect_street(cv_image, width, height)
-        
-        if street == 'preflop':
-            return []
-        elif street == 'flop':
-            return ['2h', '7d', 'Ts']  # Placeholder
-        elif street == 'turn':
-            return ['2h', '7d', 'Ts', 'Qc']
-        elif street == 'river':
-            return ['2h', '7d', 'Ts', 'Qc', 'Kd']
-        
-        return []
+    def _detect_action_buttons(self, screenshot: np.ndarray) -> bool:
+        """Detectar si hay botones de acción disponibles para el hero"""
+        # Implementación básica - en realidad analizaría la región de botones
+        return True  # Por defecto, asumir que es nuestro turno
     
-    def detect_pot_size(self, cv_image, width, height):
-        """Detectar tamaño del pozo"""
-        area = self.areas['pot_amount']
-        x1 = int(width * area['x1'])
-        y1 = int(height * area['y1'])
-        x2 = int(width * area['x2'])
-        y2 = int(height * area['y2'])
-        
-        pot_area = cv_image[y1:y2, x1:x2]
-        
-        # Usar OCR para leer el texto
-        pot_text = self.ocr_region(pot_area)
-        
-        # Extraer número
-        match = re.search(r'([\d,\.]+)', pot_text)
-        if match:
-            try:
-                # Limpiar y convertir
-                amount = match.group(1).replace(',', '')
-                return float(amount)
-            except:
-                pass
-        
-        return 0.0
+    def _determine_hero_position(self, screenshot: np.ndarray) -> str:
+        """Determinar la posición del hero en la mesa"""
+        # Implementación simplificada - en realidad analizaría posiciones
+        positions = ["SB", "BB", "UTG", "MP", "CO", "BTN"]
+        return positions[2]  # Por defecto, asumir UTG
     
-    def detect_bet_to_call(self, cv_image, width, height):
-        """Detectar apuesta a pagar"""
-        area = self.areas['bet_to_call']
-        x1 = int(width * area['x1'])
-        y1 = int(height * area['y1'])
-        x2 = int(width * area['x2'])
-        y2 = int(height * area['y2'])
+    def get_recommendation(self, game_state: GameState) -> Dict:
+        """
+        Generar recomendación basada en el estado del juego
         
-        bet_area = cv_image[y1:y2, x1:x2]
+        Args:
+            game_state: Estado actual del juego
+            
+        Returns:
+            Dict con recomendación y detalles
+        """
+        # Lógica básica de recomendación (se expandirá)
+        recommendation = {
+            "action": "CHECK/FOLD",
+            "confidence": 0.7,
+            "reason": "Implementación básica",
+            "alternative_actions": ["FOLD", "CALL", "RAISE"],
+            "optimal_bet_size": 0.0
+        }
         
-        # Verificar botones de acción primero
-        action_buttons = self.detect_action_buttons(cv_image, width, height)
+        # Lógica preflop básica
+        if game_state.current_street == "preflop":
+            if len(game_state.hero_cards) == 2:
+                # Evaluar fuerza de mano preflop
+                card1 = game_state.hero_cards[0]
+                card2 = game_state.hero_cards[1]
+                
+                # Parejas altas
+                if card1[0] == card2[0] and card1[0] in ['A', 'K', 'Q', 'J']:
+                    recommendation["action"] = "RAISE"
+                    recommendation["confidence"] = 0.85
+                    recommendation["reason"] = "Pareja alta"
+                    recommendation["optimal_bet_size"] = 2.2  # 2.2 BB
+                
+                # Cartas altas suited
+                elif card1[1] == card2[1] and card1[0] in ['A', 'K']:
+                    recommendation["action"] = "RAISE"
+                    recommendation["confidence"] = 0.80
+                    recommendation["reason"] = "Cartas altas suited"
+                    recommendation["optimal_bet_size"] = 2.2
         
-        for button in action_buttons:
-            if 'call' in button.lower():
-                # Extraer cantidad del texto del botón
-                match = re.search(r'([\d,\.]+)', button)
-                if match:
-                    try:
-                        amount = match.group(1).replace(',', '')
-                        return float(amount)
-                    except:
-                        pass
-        
-        return 0.0
+        self.logger.debug(f"Recomendación generada: {recommendation['action']}")
+        return recommendation
+
+# Función de utilidad para prueba rápida
+def test_ggpoker_adapter():
+    """Probar el adaptador de GG Poker"""
+    print("🧪 Probando GGPokerAdapter...")
     
-    def detect_hero_stack(self, cv_image, width, height):
-        """Detectar stack del héroe"""
-        area = self.areas['hero_stack']
-        x1 = int(width * area['x1'])
-        y1 = int(height * area['y1'])
-        x2 = int(width * area['x2'])
-        y2 = int(height * area['y2'])
+    try:
+        adapter = GGPokerAdapter(stealth_level="MINIMUM")
+        print("✅ Adaptador inicializado")
         
-        stack_area = cv_image[y1:y2, x1:x2]
+        # Crear screenshot de prueba
+        test_screenshot = np.zeros((1080, 1920, 3), dtype=np.uint8)
         
-        # OCR para stack
-        stack_text = self.ocr_region(stack_area)
+        # Analizar
+        game_state = adapter.analyze_screenshot(test_screenshot)
         
-        match = re.search(r'([\d,\.]+)', stack_text)
-        if match:
-            try:
-                amount = match.group(1).replace(',', '')
-                return float(amount)
-            except:
-                pass
+        if game_state:
+            print(f"✅ Estado del juego analizado:")
+            print(f"   Hero cards: {game_state.hero_cards}")
+            print(f"   Board cards: {game_state.board_cards}")
+            print(f"   Street: {game_state.current_street}")
+            
+            # Generar recomendación
+            recommendation = adapter.get_recommendation(game_state)
+            print(f"✅ Recomendación: {recommendation['action']}")
+        else:
+            print("⚠️  No se pudo analizar el estado del juego")
         
-        return 100.0  # Valor por defecto
-    
-    def detect_street(self, cv_image, width, height):
-        """Detectar calle actual (preflop, flop, turn, river)"""
+        return True
         
-        # Basado en número de cartas comunitarias visibles
-        board_cards = self.detect_board_cards(cv_image, width, height)
-        
-        if len(board_cards) == 0:
-            return 'preflop'
-        elif len(board_cards) == 3:
-            return 'flop'
-        elif len(board_cards) == 4:
-            return 'turn'
-        elif len(board_cards) == 5:
-            return 'river'
-        
-        return 'preflop'
-    
-    def detect_position(self, cv_image, width, height):
-        """Detectar posición del héroe"""
-        
-        # Analizar posición del botón
-        btn_area = self.areas['player_positions']['btn']
-        btn_x = int(width * btn_area['x'])
-        btn_y = int(height * btn_area['y'])
-        
-        # Obtener color en posición del botón
-        btn_color = cv_image[btn_y, btn_x]
-        
-        # Verificar si es el botón (color dorado GG Poker)
-        if self.is_button_color(btn_color):
-            return 'BTN'
-        
-        # Lógica simplificada
-        return 'BTN'  # Placeholder
-    
-    def detect_action_to_us(self, cv_image, width, height):
-        """Detectar si hay acción para nosotros"""
-        
-        # Verificar botones visibles
-        buttons = self.detect_action_buttons(cv_image, width, height)
-        
-        if buttons:
-            return True
-        
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
         return False
-    
-    def detect_action_buttons(self, cv_image, width, height):
-        """Detectar botones de acción visibles"""
-        area = self.areas['action_buttons']
-        x1 = int(width * area['x1'])
-        y1 = int(height * area['y1'])
-        x2 = int(width * area['x2'])
-        y2 = int(height * area['y2'])
-        
-        buttons_area = cv_image[y1:y2, x1:x2]
-        
-        # Detectar colores de botones específicos de GG Poker
-        button_colors = [
-            ((200, 0, 0), 'raise'),    # Rojo para raise
-            ((255, 165, 0), 'call'),   # Naranja para call
-            ((128, 128, 128), 'fold'), # Gris para fold
-            ((0, 128, 0), 'check')     # Verde para check
-        ]
-        
-        detected_buttons = []
-        
-        for color_range, action in button_colors:
-            # Crear máscara para color
-            lower = np.array([c-20 for c in color_range])
-            upper = np.array([c+20 for c in color_range])
-            mask = cv2.inRange(buttons_area, lower, upper)
-            
-            if np.sum(mask) > 1000:  # Si hay suficiente del color
-                detected_buttons.append(action)
-        
-        return detected_buttons
-    
-    def is_button_color(self, color):
-        """Verificar si un color es del botón de dealer GG Poker"""
-        # GG Poker usa dorado (255, 215, 0)
-        gold_color = np.array([255, 215, 0])
-        return np.allclose(color, gold_color, atol=30)
-    
-    def ocr_region(self, image_area):
-        """Realizar OCR en una región de imagen"""
-        try:
-            # Convertir a PIL
-            pil_image = Image.fromarray(cv2.cvtColor(image_area, cv2.COLOR_BGR2RGB))
-            
-            # Preprocesar para mejor OCR
-            gray = pil_image.convert('L')
-            threshold = gray.point(lambda x: 0 if x < 200 else 255)
-            
-            # Realizar OCR
-            text = pytesseract.image_to_string(threshold, config='--psm 7')
-            return text.strip()
-        except:
-            return ""
-    
-    def get_platform_specific_decision(self, game_state):
-        """Obtener decisión específica para GG Poker"""
-        
-        # Ajustes específicos de GG Poker
-        decision = game_state.copy()
-        
-        # GG Poker tiene jugadores más loose
-        if decision.get('street') == 'preflop':
-            # Abrir más manos en GG Poker
-            if decision.get('action') == 'RAISE':
-                decision['size'] = decision.get('size', 2.2)
-        
-        return decision
+
+if __name__ == "__main__":
+    test_ggpoker_adapter()
