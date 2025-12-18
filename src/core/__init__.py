@@ -1,5 +1,6 @@
+﻿"""
+Core poker engine module for Poker Coach Pro
 """
-Archivo: __init__.py
-Ruta: src/core/__init__.py
-"""
+from .poker_engine import PokerEngine, GameState, Recommendation
 
+__all__ = ['PokerEngine', 'GameState', 'Recommendation']

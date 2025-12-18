@@ -1,5 +1,6 @@
+﻿"""
+Overlay GUI module for Poker Coach Pro
 """
-Archivo: __init__.py
-Ruta: src/overlay/__init__.py
-"""
+from .overlay_gui import PokerOverlay, OverlayConfig
 
+__all__ = ['PokerOverlay', 'OverlayConfig']
