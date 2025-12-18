@@ -1,6 +1,6 @@
 """
 ggpoker_adapter.py - Adaptador específico para GG Poker
-Analiza screenshots completos y extrae el estado del juego para GG Poker
+Versión completa con importaciones corregidas
 """
 
 import cv2
@@ -11,12 +11,42 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from datetime import datetime
+import sys
+import os
 
-# Importar desde el nuevo sistema adaptativo
-from ..screen_capture.adaptive_recognizer import AdaptiveCardRecognizer
-from ..screen_capture.table_detector import TableDetector
-from ..screen_capture.text_ocr import TextOCR
-from ..screen_capture.stealth_capture import StealthScreenCapture
+# ============================================================================
+# CORRECCIÓN DE IMPORTACIONES - FUNCIONA EN TODOS LOS CONTEXTOS
+# ============================================================================
+
+# Obtener el directorio actual de este archivo
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Subir un nivel para llegar a 'src'
+src_dir = os.path.join(current_dir, '..')
+
+# Añadir 'src' al path de Python
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
+# Ahora importar normalmente desde screen_capture
+try:
+    from screen_capture.adaptive_recognizer import AdaptiveCardRecognizer
+    from screen_capture.table_detector import TableDetector
+    from screen_capture.text_ocr import TextOCR
+    from screen_capture.stealth_capture import StealthScreenCapture
+    IMPORT_SUCCESS = True
+except ImportError as e:
+    print(f"❌ Error importando módulos: {e}")
+    print("📁 Estructura esperada:")
+    print("   poker-coach-pro/")
+    print("   ├── src/")
+    print("   │   ├── platforms/ggpoker_adapter.py")
+    print("   │   └── screen_capture/ [módulos aquí]")
+    print("   └── test_ggpoker_simple.py")
+    IMPORT_SUCCESS = False
+
+# ============================================================================
+# DEFINICIÓN DE CLASES
+# ============================================================================
 
 @dataclass
 class GameState:
@@ -80,6 +110,9 @@ class GGPokerAdapter:
             stealth_level: Nivel de stealth (MINIMUM, MEDIUM, MAXIMUM)
             learning_mode: Si True, el sistema aprende mientras juega
         """
+        if not IMPORT_SUCCESS:
+            raise ImportError("No se pudieron importar los módulos necesarios")
+        
         self.stealth_level = stealth_level
         self.learning_mode = learning_mode
         self.logger = logging.getLogger(__name__)
@@ -469,7 +502,7 @@ class GGPokerAdapter:
         self.logger.debug(f"Nueva mano iniciada: {self.current_hand_id}")
 
 # ============================================================================
-# FUNCIONES DE PRUEBA Y EJEMPLO
+# FUNCIONES DE PRUEBA
 # ============================================================================
 
 def test_ggpoker_adapter():
