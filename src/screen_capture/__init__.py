@@ -1,25 +1,22 @@
 """
-Módulo de captura de pantalla con técnicas stealth
-Sistema completo para análisis de mesas de poker
+screen_capture module - Captura y análisis de pantalla para poker
 """
 
-from .stealth_capture import StealthScreenCapture, AdaptiveRegionCapture
+# Importar todos los componentes
+from .stealth_capture import StealthScreenCapture
 from .screen_reader import ScreenReader
-from .card_recognizer import CardRecognizer
-from .table_detector import TableDetector
-from .text_ocr import TextOCR
 from .image_processor import ImageProcessor
+from .text_ocr import TextOCR
+from .card_recognizer import CardRecognizer, Card
+from .table_detector import TableDetector
 
+# Definir qué se exporta
 __all__ = [
     'StealthScreenCapture',
-    'AdaptiveRegionCapture', 
     'ScreenReader',
-    'CardRecognizer',
-    'TableDetector',
+    'ImageProcessor',
     'TextOCR',
-    'ImageProcessor'
+    'CardRecognizer',
+    'Card',
+    'TableDetector'
 ]
-
-__version__ = '2.0.0'
-__author__ = 'Poker Coach Pro Team'
-__description__ = 'Sistema profesional de captura y análisis para poker'
