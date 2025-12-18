@@ -1,6 +1,6 @@
-Ôªø#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-Poker Coach Pro - Versi√≥n h√≠brida (intenta captura real, fallback a simulaci√≥n)
+Poker Coach Pro - VersiÛn hÌbrida (intenta captura real, fallback a simulaciÛn)
 """
 import time
 import logging
@@ -11,18 +11,18 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 class HybridPokerStarsCoach:
-    """Coach h√≠brido - Intenta captura real, si falla usa simulaci√≥n"""
+    """Coach hÌbrido - Intenta captura real, si falla usa simulaciÛn"""
     
     def __init__(self):
         self.poker_engine = None
         self.adapter = None
         self.running = False
-        self.real_mode = False  # True = captura real, False = simulaci√≥n
+        self.real_mode = False  # True = captura real, False = simulaciÛn
         self.hand_count = 0
         
     def initialize(self):
-        """Inicializar intentando todos los m√©todos"""
-        print(" Inicializando Poker Coach Pro (Modo H√≠brido)...")
+        """Inicializar intentando todos los mÈtodos"""
+        print(" Inicializando Poker Coach Pro (Modo HÌbrido)...")
         
         try:
             # 1. Siempre cargar PokerEngine
@@ -32,7 +32,7 @@ class HybridPokerStarsCoach:
             
             # 2. Intentar adaptador real
             try:
-                from src.platforms.pokerstars_adapter import PokerStarsAdapter
+                from src.platforms.pokerstars_adapter_nocapture import PokerStarsAdapterNoCapture as PokerStarsAdapter
                 self.adapter = PokerStarsAdapter()
                 print(" PokerStarsAdapter (real) inicializado")
                 
@@ -42,28 +42,28 @@ class HybridPokerStarsCoach:
                     print(" MODO: CAPTURA REAL (PokerStars activo)")
                 else:
                     self.real_mode = False
-                    print("  MODO: SIMULACI√ìN (captura real fall√≥)")
+                    print("  MODO: SIMULACI”N (captura real fallÛ)")
                     
             except Exception as e:
-                print(f"  Adaptador real fall√≥: {e}")
+                print(f"  Adaptador real fallÛ: {e}")
                 
                 # Intentar adaptador simple
                 try:
-                    from src.platforms.simple_pokerstars_adapter import SimplePokerStarsAdapter
+                    # from src.platforms.simple_pokerstars_adapter import SimplePokerStarsAdapter
                     self.adapter = SimplePokerStarsAdapter()
                     print(" SimplePokerStarsAdapter inicializado")
                     self.real_mode = False
-                    print("  MODO: SIMULACI√ìN (usando adaptador simple)")
+                    print("  MODO: SIMULACI”N (usando adaptador simple)")
                 except Exception as e2:
-                    print(f"  Adaptador simple tambi√©n fall√≥: {e2}")
-                    print(" MODO: SIMULACI√ìN INTERNA")
+                    print(f"  Adaptador simple tambiÈn fallÛ: {e2}")
+                    print(" MODO: SIMULACI”N INTERNA")
                     self.adapter = None
                     self.real_mode = False
             
             return True
             
         except Exception as e:
-            print(f" Error cr√≠tico: {e}")
+            print(f" Error crÌtico: {e}")
             return False
     
     def _test_real_capture(self) -> bool:
@@ -79,11 +79,11 @@ class HybridPokerStarsCoach:
                 print(f" Prueba exitosa: {getattr(state, 'street', 'unknown')}")
                 return True
             else:
-                print(" Prueba fall√≥: estado None")
+                print(" Prueba fallÛ: estado None")
                 return False
                 
         except Exception as e:
-            print(f" Prueba fall√≥ con error: {e}")
+            print(f" Prueba fallÛ con error: {e}")
             return False
     
     def run(self):
@@ -91,16 +91,16 @@ class HybridPokerStarsCoach:
         self.running = True
         
         print("\n" + "=" * 60)
-        print(" POKER COACH PRO - MODO H√çBRIDO")
+        print(" POKER COACH PRO - MODO HÕBRIDO")
         print("=" * 60)
         
         if self.real_mode:
             print(" Conectado a PokerStars real")
             print(" Analizando mesa en tiempo real...")
         else:
-            print("  Modo simulaci√≥n activado")
-            print(" Perfecto para pr√°ctica y aprendizaje GTO")
-            print(" Se generar√°n situaciones realistas de poker")
+            print("  Modo simulaciÛn activado")
+            print(" Perfecto para pr·ctica y aprendizaje GTO")
+            print(" Se generar·n situaciones realistas de poker")
         
         print("\n  Ctrl+C para pausar, Ctrl+C dos veces para salir")
         print("=" * 60)
@@ -122,13 +122,13 @@ class HybridPokerStarsCoach:
                     if state_hash != last_state_hash and state_hash:
                         self.hand_count += 1
                         
-                        # Mostrar informaci√≥n
+                        # Mostrar informaciÛn
                         self._display_hand_info(current_state, self.hand_count)
                         
-                        # Tomar decisi√≥n
+                        # Tomar decisiÛn
                         decision = self.poker_engine.make_decision(current_state)
                         
-                        # Mostrar recomendaci√≥n
+                        # Mostrar recomendaciÛn
                         self._display_recommendation(decision)
                         
                         # Guardar en historial si hay adapter
@@ -137,7 +137,7 @@ class HybridPokerStarsCoach:
                         
                         last_state_hash = state_hash
                 
-                # Pausa seg√∫n modo
+                # Pausa seg˙n modo
                 delay = 1.0 if self.real_mode else 5.0
                 time.sleep(delay)
                 
@@ -152,7 +152,7 @@ class HybridPokerStarsCoach:
                     break
     
     def _get_current_state(self) -> Optional[Dict[str, Any]]:
-        """Obtener estado actual seg√∫n el modo"""
+        """Obtener estado actual seg˙n el modo"""
         if self.real_mode and self.adapter:
             # Modo real con adapter
             state = self.adapter.capture_and_analyze()
@@ -161,7 +161,7 @@ class HybridPokerStarsCoach:
                     return state.to_dict()
                 return state
         
-        # Modo simulaci√≥n (generar estado)
+        # Modo simulaciÛn (generar estado)
         return self._generate_simulated_state()
     
     def _generate_simulated_state(self) -> Dict[str, Any]:
@@ -197,18 +197,18 @@ class HybridPokerStarsCoach:
         }
     
     def _create_state_hash(self, state: Dict[str, Any]) -> str:
-        """Crear hash √∫nico para el estado"""
+        """Crear hash ˙nico para el estado"""
         return str(state.get('hero_cards', [])) + str(state.get('street', ''))
     
     def _display_hand_info(self, state: Dict[str, Any], hand_number: int):
-        """Mostrar informaci√≥n de la mano"""
+        """Mostrar informaciÛn de la mano"""
         mode_indicator = "" if self.real_mode else ""
         
         print(f"\n{'='*40}")
         print(f"{mode_indicator} MANO #{hand_number} - {state['street'].upper()}")
         print(f"{'='*40}")
         
-        print(f" Posici√≥n: {state['position']}")
+        print(f" PosiciÛn: {state['position']}")
         print(f" Tus cartas: {', '.join(state['hero_cards'])}")
         
         if state['community_cards']:
@@ -223,12 +223,12 @@ class HybridPokerStarsCoach:
         print(f" Acciones: {', '.join(state['actions_available'])}")
     
     def _display_recommendation(self, decision: Dict[str, Any]):
-        """Mostrar recomendaci√≥n"""
+        """Mostrar recomendaciÛn"""
         action = decision.get('action', 'CHECK')
         confidence = decision.get('confidence', 0.5) * 100
         reason = decision.get('reason', '')
         
-        # Emoji seg√∫n acci√≥n
+        # Emoji seg˙n acciÛn
         if action == 'FOLD':
             emoji = ""
         elif action in ['RAISE', 'BET', 'ALL-IN']:
@@ -238,10 +238,10 @@ class HybridPokerStarsCoach:
         else:
             emoji = ""
         
-        print(f"\n {emoji} RECOMENDACI√ìN GTO:")
-        print(f"   Acci√≥n: {action}")
+        print(f"\n {emoji} RECOMENDACI”N GTO:")
+        print(f"   AcciÛn: {action}")
         print(f"   Confianza: {confidence:.0f}%")
-        print(f"   Raz√≥n: {reason}")
+        print(f"   RazÛn: {reason}")
         
         # Alternativas
         alternatives = decision.get('alternatives', [])
@@ -253,22 +253,22 @@ class HybridPokerStarsCoach:
         self.running = False
         
         print(f"\n{'='*40}")
-        print(" RESUMEN DE SESI√ìN")
+        print(" RESUMEN DE SESI”N")
         print(f"{'='*40}")
         print(f"  Manos analizadas: {self.hand_count}")
-        print(f"  Modo: {'REAL' if self.real_mode else 'SIMULACI√ìN'}")
+        print(f"  Modo: {'REAL' if self.real_mode else 'SIMULACI”N'}")
         print(f"  Plataforma: PokerStars")
         print(f"{'='*40}")
         print(" Gracias por usar Poker Coach Pro!")
 
 def main():
-    """Funci√≥n principal"""
+    """FunciÛn principal"""
     print("=" * 60)
-    print(" POKER COACH PRO - VERSI√ìN H√çBRIDA")
+    print(" POKER COACH PRO - VERSI”N HÕBRIDA")
     print("=" * 60)
-    print("\nEsta versi√≥n intentar√°:")
-    print("1. Conectar con PokerStars real (si est√° disponible)")
-    print("2. Si falla, usar simulaci√≥n realista")
+    print("\nEsta versiÛn intentar·:")
+    print("1. Conectar con PokerStars real (si est· disponible)")
+    print("2. Si falla, usar simulaciÛn realista")
     print("3. Siempre dar recomendaciones GTO precisas")
     print("=" * 60)
     
@@ -282,7 +282,7 @@ def main():
         finally:
             coach.stop()
     else:
-        print("\n Error cr√≠tico al inicializar")
+        print("\n Error crÌtico al inicializar")
 
 if __name__ == "__main__":
     main()
