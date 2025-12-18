@@ -1,6 +1,6 @@
 ﻿#!/usr/bin/env python3
 """
-Script principal unificado para Poker Coach Pro
+Script principal unificado para Poker Coach Pro - VERSIÓN CORREGIDA
 """
 import os
 import sys
@@ -25,32 +25,53 @@ logger = logging.getLogger(__name__)
 
 def check_imports():
     """Verificar que todos los imports funcionen"""
-    print(" Verificando imports...")
+    print(" Verificando imports y compatibilidad...")
+    print("-" * 50)
     
-    modules_to_check = [
-        ("src.core.poker_engine", "PokerEngine"),
-        ("src.overlay.overlay_gui", "PokerOverlay"),
-        ("src.platforms.ggpoker_adapter", "GGPokerAdapter"),
-        ("src.integration.coach_integrator", "PokerCoachIntegrator"),
-    ]
+    # Verificar imports básicos
+    try:
+        from src.core.poker_engine import PokerEngine
+        print(" src.core.poker_engine.PokerEngine")
+    except ImportError as e:
+        print(f" src.core.poker_engine.PokerEngine: {e}")
+        return False
     
-    for module_name, class_name in modules_to_check:
-        try:
-            module = __import__(module_name, fromlist=[class_name])
-            print(f" {module_name}.{class_name}")
-        except ImportError as e:
-            print(f" {module_name}.{class_name}: {e}")
-            
-            # Intentar importación alternativa
-            try:
-                # Intentar importar sin src.
-                alt_module_name = module_name.replace("src.", "")
-                module = __import__(alt_module_name, fromlist=[class_name])
-                print(f"    Usando alternativa: {alt_module_name}.{class_name}")
-            except:
-                pass
+    try:
+        from src.overlay.overlay_gui import PokerOverlay
+        print(" src.overlay.overlay_gui.PokerOverlay")
+    except ImportError as e:
+        print(f" src.overlay.overlay_gui.PokerOverlay: {e}")
+        return False
     
-    print()
+    try:
+        from src.platforms.ggpoker_adapter import GGPokerAdapter
+        print(" src.platforms.ggpoker_adapter.GGPokerAdapter")
+        
+        # Verificar firma del constructor
+        import inspect
+        sig = inspect.signature(GGPokerAdapter.__init__)
+        params = list(sig.parameters.keys())
+        print(f"   Parámetros constructor: {params[1:] if params else 'ninguno'}")
+        
+    except ImportError as e:
+        print(f" src.platforms.ggpoker_adapter.GGPokerAdapter: {e}")
+        return False
+    
+    try:
+        from src.screen_capture.adaptive_recognizer import AdaptiveCardRecognizer
+        print(" src.screen_capture.adaptive_recognizer.AdaptiveCardRecognizer")
+    except ImportError as e:
+        print(f"  src.screen_capture.adaptive_recognizer: {e}")
+    
+    try:
+        from src.integration.coach_integrator import PokerCoachIntegrator
+        print(" src.integration.coach_integrator.PokerCoachIntegrator")
+    except ImportError as e:
+        print(f" src.integration.coach_integrator: {e}")
+        return False
+    
+    print("-" * 50)
+    return True
 
 def main():
     """Función principal"""
@@ -59,7 +80,13 @@ def main():
     print("=" * 60)
     
     # Verificar imports primero
-    check_imports()
+    if not check_imports():
+        print("\n ERROR: Faltan imports críticos")
+        print(" Solución: Verifica que los archivos existan en:")
+        print("   - src/core/poker_engine.py")
+        print("   - src/overlay/overlay_gui.py")
+        print("   - src/platforms/ggpoker_adapter.py")
+        return
     
     try:
         # Importar integrador
@@ -69,7 +96,7 @@ def main():
         os.makedirs("logs", exist_ok=True)
         
         # Inicializar y ejecutar
-        print(" Inicializando sistema...")
+        print("\n Inicializando sistema...")
         coach = PokerCoachIntegrator()
         
         if coach.initialize():
@@ -85,21 +112,18 @@ def main():
             except KeyboardInterrupt:
                 logger.info("Detenido por usuario")
                 print("\n Saliendo de Poker Coach Pro...")
+            except Exception as e:
+                logger.error(f"Error durante ejecución: {e}")
+                print(f"\n Error durante ejecución: {e}")
         else:
             logger.error(" Fallo en inicialización")
-            print(" Error al inicializar el sistema")
+            print("\n Error al inicializar el sistema")
             
     except ImportError as e:
         logger.error(f" Error de importación: {e}")
         print(f"\n ERROR DE IMPORTACIÓN: {e}")
-        print("\n SOLUCIONES POSIBLES:")
-        print("1. Verifica que los archivos estén en:")
-        print("   - src/core/poker_engine.py")
-        print("   - src/overlay/overlay_gui.py")
-        print("   - src/platforms/ggpoker_adapter.py")
-        print("\n2. Verifica los imports en ggpoker_adapter.py:")
-        print("   DEBE decir: from core.poker_engine import PokerEngine")
-        print("   DEBE decir: from overlay.overlay_gui import PokerOverlay")
+        import traceback
+        traceback.print_exc()
         
     except Exception as e:
         logger.error(f" Error inesperado: {e}")
