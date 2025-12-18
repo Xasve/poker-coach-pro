@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+ï»¿#!/usr/bin/env python3
 """
-POKERSTARS COACH PRO - VERSIÓN DEFINITIVA
-Sistema COMPLETO para PokerStars real + simulación
+POKERSTARS COACH PRO - VERSIÃ“N DEFINITIVA
+Sistema COMPLETO para PokerStars real + simulaciÃ³n
 """
 import time
 import logging
@@ -15,11 +15,11 @@ logging.basicConfig(
 )
 
 print("=" * 70)
-print(" POKERSTARS COACH PRO - VERSIÓN DEFINITIVA")
+print(" POKERSTARS COACH PRO - VERSIÃ“N DEFINITIVA")
 print("=" * 70)
 print("\n Sistema profesional para PokerStars")
-print(" Combina captura real + simulación avanzada")
-print(" Perfecto para práctica y juego real")
+print(" Combina captura real + simulaciÃ³n avanzada")
+print(" Perfecto para prÃ¡ctica y juego real")
 print("=" * 70)
 
 # Importar PokerEngine
@@ -65,15 +65,15 @@ class PokerStarsProCoach:
                 
                 # Verificar si podemos capturar
                 if self._test_capture():
-                    print(" MODO: HÍBRIDO (captura real disponible)")
+                    print(" MODO: HÃBRIDO (captura real disponible)")
                     self.mode = "hybrid"
                 else:
-                    print("  MODO: SIMULACIÓN (captura no disponible)")
+                    print("  MODO: SIMULACIÃ“N (captura no disponible)")
                     self.mode = "simulation"
                     
             except ImportError as e:
                 print(f"  Sistema de captura no disponible: {e}")
-                print(" MODO: SIMULACIÓN AVANZADA")
+                print(" MODO: SIMULACIÃ“N AVANZADA")
                 self.mode = "simulation"
             
             print("\n" + "=" * 70)
@@ -102,7 +102,7 @@ class PokerStarsProCoach:
                 print(" AdvancedPokerEngine inicializado")
             
             def make_decision(self, game_state):
-                """Tomar decisión GTO avanzada"""
+                """Tomar decisiÃ³n GTO avanzada"""
                 import random
                 
                 hero_cards = game_state.get('hero_cards', [])
@@ -114,24 +114,24 @@ class PokerStarsProCoach:
                 # Evaluar mano
                 hand_score = self._evaluate_hand(hero_cards, street)
                 
-                # Ajustar por posición
+                # Ajustar por posiciÃ³n
                 pos_multiplier = self._position_multiplier(position)
                 
-                # Ajustar por tamaño de apuesta
+                # Ajustar por tamaÃ±o de apuesta
                 call_adjustment = 1.0 - (to_call / 1000) if to_call > 0 else 1.0
                 
                 # Score final
                 final_score = hand_score * pos_multiplier * call_adjustment
                 
-                # Tomar decisión
+                # Tomar decisiÃ³n
                 if final_score < 0.3 and 'FOLD' in actions:
                     action = 'FOLD'
                     confidence = 0.7 + random.random() * 0.2
-                    reason = 'Mano muy débil para esta situación'
+                    reason = 'Mano muy dÃ©bil para esta situaciÃ³n'
                 elif final_score > 0.7 and 'RAISE' in actions:
                     action = 'RAISE'
                     confidence = 0.75 + random.random() * 0.2
-                    reason = 'Mano fuerte + posición favorable'
+                    reason = 'Mano fuerte + posiciÃ³n favorable'
                 elif final_score > 0.5 and 'CALL' in actions:
                     action = 'CALL'
                     confidence = 0.65 + random.random() * 0.15
@@ -139,11 +139,11 @@ class PokerStarsProCoach:
                 elif 'CHECK' in actions:
                     action = 'CHECK'
                     confidence = 0.6 + random.random() * 0.15
-                    reason = 'Controlar el pot y obtener información'
+                    reason = 'Controlar el pot y obtener informaciÃ³n'
                 else:
                     action = random.choice(actions)
                     confidence = 0.5 + random.random() * 0.2
-                    reason = 'Decisión equilibrada'
+                    reason = 'DecisiÃ³n equilibrada'
                 
                 # Alternativas
                 alternatives = [a for a in actions if a != action][:2]
@@ -160,7 +160,7 @@ class PokerStarsProCoach:
                 if not cards or len(cards) < 2:
                     return 0.3
                 
-                # Simplificar evaluación
+                # Simplificar evaluaciÃ³n
                 card1, card2 = cards[0], cards[1]
                 rank1, suit1 = card1[0], card1[1]
                 rank2, suit2 = card2[0], card2[1]
@@ -182,7 +182,7 @@ class PokerStarsProCoach:
                 return min(0.95, base + street_bonus.get(street, 0.0))
             
             def _position_multiplier(self, position):
-                """Multiplicador por posición"""
+                """Multiplicador por posiciÃ³n"""
                 multipliers = {
                     'BTN': 1.3, 'CO': 1.2, 'MP': 1.0, 
                     'UTG': 0.9, 'SB': 0.8, 'BB': 0.7
@@ -206,20 +206,20 @@ class PokerStarsProCoach:
         """Ejecutar sistema principal"""
         self.running = True
         
-        print("\n MODO DE OPERACIÓN:")
+        print("\n MODO DE OPERACIÃ“N:")
         if self.mode == "hybrid":
-            print("    CAPTURA HÍBRIDA ACTIVADA")
-            print("    El sistema intentará capturar PokerStars real")
-            print("    Si falla, usará simulación automáticamente")
+            print("    CAPTURA HÃBRIDA ACTIVADA")
+            print("    El sistema intentarÃ¡ capturar PokerStars real")
+            print("    Si falla, usarÃ¡ simulaciÃ³n automÃ¡ticamente")
         else:
-            print("    SIMULACIÓN AVANZADA ACTIVADA")
-            print("    Perfecto para práctica y aprendizaje GTO")
+            print("    SIMULACIÃ“N AVANZADA ACTIVADA")
+            print("    Perfecto para prÃ¡ctica y aprendizaje GTO")
         
         print("\n CONTROLES:")
         print("    Enter: Continuar manualmente")
-        print("    'a': Modo automático (5s entre manos)")
+        print("    'a': Modo automÃ¡tico (5s entre manos)")
         print("    'm': Cambiar modo")
-        print("    's': Ver estadísticas")
+        print("    's': Ver estadÃ­sticas")
         print("    'q': Salir")
         print("=" * 70)
         
@@ -252,7 +252,7 @@ class PokerStarsProCoach:
                         print(f"  {i}...", end='\r')
                         time.sleep(1)
                     
-                    print(" " * 20, end='\r')  # Limpiar línea
+                    print(" " * 20, end='\r')  # Limpiar lÃ­nea
                 
             except KeyboardInterrupt:
                 print("\n\n  Programa pausado")
@@ -267,7 +267,7 @@ class PokerStarsProCoach:
         print(f" MANO #{self.hand_count + 1}")
         print(f"{'='*60}")
         
-        # Obtener estado del juego según el modo
+        # Obtener estado del juego segÃºn el modo
         state = None
         is_real = False
         
@@ -278,21 +278,21 @@ class PokerStarsProCoach:
                 is_real = True
                 print(" [CAPTURA REAL DE POKERSTARS]")
             else:
-                # Fallback a simulación
+                # Fallback a simulaciÃ³n
                 state = self._create_simulated_state()
-                print(" [SIMULACIÓN - fallback]")
+                print(" [SIMULACIÃ“N - fallback]")
         else:
-            # Modo simulación
+            # Modo simulaciÃ³n
             state = self._create_simulated_state()
-            print(" [SIMULACIÓN AVANZADA]")
+            print(" [SIMULACIÃ“N AVANZADA]")
         
-        # Mostrar información
+        # Mostrar informaciÃ³n
         self._display_hand_info(state, is_real)
         
-        # Tomar decisión
+        # Tomar decisiÃ³n
         decision = self.engine.make_decision(state)
         
-        # Mostrar recomendación
+        # Mostrar recomendaciÃ³n
         self._display_recommendation(decision)
     
     def _create_simulated_state(self):
@@ -306,7 +306,7 @@ class PokerStarsProCoach:
         deck = [f"{rank}{suit}" for rank in ranks for suit in suits]
         random.shuffle(deck)
         
-        # Cartas del héroe
+        # Cartas del hÃ©roe
         hero_cards = [deck.pop(), deck.pop()]
         
         # Calle
@@ -346,11 +346,11 @@ class PokerStarsProCoach:
         }
     
     def _display_hand_info(self, state, is_real: bool):
-        """Mostrar información de la mano"""
+        """Mostrar informaciÃ³n de la mano"""
         mode_symbol = "" if is_real else ""
         
-        print(f"\n{mode_symbol} INFORMACIÓN:")
-        print(f"  Posición: {state.get('position', 'N/A')}")
+        print(f"\n{mode_symbol} INFORMACIÃ“N:")
+        print(f"  PosiciÃ³n: {state.get('position', 'N/A')}")
         print(f"  Calle: {state.get('street', 'N/A').upper()}")
         
         hero_cards = state.get('hero_cards', [])
@@ -376,7 +376,7 @@ class PokerStarsProCoach:
         print(f"  Acciones: {', '.join(actions)}")
     
     def _display_recommendation(self, decision):
-        """Mostrar recomendación"""
+        """Mostrar recomendaciÃ³n"""
         action = decision.get('action', 'CHECK')
         confidence = decision.get('confidence', 0.5)
         reason = decision.get('reason', '')
@@ -384,7 +384,7 @@ class PokerStarsProCoach:
         # Convertir confianza a porcentaje
         confidence_pct = confidence * 100
         
-        # Emoji según acción
+        # Emoji segÃºn acciÃ³n
         if action == 'FOLD':
             display = " FOLD"
         elif action in ['RAISE', 'BET', 'ALL-IN']:
@@ -394,10 +394,10 @@ class PokerStarsProCoach:
         else:
             display = " " + action
         
-        print(f"\n RECOMENDACIÓN GTO:")
+        print(f"\n RECOMENDACIÃ“N GTO:")
         print(f"   {display}")
         print(f"    Confianza: {confidence_pct:.0f}%")
-        print(f"    Razón: {reason}")
+        print(f"    RazÃ³n: {reason}")
         
         # Alternativas
         alternatives = decision.get('alternatives', [])
@@ -405,20 +405,20 @@ class PokerStarsProCoach:
             print(f"\n    Alternativas: {', '.join(alternatives)}")
     
     def _show_menu(self):
-        """Mostrar menú de opciones"""
-        print("\n  MENÚ PRINCIPAL:")
+        """Mostrar menÃº de opciones"""
+        print("\n  MENÃš PRINCIPAL:")
         print("   1. Continuar (c)")
-        print("   2. Modo automático (a)")
+        print("   2. Modo automÃ¡tico (a)")
         print("   3. Cambiar modo captura (m)")
-        print("   4. Ver estadísticas (s)")
+        print("   4. Ver estadÃ­sticas (s)")
         print("   5. Salir (q)")
         
-        choice = input("\n Tu elección: ").lower()
+        choice = input("\n Tu elecciÃ³n: ").lower()
         
         if choice == 'q':
             self.running = False
         elif choice == 'a':
-            print(" Modo automático activado (5s entre manos)")
+            print(" Modo automÃ¡tico activado (5s entre manos)")
             return 'auto'
         elif choice == 's':
             self._show_stats()
@@ -428,9 +428,9 @@ class PokerStarsProCoach:
         return 'manual'
     
     def _show_stats(self):
-        """Mostrar estadísticas"""
+        """Mostrar estadÃ­sticas"""
         print(f"\n{'='*50}")
-        print(" ESTADÍSTICAS DE SESIÓN")
+        print(" ESTADÃSTICAS DE SESIÃ“N")
         print(f"{'='*50}")
         print(f"  Manos jugadas: {self.hand_count}")
         print(f"  Modo actual: {self.mode.upper()}")
@@ -438,23 +438,23 @@ class PokerStarsProCoach:
         print(f"{'='*50}")
     
     def _change_mode(self):
-        """Cambiar modo de operación"""
+        """Cambiar modo de operaciÃ³n"""
         print("\n  SELECCIONAR MODO:")
-        print("   1. Simulación avanzada")
-        print("   2. Captura híbrida (si disponible)")
+        print("   1. SimulaciÃ³n avanzada")
+        print("   2. Captura hÃ­brida (si disponible)")
         print("   3. Cancelar")
         
-        choice = input("\n Tu elección: ")
+        choice = input("\n Tu elecciÃ³n: ")
         
         if choice == '1':
             self.mode = "simulation"
-            print(" Modo cambiado a: SIMULACIÓN AVANZADA")
+            print(" Modo cambiado a: SIMULACIÃ“N AVANZADA")
         elif choice == '2':
             if self.capture_system:
                 self.mode = "hybrid"
-                print(" Modo cambiado a: CAPTURA HÍBRIDA")
+                print(" Modo cambiado a: CAPTURA HÃBRIDA")
             else:
-                print(" Captura no disponible - manteniendo simulación")
+                print(" Captura no disponible - manteniendo simulaciÃ³n")
         else:
             print("  Cambio cancelado")
     
@@ -463,20 +463,20 @@ class PokerStarsProCoach:
         self.running = False
         
         print(f"\n{'='*70}")
-        print(" SESIÓN FINALIZADA - POKERSTARS COACH PRO")
+        print(" SESIÃ“N FINALIZADA - POKERSTARS COACH PRO")
         print(f"{'='*70}")
         
         self._show_stats()
         
         print(f"\n Gracias por usar PokerStars Coach Pro!")
-        print(" Para captura REAL completa, asegúrate de:")
+        print(" Para captura REAL completa, asegÃºrate de:")
         print("   1. Tener PokerStars instalado y abierto")
         print("   2. Estar en una mesa de poker visible")
         print("   3. Tener las dependencias instaladas")
         print(f"{'='*70}")
 
 def main():
-    """Función principal"""
+    """FunciÃ³n principal"""
     coach = PokerStarsProCoach()
     
     if coach.initialize():
@@ -485,7 +485,8 @@ def main():
         finally:
             coach.stop()
     else:
-        print("\n Error crítico al inicializar el sistema")
+        print("\n Error crÃ­tico al inicializar el sistema")
 
 if __name__ == "__main__":
     main()
+
