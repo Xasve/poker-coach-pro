@@ -10,5 +10,5 @@
 
 ### 2. Clona tu Fork
 ```bash
-git clone https://github.com/TU_USUARIO/poker-coach-pro.git
+git clone https://github.com/Xasve/poker-coach-pro
 cd poker-coach-pro
