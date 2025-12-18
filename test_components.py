@@ -1,6 +1,6 @@
 ﻿#!/usr/bin/env python3
 """
-Prueba rápida de componentes individuales
+Prueba rápida de componentes individuales CON WRAPPERS
 """
 import sys
 import os
@@ -11,7 +11,7 @@ def test_poker_engine():
     try:
         from core.poker_engine import PokerEngine
         engine = PokerEngine()
-        print(f" PokerEngine creado: agresión={getattr(engine, 'aggression', 'N/A')}")
+        print(f" PokerEngine creado")
         
         # Probar decisión demo
         demo_state = {
@@ -30,6 +30,12 @@ def test_poker_engine():
         print(f"   Confianza: {decision.get('confidence', 'N/A')}")
         print(f"   Razón: {decision.get('reason', 'N/A')}")
         
+        # Probar wrapper
+        from integration.compatibility_wrappers import PokerEngineWrapper
+        wrapper = PokerEngineWrapper(engine)
+        wrapped_decision = wrapper.make_decision(demo_state)
+        print(f" Wrapper funcionando: {wrapped_decision.get('action', 'N/A')}")
+        
         return True
     except Exception as e:
         print(f" Error en PokerEngine: {e}")
@@ -44,20 +50,33 @@ def test_overlay():
         overlay = PokerOverlay()
         print(" Overlay creado")
         
+        # Probar wrapper
+        from integration.compatibility_wrappers import OverlayWrapper
+        wrapper = OverlayWrapper(overlay)
+        print(f" Wrapper creado - tipo detectado: {wrapper.method_type}")
+        
         # Iniciar en hilo separado
         import threading
         overlay_thread = threading.Thread(target=overlay.start, daemon=True)
         overlay_thread.start()
         
-        # Probar actualización
-        overlay.update_recommendation(
+        # Probar actualización con wrapper
+        wrapper.update_recommendation(
             action="RAISE",
             confidence=0.85,
             reason="Top pair + flush draw",
             alternatives=["CALL", "FOLD"]
         )
         
-        print(" Overlay actualizado")
+        print(" Overlay actualizado via wrapper")
+        
+        # Probar diferentes tipos de actualización
+        wrapper.update_recommendation(
+            action="CALL",
+            confidence=0.65,
+            reason="Pot odds favorables",
+            alternatives=["RAISE", "FOLD"]
+        )
         
         # Esperar un momento y cerrar
         import time
@@ -76,28 +95,21 @@ def test_ggpoker_adapter():
     try:
         from platforms.ggpoker_adapter import GGPokerAdapter
         
-        # Probar diferentes firmas de constructor
-        try:
-            adapter = GGPokerAdapter()
-            print(" GGPokerAdapter creado (sin parámetros)")
-        except TypeError:
-            try:
-                adapter = GGPokerAdapter(poker_engine=None, overlay=None)
-                print(" GGPokerAdapter creado (con parámetros None)")
-            except Exception as e:
-                print(f" Error creando adapter: {e}")
-                return False
+        # Crear adapter
+        adapter = GGPokerAdapter()
+        print(" GGPokerAdapter creado")
         
-        # Verificar métodos disponibles
-        methods = [m for m in dir(adapter) if not m.startswith('_')]
-        print(f" Métodos disponibles: {', '.join(methods[:10])}...")
+        # Probar wrapper
+        from integration.compatibility_wrappers import GGAdapterWrapper
+        wrapper = GGAdapterWrapper(adapter)
+        print(" Wrapper creado")
         
-        # Verificar si tiene método de detección
-        if hasattr(adapter, 'is_ggpoker_active'):
-            is_active = adapter.is_ggpoker_active()
-            print(f" GG Poker activo: {is_active}")
-        else:
-            print("  No tiene método is_ggpoker_active")
+        # Verificar si GG Poker está activo
+        is_active = wrapper.is_ggpoker_active()
+        print(f" GG Poker activo (wrapper): {is_active}")
+        
+        # Verificar métodos
+        print(f" Métodos wrapper: is_ggpoker_active, capture_and_analyze")
         
         return True
     except Exception as e:
@@ -106,21 +118,45 @@ def test_ggpoker_adapter():
         traceback.print_exc()
         return False
 
+def test_integrator():
+    print("\n Probando Integrador...")
+    try:
+        from integration.coach_integrator import PokerCoachIntegrator
+        
+        integrator = PokerCoachIntegrator()
+        print(" Integrador creado")
+        
+        # Inicializar (pero no ejecutar bucle completo)
+        initialized = integrator.initialize()
+        print(f" Inicialización: {initialized}")
+        print(f"   Modo demo: {integrator.demo_mode}")
+        print(f"   Wrappers creados: {bool(integrator.overlay_wrapper)}")
+        
+        # Limpiar
+        integrator.shutdown()
+        
+        return initialized
+    except Exception as e:
+        print(f" Error en Integrador: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 def main():
     print("=" * 60)
-    print(" PRUEBA DE COMPONENTES POKER COACH PRO")
+    print(" PRUEBA DE COMPONENTES CON WRAPPERS")
     print("=" * 60)
     
     results = []
     results.append(test_poker_engine())
     results.append(test_overlay())
     results.append(test_ggpoker_adapter())
+    results.append(test_integrator())
     
     print("\n" + "=" * 60)
     print(" RESUMEN DE PRUEBAS:")
-    for i, (test_name, result) in enumerate(zip(
-        ["PokerEngine", "Overlay", "GGPokerAdapter"], results
-    )):
+    tests = ["PokerEngine", "Overlay", "GGPokerAdapter", "Integrador"]
+    for i, (test_name, result) in enumerate(zip(tests, results)):
         status = "" if result else ""
         print(f"  {status} {test_name}")
     

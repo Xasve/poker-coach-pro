@@ -1,5 +1,5 @@
 ﻿"""
-Integrador principal que une todos los componentes - VERSIÓN CORREGIDA
+Integrador principal que une todos los componentes - VERSIÓN CON WRAPPERS
 """
 import time
 import logging
@@ -23,66 +23,97 @@ class PokerCoachIntegrator:
         self.is_running = False
         self.demo_mode = False
         
+        # Wrappers
+        self.overlay_wrapper = None
+        self.adapter_wrapper = None
+        self.engine_wrapper = None
+        
     def initialize(self) -> bool:
-        """Inicializar todos los componentes - VERSIÓN COMPATIBLE"""
+        """Inicializar todos los componentes con wrappers de compatibilidad"""
         try:
-            logger.info("Inicializando Poker Coach Pro...")
+            logger.info("Inicializando Poker Coach Pro con wrappers...")
             
             # 1. Inicializar motor de poker
             from src.core.poker_engine import PokerEngine
             self.poker_engine = PokerEngine()
-            logger.info(" Motor de poker inicializado")
+            from src.integration.compatibility_wrappers import PokerEngineWrapper
+            self.engine_wrapper = PokerEngineWrapper(self.poker_engine)
+            logger.info(" Motor de poker inicializado y envuelto")
             
             # 2. Inicializar overlay
             from src.overlay.overlay_gui import PokerOverlay
             self.overlay = PokerOverlay()
             self.overlay.start()
-            logger.info(" Overlay inicializado")
+            from src.integration.compatibility_wrappers import OverlayWrapper
+            self.overlay_wrapper = OverlayWrapper(self.overlay)
+            logger.info(" Overlay inicializado y envuelto")
             
-            # 3. Inicializar adaptador GG Poker - SIN PARÁMETROS
-            # (basado en el error: no acepta poker_engine y overlay)
+            # 3. Inicializar adaptador GG Poker
             from src.platforms.ggpoker_adapter import GGPokerAdapter
+            from src.integration.compatibility_wrappers import GGAdapterWrapper
             
-            # Intentar diferentes firmas de constructor
-            try:
-                # Intentar con parámetros
-                self.ggpoker_adapter = GGPokerAdapter(
-                    poker_engine=self.poker_engine,
-                    overlay=self.overlay
-                )
-                logger.info(" Adaptador GG Poker inicializado (con parámetros)")
-            except TypeError as e:
-                if "unexpected keyword argument" in str(e):
-                    # Intentar sin parámetros
+            # Intentar crear adapter con diferentes firmas
+            adapter_created = False
+            for attempt in [
+                lambda: GGPokerAdapter(),  # Sin parámetros
+                lambda: GGPokerAdapter(poker_engine=self.poker_engine),  # Solo engine
+                lambda: GGPokerAdapter(poker_engine=self.poker_engine, overlay=self.overlay),  # Ambos
+                lambda: GGPokerAdapter(None, None)  # Parámetros posicionales
+            ]:
+                try:
+                    self.ggpoker_adapter = attempt()
+                    adapter_created = True
+                    logger.info(f" Adaptador GG Poker creado con firma: {attempt.__name__}")
+                    break
+                except TypeError as e:
+                    continue
+                except Exception as e:
+                    logger.warning(f"Intento fallido: {e}")
+                    continue
+            
+            if not adapter_created:
+                # Último intento: inspeccionar firma
+                import inspect
+                try:
+                    sig = inspect.signature(GGPokerAdapter.__init__)
+                    params = list(sig.parameters.keys())[1:]  # Excluir self
+                    kwargs = {}
+                    if 'poker_engine' in params:
+                        kwargs['poker_engine'] = self.poker_engine
+                    if 'overlay' in params:
+                        kwargs['overlay'] = self.overlay
+                    
+                    self.ggpoker_adapter = GGPokerAdapter(**kwargs)
+                    adapter_created = True
+                    logger.info(f" Adaptador creado con kwargs: {kwargs.keys()}")
+                except:
+                    # Crear sin parámetros y rezar
                     self.ggpoker_adapter = GGPokerAdapter()
-                    logger.info(" Adaptador GG Poker inicializado (sin parámetros)")
-                else:
-                    raise
             
-            # 4. Verificar si GG Poker está activo
-            try:
-                if hasattr(self.ggpoker_adapter, 'is_ggpoker_active'):
-                    self.demo_mode = not self.ggpoker_adapter.is_ggpoker_active()
-                else:
-                    # Si no tiene el método, probar captura
-                    logger.warning("Adaptador no tiene método is_ggpoker_active, probando captura...")
-                    try:
-                        test_state = self.ggpoker_adapter.capture_and_analyze()
-                        self.demo_mode = test_state is None or not getattr(test_state, 'is_valid', lambda: False)()
-                    except:
-                        self.demo_mode = True
-            except Exception as e:
-                logger.warning(f"Error verificando GG Poker: {e}, usando modo demo")
-                self.demo_mode = True
+            self.adapter_wrapper = GGAdapterWrapper(self.ggpoker_adapter)
+            logger.info(" Adaptador GG Poker inicializado y envuelto")
+            
+            # 4. Verificar si GG Poker está activo usando wrapper
+            self.demo_mode = not self.adapter_wrapper.is_ggpoker_active()
             
             if self.demo_mode:
                 logger.warning("  Modo demo activado - GG Poker no detectado")
-                if self.overlay:
-                    self.overlay.show_message("MODO DEMO", color="yellow")
+                if self.overlay_wrapper:
+                    self.overlay_wrapper.update_recommendation(
+                        action="DEMO",
+                        confidence=0.0,
+                        reason="Modo demo - GG Poker no detectado",
+                        alternatives=[]
+                    )
             else:
                 logger.info(" GG Poker detectado - Modo real activo")
-                if self.overlay:
-                    self.overlay.show_message("GG POKER DETECTADO", color="green")
+                if self.overlay_wrapper:
+                    self.overlay_wrapper.update_recommendation(
+                        action="READY",
+                        confidence=1.0,
+                        reason="GG Poker detectado - Modo tiempo real",
+                        alternatives=[]
+                    )
             
             return True
             
@@ -99,17 +130,27 @@ class PokerCoachIntegrator:
             while self.is_running:
                 try:
                     # Verificar modo actual
-                    current_demo_mode = self._check_current_mode()
+                    current_demo_mode = not self.adapter_wrapper.is_ggpoker_active()
                     
                     if current_demo_mode != self.demo_mode:
                         self.demo_mode = current_demo_mode
-                        if self.overlay:
+                        if self.overlay_wrapper:
                             if self.demo_mode:
                                 logger.info("Cambiando a modo demo")
-                                self.overlay.show_message("MODO DEMO", color="yellow")
+                                self.overlay_wrapper.update_recommendation(
+                                    action="DEMO",
+                                    confidence=0.5,
+                                    reason="Cambiado a modo demo",
+                                    alternatives=[]
+                                )
                             else:
                                 logger.info("Cambiando a modo real")
-                                self.overlay.show_message("GG POKER DETECTADO", color="green")
+                                self.overlay_wrapper.update_recommendation(
+                                    action="READY",
+                                    confidence=0.9,
+                                    reason="GG Poker detectado - Modo real",
+                                    alternatives=[]
+                                )
                     
                     if self.demo_mode:
                         self._run_demo_mode()
@@ -129,45 +170,21 @@ class PokerCoachIntegrator:
         finally:
             self.shutdown()
     
-    def _check_current_mode(self) -> bool:
-        """Verificar si estamos en modo demo o real"""
-        if not self.ggpoker_adapter:
-            return True
-            
-        try:
-            if hasattr(self.ggpoker_adapter, 'is_ggpoker_active'):
-                return not self.ggpoker_adapter.is_ggpoker_active()
-            
-            # Intentar captura para verificar
-            state = self.ggpoker_adapter.capture_and_analyze()
-            if state is None:
-                return True
-                
-            # Verificar si el estado es válido
-            if hasattr(state, 'is_valid'):
-                return not state.is_valid()
-            else:
-                # Si no tiene método is_valid, asumir demo si no hay datos
-                return not bool(getattr(state, 'hero_cards', None))
-                
-        except Exception:
-            return True  # Si hay error, modo demo
-    
     def _run_demo_mode(self):
         """Ejecutar en modo demo"""
         try:
             # Generar estado de juego simulado
             demo_state = self._generate_demo_state()
             
-            # Tomar decisión
-            decision = self.poker_engine.make_decision(demo_state)
+            # Tomar decisión usando wrapper
+            decision = self.engine_wrapper.make_decision(demo_state)
             
-            # Mostrar en overlay
-            if decision and self.overlay:
-                self.overlay.update_recommendation(
+            # Mostrar en overlay usando wrapper
+            if decision and self.overlay_wrapper:
+                self.overlay_wrapper.update_recommendation(
                     action=decision.get("action", "FOLD"),
                     confidence=decision.get("confidence", 0.5),
-                    reason=decision.get("reason", "Demo mode"),
+                    reason=decision.get("reason", "Demo mode")[:100],
                     alternatives=decision.get("alternatives", [])
                 )
         except Exception as e:
@@ -176,8 +193,8 @@ class PokerCoachIntegrator:
     def _run_real_mode(self):
         """Ejecutar en modo real con GG Poker"""
         try:
-            # Capturar y analizar pantalla
-            game_state = self.ggpoker_adapter.capture_and_analyze()
+            # Capturar y analizar pantalla usando wrapper
+            game_state = self.adapter_wrapper.capture_and_analyze()
             
             if game_state:
                 # Convertir a dict para poker_engine
@@ -185,24 +202,25 @@ class PokerCoachIntegrator:
                     state_dict = game_state.to_dict()
                 elif hasattr(game_state, '__dict__'):
                     state_dict = vars(game_state)
-                else:
+                elif isinstance(game_state, dict):
                     state_dict = game_state
+                else:
+                    state_dict = {"raw_state": game_state}
                 
-                # Tomar decisión
-                decision = self.poker_engine.make_decision(state_dict)
+                # Tomar decisión usando wrapper
+                decision = self.engine_wrapper.make_decision(state_dict)
                 
-                if decision and self.overlay:
-                    # Mostrar recomendación
-                    self.overlay.update_recommendation(
+                if decision and self.overlay_wrapper:
+                    # Mostrar recomendación usando wrapper
+                    self.overlay_wrapper.update_recommendation(
                         action=decision.get("action", "CHECK"),
                         confidence=decision.get("confidence", 0.7),
-                        reason=decision.get("reason", ""),
+                        reason=decision.get("reason", "")[:100],
                         alternatives=decision.get("alternatives", [])
                     )
                     
-                    # Guardar en historial si existe el método
-                    if hasattr(self.ggpoker_adapter, 'save_hand_history'):
-                        self.ggpoker_adapter.save_hand_history(game_state, decision)
+                    # Guardar en historial usando wrapper
+                    self.adapter_wrapper.save_hand_history(game_state, decision)
         except Exception as e:
             logger.error(f"Error en modo real: {e}")
     
@@ -214,12 +232,16 @@ class PokerCoachIntegrator:
         positions = ["BTN", "SB", "BB", "UTG", "MP", "CO"]
         actions = ["FOLD", "CHECK", "CALL", "RAISE", "ALL-IN"]
         
-        community_cards = ["Js", "8c", "2h", "Td", "As"]
-        num_community = random.randint(0, 5)
+        # Generar cartas aleatorias para demo
+        ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
+        suits = ['h', 'd', 'c', 's']
+        
+        hero_cards = [f"{random.choice(ranks)}{random.choice(suits)}" for _ in range(2)]
+        community = [f"{random.choice(ranks)}{random.choice(suits)}" for _ in range(random.randint(0, 5))]
         
         return {
-            "hero_cards": ["Ah", "Kd"],
-            "community_cards": community_cards[:num_community],
+            "hero_cards": hero_cards,
+            "community_cards": community,
             "street": random.choice(streets),
             "position": random.choice(positions),
             "pot": random.randint(100, 1000),
@@ -236,6 +258,9 @@ class PokerCoachIntegrator:
         self.is_running = False
         
         if self.overlay:
-            self.overlay.stop()
+            try:
+                self.overlay.stop()
+            except:
+                pass
         
         logger.info(" Poker Coach Pro apagado correctamente")
