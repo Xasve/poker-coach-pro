@@ -1,494 +1,490 @@
 """
-Archivo: card_recognizer.py
-Ruta: src/screen_capture/card_recognizer.py
-Sistema de reconocimiento de cartas de poker usando template matching
+card_recognizer.py - Sistema de reconocimiento de cartas por template matching
+Reconoce cartas del hero y mesa en GG Poker y PokerStars
 """
 
 import cv2
 import numpy as np
-from PIL import Image
 import os
-import json
-from typing import List, Tuple, Dict, Optional
-from dataclasses import dataclass
-from enum import Enum
 import time
+import random
+from typing import List, Tuple, Optional, Dict
+from dataclasses import dataclass
+import logging
+
+from ..utils.image_utils import ImageUtils
+from ..quality.quality_checker import QualityChecker
 
 @dataclass
 class Card:
-    """Estructura para representar una carta de poker"""
-    rank: str  # A, K, Q, J, T, 9-2
-    suit: str  # h, d, c, s (hearts, diamonds, clubs, spades)
-    confidence: float  # 0.0 - 1.0
-    position: Tuple[int, int]  # (x, y)
+    """Clase que representa una carta de poker"""
+    rank: str  # 'A', 'K', 'Q', 'J', '10', '9', ..., '2'
+    suit: str  # 's' (spades), 'h' (hearts), 'd' (diamonds), 'c' (clubs)
+    confidence: float  # 0.0 a 1.0
+    position: Tuple[int, int]  # Posición en la imagen
     
     def __str__(self):
         return f"{self.rank}{self.suit}"
     
-    def to_dict(self):
-        return {
-            'rank': self.rank,
-            'suit': self.suit,
-            'confidence': self.confidence,
-            'position': self.position
-        }
-
-class CardSuit(Enum):
-    """Palos de las cartas"""
-    HEARTS = 'h'
-    DIAMONDS = 'd'
-    CLUBS = 'c'
-    SPADES = 's'
-
-class CardRank(Enum):
-    """Valores de las cartas"""
-    ACE = 'A'
-    KING = 'K'
-    QUEEN = 'Q'
-    JACK = 'J'
-    TEN = 'T'
-    NINE = '9'
-    EIGHT = '8'
-    SEVEN = '7'
-    SIX = '6'
-    FIVE = '5'
-    FOUR = '4'
-    THREE = '3'
-    TWO = '2'
+    def to_poker_format(self) -> str:
+        """Formato estándar de poker (ej: 'Ah' para Ace of hearts)"""
+        return f"{self.rank}{self.suit}"
 
 class CardRecognizer:
-    """
-    Sistema de reconocimiento de cartas de poker
-    Usa template matching con OpenCV para detectar cartas
-    """
+    """Sistema principal de reconocimiento de cartas"""
     
-    def __init__(self, platform: str = "ggpoker"):
+    def __init__(self, platform: str = "ggpoker", stealth_level: str = "MEDIUM"):
         """
         Inicializar reconocedor de cartas
         
         Args:
-            platform: Plataforma ("ggpoker" o "pokerstars")
+            platform: 'ggpoker' o 'pokerstars'
+            stealth_level: Nivel de stealth (MINIMUM, MEDIUM, MAXIMUM)
         """
         self.platform = platform.lower()
+        self.stealth_level = stealth_level
+        self.logger = logging.getLogger(__name__)
+        self.quality_checker = QualityChecker()
+        
+        # Umbrales de confianza por nivel de stealth
+        self.confidence_thresholds = {
+            "MINIMUM": 0.80,
+            "MEDIUM": 0.85,
+            "MAXIMUM": 0.90
+        }
+        
+        # Cargar templates de cartas
         self.templates = self._load_card_templates()
-        self.template_size = (71, 96)  # Tamaño estándar de cartas GG Poker
-        self.confidence_threshold = 0.75
-        self.min_contour_area = 500
+        self.logger.info(f"CardRecognizer inicializado para {platform}")
         
         # Estadísticas
         self.stats = {
-            'cards_detected': 0,
-            'recognition_attempts': 0,
-            'success_rate': 0.0,
-            'avg_confidence': 0.0
+            "total_recognitions": 0,
+            "successful_recognitions": 0,
+            "avg_confidence": 0.0,
+            "avg_processing_time": 0.0
         }
-        
-        print(f"[Card Recognizer] Inicializado para {self.platform.upper()}")
-        
-    def _load_card_templates(self) -> Dict:
+    
+    def _load_card_templates(self) -> Dict[str, np.ndarray]:
         """
-        Cargar templates de cartas desde archivos
-        En producción, estos estarían en data/card_templates/
+        Cargar templates de cartas desde el directorio data/card_templates/
+        
+        Returns:
+            Diccionario con templates (clave: 'Ah', 'Kd', etc.)
         """
-        
-        # Mapeo de colores por plataforma
-        platform_colors = {
-            "ggpoker": {
-                "hearts": (0, 0, 255),    # Rojo
-                "diamonds": (0, 0, 255),  # Rojo
-                "clubs": (0, 0, 0),       # Negro
-                "spades": (0, 0, 0)       # Negro
-            },
-            "pokerstars": {
-                "hearts": (255, 0, 0),    # Rojo
-                "diamonds": (255, 0, 0),  # Rojo
-                "clubs": (0, 0, 0),       # Negro
-                "spades": (0, 0, 0)       # Negro
-            }
-        }
-        
-        # Crear templates básicos (en producción se cargarían desde imágenes)
         templates = {}
+        template_dir = "data/card_templates"
         
-        # Valores y palos
-        ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
-        suits = ['h', 'd', 'c', 's']
+        if not os.path.exists(template_dir):
+            self.logger.warning(f"Directorio de templates no encontrado: {template_dir}")
+            # Crear directorio si no existe
+            os.makedirs(template_dir, exist_ok=True)
+            # En una implementación real, aquí se generarían los templates
+            return templates
+        
+        ranks = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2']
+        suits = ['s', 'h', 'd', 'c']  # spades, hearts, diamonds, clubs
         
         for rank in ranks:
             for suit in suits:
-                card_key = f"{rank}{suit}"
-                templates[card_key] = {
-                    'rank': rank,
-                    'suit': suit,
-                    'color': platform_colors.get(self.platform, {}).get(
-                        'hearts' if suit in ['h', 'd'] else 'clubs', 
-                        (0, 0, 0)
-                    )
-                }
+                card_name = f"{rank}{suit}"
+                template_path = os.path.join(template_dir, f"{card_name}.png")
+                
+                if os.path.exists(template_path):
+                    try:
+                        template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
+                        if template is not None:
+                            # Redimensionar a tamaño estándar
+                            template = cv2.resize(template, (80, 120))
+                            templates[card_name] = template
+                            self.logger.debug(f"Template cargado: {card_name}")
+                        else:
+                            self.logger.warning(f"No se pudo cargar template: {card_name}")
+                    except Exception as e:
+                        self.logger.error(f"Error cargando template {card_name}: {e}")
+                else:
+                    self.logger.debug(f"Template no encontrado: {card_name}")
         
+        self.logger.info(f"Templates cargados: {len(templates)}/52")
         return templates
     
-    def recognize_cards(self, image: Image.Image, card_count: int = 2) -> List[Card]:
+    def recognize_cards_in_region(self, screenshot: np.ndarray, 
+                                 region_config: Dict) -> List[Card]:
         """
-        Reconocer cartas en una imagen
+        Reconocer cartas en una región específica de la pantalla
         
         Args:
-            image: PIL Image a analizar
-            card_count: Número esperado de cartas (2 para hole cards)
+            screenshot: Captura de pantalla completa
+            region_config: Configuración de región (de JSON config)
             
         Returns:
-            Lista de objetos Card detectados
+            Lista de cartas reconocidas
         """
         start_time = time.time()
-        self.stats['recognition_attempts'] += 1
         
+        # Aplicar randomización de timing según nivel de stealth
+        self._apply_stealth_delay()
+        
+        # Extraer región de interés
+        roi = self._extract_roi(screenshot, region_config)
+        
+        if roi is None or roi.size == 0:
+            self.logger.warning("Región de interés vacía o inválida")
+            return []
+        
+        # Preprocesar imagen
+        processed_roi = self._preprocess_image(roi)
+        
+        # Detectar cartas individuales en la región
+        card_images = self._detect_individual_cards(processed_roi)
+        
+        # Reconocer cada carta
+        recognized_cards = []
+        for i, card_img in enumerate(card_images):
+            card = self._recognize_single_card(card_img)
+            if card:
+                # Ajustar posición a coordenadas de screenshot original
+                card.position = self._adjust_position(card.position, region_config, i, len(card_images))
+                recognized_cards.append(card)
+        
+        # Validar resultado
+        if self._validate_recognition(recognized_cards):
+            self.stats["successful_recognitions"] += 1
+        
+        # Actualizar estadísticas
+        processing_time = time.time() - start_time
+        self._update_stats(processing_time, recognized_cards)
+        
+        self.logger.debug(f"Reconocidas {len(recognized_cards)} cartas en {processing_time:.3f}s")
+        return recognized_cards
+    
+    def _apply_stealth_delay(self):
+        """Aplicar delay aleatorio según nivel de stealth"""
+        delays = {
+            "MINIMUM": (0.05, 0.15),      # 50-150ms
+            "MEDIUM": (0.15, 0.30),       # 150-300ms
+            "MAXIMUM": (0.25, 0.50)       # 250-500ms
+        }
+        
+        if self.stealth_level in delays:
+            min_delay, max_delay = delays[self.stealth_level]
+            delay = random.uniform(min_delay, max_delay)
+            time.sleep(delay)
+    
+    def _extract_roi(self, screenshot: np.ndarray, 
+                    region_config: Dict) -> Optional[np.ndarray]:
+        """
+        Extraer región de interés basada en porcentajes
+        
+        Args:
+            screenshot: Imagen completa
+            region_config: Config con x1, y1, x2, y2 en porcentajes
+            
+        Returns:
+            Región de interés recortada
+        """
         try:
-            # Convertir PIL Image a OpenCV format
-            cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+            h, w = screenshot.shape[:2]
             
-            # Preprocesar imagen
-            processed = self._preprocess_image(cv_image)
+            # Convertir porcentajes a píxeles
+            x1 = int(w * region_config.get('x1', 0))
+            y1 = int(h * region_config.get('y1', 0))
+            x2 = int(w * region_config.get('x2', 1))
+            y2 = int(h * region_config.get('y2', 1))
             
-            # Encontrar contornos de cartas
-            card_contours = self._find_card_contours(processed)
+            # Asegurar límites válidos
+            x1 = max(0, min(x1, w))
+            x2 = max(0, min(x2, w))
+            y1 = max(0, min(y1, h))
+            y2 = max(0, min(y2, h))
             
-            # Si no encontramos contornos, usar detección por color
-            if len(card_contours) < card_count:
-                card_contours = self._find_cards_by_color(cv_image)
+            if x2 <= x1 or y2 <= y1:
+                self.logger.warning(f"Región inválida: ({x1},{y1})-({x2},{y2})")
+                return None
             
-            # Ordenar contornos de izquierda a derecha
-            card_contours = sorted(card_contours, key=lambda c: cv2.boundingRect(c)[0])
-            
-            # Procesar cada contorno de carta
-            detected_cards = []
-            for i, contour in enumerate(card_contours[:card_count]):  # Limitar al número esperado
-                try:
-                    # Extraer región de la carta
-                    x, y, w, h = cv2.boundingRect(contour)
-                    card_region = cv_image[y:y+h, x:x+w]
-                    
-                    # Reconocer carta
-                    card = self._recognize_single_card(card_region)
-                    if card:
-                        card.position = (x + w//2, y + h//2)  # Centro de la carta
-                        detected_cards.append(card)
-                        
-                except Exception as e:
-                    print(f"[Card Recognizer] Error procesando carta {i}: {e}")
-                    continue
-            
-            # Actualizar estadísticas
-            self._update_stats(detected_cards, time.time() - start_time)
-            
-            return detected_cards
+            roi = screenshot[y1:y2, x1:x2]
+            return roi
             
         except Exception as e:
-            print(f"[Card Recognizer] Error en reconocimiento: {e}")
-            return []
+            self.logger.error(f"Error extrayendo ROI: {e}")
+            return None
     
-    def _preprocess_image(self, cv_image: np.ndarray) -> np.ndarray:
-        """Preprocesar imagen para detección de contornos"""
+    def _preprocess_image(self, image: np.ndarray) -> np.ndarray:
+        """
+        Preprocesar imagen para mejor reconocimiento
         
+        Args:
+            image: Imagen a preprocesar
+            
+        Returns:
+            Imagen preprocesada
+        """
         # Convertir a escala de grises
-        gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image
         
-        # Aplicar desenfoque para reducir ruido
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        # Aplicar filtro bilateral para reducir ruido manteniendo bordes
+        filtered = cv2.bilateralFilter(gray, 9, 75, 75)
         
-        # Detectar bordes
-        edges = cv2.Canny(blurred, 50, 150)
+        # Aumentar contraste
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+        enhanced = clahe.apply(filtered)
         
-        # Dilatar bordes para conectar líneas rotas
-        kernel = np.ones((3, 3), np.uint8)
-        dilated = cv2.dilate(edges, kernel, iterations=1)
+        # Umbralización adaptativa
+        thresh = cv2.adaptiveThreshold(enhanced, 255, 
+                                      cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                      cv2.THRESH_BINARY, 11, 2)
         
-        return dilated
+        return thresh
     
-    def _find_card_contours(self, processed_image: np.ndarray) -> List:
-        """Encontrar contornos que podrían ser cartas"""
+    def _detect_individual_cards(self, roi: np.ndarray) -> List[np.ndarray]:
+        """
+        Detectar cartas individuales dentro de una región
         
-        # Encontrar contornos
-        contours, _ = cv2.findContours(
-            processed_image, 
-            cv2.RETR_EXTERNAL, 
-            cv2.CHAIN_APPROX_SIMPLE
-        )
-        
-        # Filtrar contornos por área y relación de aspecto
-        card_contours = []
-        for contour in contours:
-            area = cv2.contourArea(contour)
+        Args:
+            roi: Región que contiene múltiples cartas
             
-            # Filtrar por área mínima
-            if area < self.min_contour_area:
-                continue
+        Returns:
+            Lista de imágenes de cartas individuales
+        """
+        card_images = []
+        
+        try:
+            # Encontrar contornos
+            contours, _ = cv2.findContours(roi, cv2.RETR_EXTERNAL, 
+                                          cv2.CHAIN_APPROX_SIMPLE)
             
-            # Obtener bounding rect
-            x, y, w, h = cv2.boundingRect(contour)
-            
-            # Calcular relación de aspecto (cartas ~ 0.7-0.8)
-            aspect_ratio = w / h if h > 0 else 0
-            
-            # Filtrar por relación de aspecto de carta
-            if 0.6 <= aspect_ratio <= 0.9:
-                card_contours.append(contour)
+            for contour in contours:
+                # Filtrar por área
+                area = cv2.contourArea(contour)
+                if area < 100:  # Muy pequeño para ser una carta
+                    continue
+                
+                # Obtener rectángulo delimitador
+                x, y, w, h = cv2.boundingRect(contour)
+                
+                # Filtrar por relación de aspecto (cartas típicas ~2:3)
+                aspect_ratio = h / w if h > 0 else 0
+                if not (1.2 < aspect_ratio < 2.0):
+                    continue
+                
+                # Extraer la carta
+                card_img = roi[y:y+h, x:x+w]
+                
+                # Redimensionar a tamaño estándar
+                card_img = cv2.resize(card_img, (80, 120))
+                card_images.append(card_img)
+                
+        except Exception as e:
+            self.logger.error(f"Error detectando cartas individuales: {e}")
         
-        return card_contours
-    
-    def _find_cards_by_color(self, cv_image: np.ndarray) -> List:
-        """Buscar cartas por detección de color"""
+        # Ordenar de izquierda a derecha
+        card_images.sort(key=lambda img: np.mean(np.where(img > 0)[1]) 
+                        if img.size > 0 else 0)
         
-        # Convertir a HSV para mejor detección de color
-        hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
-        
-        # Definir rangos de color para cartas (rojizo/marron)
-        lower_color = np.array([0, 20, 20])
-        upper_color = np.array([20, 255, 255])
-        
-        # Crear máscara de color
-        color_mask = cv2.inRange(hsv, lower_color, upper_color)
-        
-        # Encontrar contornos en la máscara
-        contours, _ = cv2.findContours(
-            color_mask, 
-            cv2.RETR_EXTERNAL, 
-            cv2.CHAIN_APPROX_SIMPLE
-        )
-        
-        return contours
+        return card_images
     
     def _recognize_single_card(self, card_image: np.ndarray) -> Optional[Card]:
-        """Reconocer una sola carta"""
+        """
+        Reconocer una carta individual usando template matching
         
-        try:
-            # Redimensionar a tamaño estándar para matching
-            resized = cv2.resize(card_image, self.template_size)
+        Args:
+            card_image: Imagen de una sola carta
             
-            # Convertir a escala de grises para template matching
-            gray_card = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+        Returns:
+            Objeto Card reconocido o None
+        """
+        if card_image is None or card_image.size == 0:
+            return None
+        
+        best_match = None
+        best_confidence = 0.0
+        
+        for card_name, template in self.templates.items():
+            try:
+                # Template matching
+                result = cv2.matchTemplate(card_image, template, cv2.TM_CCOEFF_NORMED)
+                _, max_val, _, max_loc = cv2.minMaxLoc(result)
+                
+                if max_val > best_confidence and max_val > self.confidence_thresholds.get(self.stealth_level, 0.85):
+                    best_confidence = max_val
+                    best_match = card_name
+                    
+            except Exception as e:
+                self.logger.debug(f"Error en template matching para {card_name}: {e}")
+                continue
+        
+        if best_match:
+            # Extraer rank y suit del nombre
+            rank = best_match[:-1]
+            suit = best_match[-1]
             
-            # Intentar reconocer el valor (rank)
-            rank, rank_confidence = self._recognize_rank(gray_card)
+            # Obtener posición aproximada
+            position = (np.mean(np.where(card_image > 0)[1]), 
+                       np.mean(np.where(card_image > 0)[0]))
             
-            # Intentar reconocer el palo (suit)
-            suit, suit_confidence = self._recognize_suit(card_image)
-            
-            # Calcular confianza promedio
-            confidence = (rank_confidence + suit_confidence) / 2
-            
-            if confidence >= self.confidence_threshold:
-                return Card(
-                    rank=rank,
-                    suit=suit,
-                    confidence=confidence,
-                    position=(0, 0)  # Se actualizará después
-                )
-            
-        except Exception as e:
-            print(f"[Card Recognizer] Error reconociendo carta: {e}")
+            return Card(rank=rank, suit=suit, 
+                       confidence=best_confidence,
+                       position=position)
         
         return None
     
-    def _recognize_rank(self, gray_card: np.ndarray) -> Tuple[str, float]:
-        """Reconocer el valor de la carta (rank)"""
+    def _adjust_position(self, position: Tuple[float, float],
+                        region_config: Dict,
+                        card_index: int,
+                        total_cards: int) -> Tuple[int, int]:
+        """
+        Ajustar posición de la carta a coordenadas globales
         
-        # Método simplificado basado en forma
-        # En producción usaríamos templates o ML
-        
-        # Detectar esquinas o patrones específicos
-        edges = cv2.Canny(gray_card, 50, 150)
-        
-        # Contar píxeles de bordes (proxy para complejidad)
-        edge_density = np.sum(edges) / (edges.shape[0] * edges.shape[1])
-        
-        # Mapear densidad a valores de carta (simplificado)
-        if edge_density < 0.1:
-            rank = 'A'  # As simple
-            confidence = 0.8
-        elif edge_density < 0.15:
-            rank = 'K'  # Rey
-            confidence = 0.7
-        elif edge_density < 0.2:
-            rank = 'Q'  # Reina
-            confidence = 0.7
-        elif edge_density < 0.25:
-            rank = 'J'  # Jota
-            confidence = 0.6
-        else:
-            # Para números, estimar basado en densidad
-            density_to_number = {
-                0.25: 'T', 0.3: '9', 0.35: '8', 0.4: '7',
-                0.45: '6', 0.5: '5', 0.55: '4', 0.6: '3', 0.65: '2'
-            }
+        Args:
+            position: Posición local en la ROI
+            region_config: Configuración de la región
+            card_index: Índice de la carta
+            total_cards: Total de cartas detectadas
             
-            # Encontrar el número más cercano
-            closest = min(density_to_number.keys(), key=lambda x: abs(x - edge_density))
-            rank = density_to_number[closest]
-            confidence = 0.6 - abs(closest - edge_density) * 2
-        
-        return rank, max(0.3, min(0.9, confidence))
+        Returns:
+            Posición ajustada en coordenadas globales
+        """
+        # En una implementación real, esto ajustaría basado en la ROI
+        # Por ahora, retornar posición aproximada
+        x_offset = card_index * 30  # Espaciado aproximado entre cartas
+        return (int(position[0] + x_offset), int(position[1]))
     
-    def _recognize_suit(self, card_image: np.ndarray) -> Tuple[str, float]:
-        """Reconocer el palo de la carta (suit)"""
+    def _validate_recognition(self, cards: List[Card]) -> bool:
+        """
+        Validar que el reconocimiento sea lógico
         
-        # Convertir a HSV para detección de color
-        hsv = cv2.cvtColor(card_image, cv2.COLOR_BGR2HSV)
+        Args:
+            cards: Lista de cartas reconocidas
+            
+        Returns:
+            True si la validación pasa
+        """
+        if not cards:
+            return False
         
-        # Definir rangos HSV para rojo (corazones y diamantes)
-        lower_red1 = np.array([0, 50, 50])
-        upper_red1 = np.array([10, 255, 255])
-        lower_red2 = np.array([160, 50, 50])
-        upper_red2 = np.array([180, 255, 255])
+        # Verificar que no haya cartas duplicadas
+        card_strings = [str(card) for card in cards]
+        if len(card_strings) != len(set(card_strings)):
+            self.logger.warning("Cartas duplicadas detectadas")
+            return False
         
-        # Crear máscaras para rojo
-        mask_red1 = cv2.inRange(hsv, lower_red1, upper_red1)
-        mask_red2 = cv2.inRange(hsv, lower_red2, upper_red2)
-        mask_red = cv2.bitwise_or(mask_red1, mask_red2)
+        # Verificar confianza mínima
+        min_confidence = min(card.confidence for card in cards)
+        if min_confidence < self.confidence_thresholds.get(self.stealth_level, 0.85):
+            self.logger.warning(f"Confianza muy baja: {min_confidence:.3f}")
+            return False
         
-        # Contar píxeles rojos
-        red_pixels = cv2.countNonZero(mask_red)
-        total_pixels = card_image.shape[0] * card_image.shape[1]
-        red_ratio = red_pixels / total_pixels
+        # Verificar número de cartas (2 para hero, 0-5 para mesa)
+        if not (0 <= len(cards) <= 5):
+            self.logger.warning(f"Número inusual de cartas: {len(cards)}")
+            return False
         
-        # Si hay suficiente rojo, es corazón o diamante
-        if red_ratio > 0.05:
-            # Diferenciar entre corazones y diamantes por forma
-            # Simplificado: corazón si hay más rojo en la parte superior
-            top_half = mask_red[:mask_red.shape[0]//2, :]
-            bottom_half = mask_red[mask_red.shape[0]//2:, :]
-            
-            top_red = cv2.countNonZero(top_half)
-            bottom_red = cv2.countNonZero(bottom_half)
-            
-            if top_red > bottom_red * 1.5:
-                suit = 'h'  # Corazones (más rojo arriba)
-            else:
-                suit = 'd'  # Diamantes
-            
-            confidence = min(0.9, red_ratio * 10)
-        else:
-            # Negro: tréboles o picas
-            # Diferenciar por forma simplificada
-            gray = cv2.cvtColor(card_image, cv2.COLOR_BGR2GRAY)
-            edges = cv2.Canny(gray, 50, 150)
-            
-            # Tréboles tienden a tener más bordes
-            edge_density = np.sum(edges) / (edges.shape[0] * edges.shape[1])
-            
-            if edge_density > 0.3:
-                suit = 'c'  # Tréboles
-            else:
-                suit = 's'  # Picas
-            
-            confidence = 0.6
-        
-        return suit, confidence
+        return True
     
-    def _update_stats(self, detected_cards: List[Card], processing_time: float):
-        """Actualizar estadísticas"""
+    def _update_stats(self, processing_time: float, cards: List[Card]):
+        """Actualizar estadísticas de reconocimiento"""
+        self.stats["total_recognitions"] += 1
         
-        if detected_cards:
-            self.stats['cards_detected'] += len(detected_cards)
-            
-            # Calcular confianza promedio
-            avg_confidence = sum(c.confidence for c in detected_cards) / len(detected_cards)
-            
-            # Actualizar promedio móvil
-            old_avg = self.stats['avg_confidence']
-            self.stats['avg_confidence'] = 0.1 * avg_confidence + 0.9 * old_avg if old_avg > 0 else avg_confidence
-            
-            # Calcular tasa de éxito
-            self.stats['success_rate'] = (
-                self.stats['cards_detected'] / 
-                (self.stats['recognition_attempts'] * 2) * 100  # 2 cartas por intento
-            )
+        if cards:
+            avg_conf = np.mean([card.confidence for card in cards])
+            self.stats["avg_confidence"] = (
+                self.stats["avg_confidence"] * (self.stats["total_recognitions"] - 1) + avg_conf
+            ) / self.stats["total_recognitions"]
+        
+        self.stats["avg_processing_time"] = (
+            self.stats["avg_processing_time"] * (self.stats["total_recognitions"] - 1) + processing_time
+        ) / self.stats["total_recognitions"]
     
     def get_stats(self) -> Dict:
-        """Obtener estadísticas"""
+        """Obtener estadísticas actuales"""
+        success_rate = (
+            (self.stats["successful_recognitions"] / self.stats["total_recognitions"] * 100)
+            if self.stats["total_recognitions"] > 0 else 0
+        )
+        
         return {
-            'cards_detected': self.stats['cards_detected'],
-            'recognition_attempts': self.stats['recognition_attempts'],
-            'success_rate': f"{self.stats['success_rate']:.1f}%",
-            'avg_confidence': f"{self.stats['avg_confidence']:.2f}",
-            'platform': self.platform
+            **self.stats,
+            "success_rate": success_rate,
+            "templates_loaded": len(self.templates)
         }
     
-    def save_detection_image(self, original: Image.Image, detected_cards: List[Card], 
-                           filename: str = "card_detection.png"):
-        """Guardar imagen con detecciones marcadas"""
-        
-        try:
-            # Convertir a OpenCV
-            cv_image = cv2.cvtColor(np.array(original), cv2.COLOR_RGB2BGR)
-            
-            # Dibujar bounding boxes y texto
-            for card in detected_cards:
-                if card.position[0] > 0:  # Si tiene posición válida
-                    # Dibujar círculo en el centro
-                    cv2.circle(cv_image, card.position, 10, (0, 255, 0), 2)
-                    
-                    # Añadir texto con la carta
-                    text = f"{card.rank}{card.suit} ({card.confidence:.2f})"
-                    cv2.putText(
-                        cv_image, text,
-                        (card.position[0] + 15, card.position[1]),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                        (0, 255, 0), 2
-                    )
-            
-            # Guardar imagen
-            cv2.imwrite(filename, cv_image)
-            print(f"[Card Recognizer] Imagen guardada: {filename}")
-            
-        except Exception as e:
-            print(f"[Card Recognizer] Error guardando imagen: {e}")
+    def reset_stats(self):
+        """Reiniciar estadísticas"""
+        self.stats = {
+            "total_recognitions": 0,
+            "successful_recognitions": 0,
+            "avg_confidence": 0.0,
+            "avg_processing_time": 0.0
+        }
 
-# Función de prueba
-def test_card_recognition():
-    """Probar reconocimiento de cartas"""
-    
-    print("🎴 Probando reconocimiento de cartas...")
-    
-    # Crear una imagen de prueba con "cartas" simuladas
-    from PIL import Image, ImageDraw
-    import random
-    
-    # Crear imagen de prueba
-    test_image = Image.new('RGB', (800, 600), color=(53, 101, 77))  # Fondo verde de mesa
-    
-    draw = ImageDraw.Draw(test_image)
-    
-    # Dibujar dos "cartas" simuladas
-    card_positions = [(200, 400), (350, 400)]
-    card_size = (100, 140)
-    
-    for i, (x, y) in enumerate(card_positions):
-        # Dibujar rectángulo de carta
-        draw.rectangle([x, y, x + card_size[0], y + card_size[1]], 
-                      fill=(255, 255, 255), outline=(0, 0, 0), width=3)
-        
-        # Añadir "valor" y "palo" simulados
-        draw.text((x + 20, y + 20), "A", fill=(255, 0, 0), font_size=30)
-        draw.text((x + 20, y + 60), "♥", fill=(255, 0, 0), font_size=30)
-    
-    print("🖼️  Imagen de prueba creada")
-    
-    # Probar reconocedor
-    recognizer = CardRecognizer(platform="ggpoker")
-    cards = recognizer.recognize_cards(test_image, card_count=2)
-    
-    print(f"\n🔍 Resultados del reconocimiento:")
-    for i, card in enumerate(cards):
-        print(f"  Carta {i+1}: {card.rank}{card.suit} (confianza: {card.confidence:.2f})")
-    
-    # Mostrar estadísticas
-    stats = recognizer.get_stats()
-    print(f"\n📊 Estadísticas: {stats}")
-    
-    # Guardar imagen con detecciones
-    recognizer.save_detection_image(test_image, cards, "test_card_detection.png")
-    
-    return cards
 
+# Clase auxiliar para manejo de imágenes
+class ImageUtils:
+    """Utilidades para procesamiento de imágenes"""
+    
+    @staticmethod
+    def save_debug_image(image: np.ndarray, filename: str, 
+                        cards: List[Card] = None):
+        """
+        Guardar imagen para debugging
+        
+        Args:
+            image: Imagen a guardar
+            filename: Nombre del archivo
+            cards: Lista de cartas para dibujar (opcional)
+        """
+        debug_dir = "debug_images"
+        os.makedirs(debug_dir, exist_ok=True)
+        
+        # Convertir a BGR si es necesario
+        if len(image.shape) == 2:
+            debug_img = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        else:
+            debug_img = image.copy()
+        
+        # Dibujar cartas reconocidas
+        if cards:
+            for card in cards:
+                x, y = map(int, card.position)
+                cv2.putText(debug_img, str(card), (x, y), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                           (0, 255, 0), 2)
+        
+        # Guardar imagen
+        cv2.imwrite(os.path.join(debug_dir, filename), debug_img)
+    
+    @staticmethod
+    def show_image(image: np.ndarray, title: str = "Image"):
+        """Mostrar imagen (solo para debugging)"""
+        cv2.imshow(title, image)
+        cv2.waitKey(1)
+        cv2.destroyAllWindows()
+
+
+# Ejemplo de uso
 if __name__ == "__main__":
-    test_card_recognition()
+    # Configurar logging
+    logging.basicConfig(level=logging.INFO)
+    
+    # Inicializar reconocedor
+    recognizer = CardRecognizer(platform="ggpoker", stealth_level="MEDIUM")
+    
+    # Simular captura (en producción esto vendría del screen_capture)
+    # test_image = cv2.imread("test_screenshot.png")
+    
+    # Configuración de región de ejemplo
+    region_config = {
+        "x1": 0.45,
+        "y1": 0.75,
+        "x2": 0.55,
+        "y2": 0.85
+    }
+    
+    # Ejemplo de reconocimiento
+    # cards = recognizer.recognize_cards_in_region(test_image, region_config)
+    
+    print("CardRecognizer listo para usar")
+    print("Estadísticas iniciales:", recognizer.get_stats())

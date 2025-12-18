@@ -1,10 +1,13 @@
 {
-  "version": "1.0.0",
+  "version": "2.0",
   "system": {
     "update_interval_ms": 1000,
     "confidence_threshold": 0.85,
     "log_level": "INFO",
-    "save_hand_history": true
+    "save_hand_history": true,
+    "max_hands_per_session": 1000,
+    "auto_restart_hours": 4,
+    "performance_mode": "BALANCED"
   },
   "overlay": {
     "position": "top_right",
@@ -13,7 +16,9 @@
     "theme": "dark",
     "show_timer": true,
     "show_confidence": true,
-    "animation_speed": "normal"
+    "show_alternatives": false,
+    "auto_hide": false,
+    "hide_delay_seconds": 5
   },
   "strategy": {
     "aggression_factor": 1.0,
@@ -21,14 +26,45 @@
     "default_bet_sizes": {
       "preflop_open": 2.2,
       "3bet": 3.0,
+      "4bet": 2.2,
+      "5bet": 2.0,
       "cbet_flop": 0.33,
-      "turn_barrel": 0.65,
-      "river_value": 0.70
+      "cbet_turn": 0.65,
+      "cbet_river": 0.70,
+      "value_bet": 0.75,
+      "bluff_bet": 0.55,
+      "pot_commitment_threshold": 0.4
     },
-    "auto_adjust": true
+    "ranges": {
+      "preflop_standard": "GTO_6MAX",
+      "postflop_aggression": "NORMAL",
+      "adjust_for_players": true,
+      "dynamic_adjustment": true
+    }
   },
-  "platforms": {
-    "default": "ggpoker",
-    "available": ["ggpoker", "pokerstars"]
+  "recognition": {
+    "template_matching_method": "TM_CCOEFF_NORMED",
+    "min_card_area": 100,
+    "max_card_area": 10000,
+    "card_aspect_min": 1.2,
+    "card_aspect_max": 2.0,
+    "debug_save_images": false,
+    "debug_save_path": "debug/recognition"
+  },
+  "stealth": {
+    "default_level": "MEDIUM",
+    "rotation_interval_minutes": 30,
+    "mouse_movement_enabled": true,
+    "random_delays_enabled": true,
+    "pattern_obfuscation": true,
+    "max_consecutive_fails": 3,
+    "auto_recover": true
+  },
+  "quality": {
+    "min_decision_score": 60,
+    "validation_enabled": true,
+    "learn_from_mistakes": true,
+    "session_review": true,
+    "performance_tracking": true
   }
 }
