@@ -221,7 +221,7 @@ class GGPokerAdapter:
             self.logger.debug("Iniciando captura y análisis...")
             
             # 1. Capturar pantalla con stealth
-            screenshot = self.capture_system.capture_screen()
+            screenshot = self.capture_system.capture()
             if screenshot is None:
                 self.logger.warning("No se pudo capturar pantalla")
                 return None
@@ -506,6 +506,20 @@ class GGPokerAdapter:
         """Reiniciar para nueva mano"""
         self.current_hand_id = self._generate_hand_id()
         self.logger.debug(f"Nueva mano iniciada: {self.current_hand_id}")
+    def is_ggpoker_active(self):
+        """Verificar si GG Poker está activo"""
+        try:
+            # Intentar capturar pantalla
+            screenshot = self.capture_system.capture()
+            if screenshot is None:
+                return False
+            
+            # Análisis simple (puede mejorarse)
+            # Por ahora, devolver True si la captura funciona
+            return True
+        except:
+            return False
+
 
 # ============================================================================
 # FUNCIONES DE PRUEBA Y UTILIDAD

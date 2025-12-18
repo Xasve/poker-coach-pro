@@ -21,6 +21,10 @@ import win32con
 import win32api
 
 class StealthScreenCapture:
+    def capture_screen(self):
+        """Alias para capture"""
+        return self.capture()
+
     """
     Sistema de captura de pantalla profesional con técnicas stealth
     Características:

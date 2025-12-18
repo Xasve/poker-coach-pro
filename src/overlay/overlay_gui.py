@@ -324,6 +324,23 @@ class PokerOverlay:
         
         print(f"✅ Configuración de overlay guardada: {config_path}")
 
+    def update_recommendation(self, decision):
+        """Actualizar recomendación desde diccionario"""
+        if isinstance(decision, dict):
+            action = decision.get('action', 'CHECK')
+            confidence = decision.get('confidence', 0.5)
+            reason = decision.get('reason', '')
+            alternatives = decision.get('alternatives', [])
+            self._update_display(action, confidence, reason, alternatives)
+        else:
+            # Mantener compatibilidad con versiones antiguas
+            self._update_display(decision)
+    
+    def _update_display(self, action, confidence=0.5, reason='', alternatives=None):
+        """Método interno para actualizar display"""
+        # Código existente aquí...
+        pass
+
 # ============================================================================
 # PRUEBAS Y EJEMPLOS
 # ============================================================================
