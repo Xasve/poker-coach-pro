@@ -1,6 +1,6 @@
 """
 ggpoker_adapter.py - Adaptador específico para GG Poker
-Versión completa con importaciones corregidas
+Versión completa con importaciones corregidas - FUNCIONA CON ESTRUCTURA src/
 """
 
 import cv2
@@ -13,9 +13,10 @@ from dataclasses import dataclass
 from datetime import datetime
 import sys
 import os
+import random
 
 # ============================================================================
-# CORRECCIÓN DE IMPORTACIONES - FUNCIONA EN TODOS LOS CONTEXTOS
+# CORRECCIÓN CRÍTICA DE IMPORTACIONES - FUNCIONA CON ESTRUCTURA src/
 # ============================================================================
 
 # Obtener el directorio actual de este archivo
@@ -23,25 +24,31 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # Subir un nivel para llegar a 'src'
 src_dir = os.path.join(current_dir, '..')
 
-# Añadir 'src' al path de Python
+# Añadir 'src' al path de Python para importaciones absolutas
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-# Ahora importar normalmente desde screen_capture
+# IMPORTAR TODOS LOS MÓDULOS NECESARIOS
 try:
     from screen_capture.adaptive_recognizer import AdaptiveCardRecognizer
     from screen_capture.table_detector import TableDetector
     from screen_capture.text_ocr import TextOCR
     from screen_capture.stealth_capture import StealthScreenCapture
     IMPORT_SUCCESS = True
+    print("✅ Módulos screen_capture importados correctamente")
 except ImportError as e:
-    print(f"❌ Error importando módulos: {e}")
-    print("📁 Estructura esperada:")
+    print(f"❌ ERROR CRÍTICO: No se pudieron importar módulos de screen_capture")
+    print(f"   Error: {e}")
+    print("📁 ESTRUCTURA REQUERIDA:")
     print("   poker-coach-pro/")
     print("   ├── src/")
     print("   │   ├── platforms/ggpoker_adapter.py")
-    print("   │   └── screen_capture/ [módulos aquí]")
-    print("   └── test_ggpoker_simple.py")
+    print("   │   └── screen_capture/")
+    print("   │       ├── adaptive_recognizer.py")
+    print("   │       ├── table_detector.py")
+    print("   │       ├── text_ocr.py")
+    print("   │       └── stealth_capture.py")
+    print("   └── start_integrated.py")
     IMPORT_SUCCESS = False
 
 # ============================================================================
@@ -111,7 +118,7 @@ class GGPokerAdapter:
             learning_mode: Si True, el sistema aprende mientras juega
         """
         if not IMPORT_SUCCESS:
-            raise ImportError("No se pudieron importar los módulos necesarios")
+            raise ImportError("No se pudieron importar los módulos necesarios de screen_capture")
         
         self.stealth_level = stealth_level
         self.learning_mode = learning_mode
@@ -200,7 +207,7 @@ class GGPokerAdapter:
     def _generate_hand_id(self) -> str:
         """Generar ID único para la mano actual"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return f"GGP_{timestamp}_{np.random.randint(1000, 9999)}"
+        return f"GGP_{timestamp}_{random.randint(1000, 9999)}"
     
     def capture_and_analyze(self) -> Optional[GameState]:
         """
@@ -407,7 +414,6 @@ class GGPokerAdapter:
         positions = ["SB", "BB", "UTG", "MP", "CO", "BTN"]
         
         # Por ahora, devolver una posición aleatoria para testing
-        import random
         return random.choice(positions)
     
     def _calculate_bet_amounts(self, pot: float, hero_stack: float, 
@@ -502,7 +508,7 @@ class GGPokerAdapter:
         self.logger.debug(f"Nueva mano iniciada: {self.current_hand_id}")
 
 # ============================================================================
-# FUNCIONES DE PRUEBA
+# FUNCIONES DE PRUEBA Y UTILIDAD
 # ============================================================================
 
 def test_ggpoker_adapter():
@@ -557,7 +563,7 @@ def test_ggpoker_adapter():
         print("✅ TEST COMPLETADO")
         print("\n🎯 PARA USAR EN JUEGO REAL:")
         print("   1. Abre GG Poker en una mesa")
-        print("   2. Ejecuta: python start_ggpoker_coach.py")
+        print("   2. Ejecuta: python start_coach.py")
         print("   3. El sistema analizará automáticamente cada mano")
         print("   4. Mejorará con cada mano que juegues")
         

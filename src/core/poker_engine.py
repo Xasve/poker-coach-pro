@@ -1,438 +1,739 @@
 """
-Archivo: poker_engine.py
-Ruta: src/core/poker_engine.py
-Motor principal de decisiones del Poker Coach Pro
+poker_engine.py - Motor principal de decisiones de poker
+Implementa lógica GTO básica para decisiones preflop/postflop
 """
 
-import random
+import numpy as np
 from typing import Dict, List, Tuple, Optional
-from enum import Enum
+from dataclasses import dataclass
 import json
-import os
+from pathlib import Path
 
-class Action(Enum):
-    """Acciones disponibles en poker"""
-    FOLD = "FOLD"
-    CHECK = "CHECK"
-    CALL = "CALL"
-    BET = "BET"
-    RAISE = "RAISE"
-    ALL_IN = "ALL-IN"
+@dataclass
+class HandStrength:
+    """Fuerza evaluada de una mano"""
+    hand_type: str  # 'high_card', 'pair', 'two_pair', 'three_of_a_kind', etc.
+    rank: int  # 1-14 (2-A)
+    kickers: List[int]  # Cartas adicionales para desempate
+    equity: float  # 0.0 a 1.0
+    
+    def __str__(self):
+        type_names = {
+            'high_card': 'Carta Alta',
+            'pair': 'Pareja',
+            'two_pair': 'Doble Pareja',
+            'three_of_a_kind': 'Trio',
+            'straight': 'Escalera',
+            'flush': 'Color',
+            'full_house': 'Full House',
+            'four_of_a_kind': 'Póker',
+            'straight_flush': 'Escalera de Color',
+            'royal_flush': 'Escalera Real'
+        }
+        return f"{type_names.get(self.hand_type, self.hand_type)} ({self.equity:.1%})"
 
 class PokerEngine:
     """Motor principal de decisiones de poker"""
     
-    def __init__(self, platform="ggpoker", mode="cash"):
-        self.platform = platform
-        self.mode = mode
-        self.load_config()
-        
-        # Rangos preflop básicos
-        self.preflop_ranges = self.load_preflop_ranges()
-        
-        # Historial de decisiones
-        self.hand_history = []
-        
-    def load_config(self):
-        """Cargar configuración de la plataforma"""
-        config_path = f"config/{self.platform}_config.json"
-        if os.path.exists(config_path):
-            with open(config_path, 'r') as f:
-                self.config = json.load(f)
-        else:
-            self.config = {}
-            
-    def load_preflop_ranges(self) -> Dict:
-        """Cargar rangos preflop según posición y modo"""
-        
-        # Rangos para 6-max Cash Games (GG Poker style)
-        cash_ranges = {
-            "UTG": ["AA", "KK", "QQ", "JJ", "TT", "AKs", "AQs", "AJs", "KQs", "AKo"],
-            "MP": ["AA", "KK", "QQ", "JJ", "TT", "99", "AKs", "AQs", "AJs", "ATs", 
-                  "KQs", "KJs", "QJs", "AKo", "AQo"],
-            "CO": ["AA", "KK", "QQ", "JJ", "TT", "99", "88", "77", "AKs", "AQs", 
-                  "AJs", "ATs", "A9s", "KQs", "KJs", "KTs", "QJs", "QTs", "JTs",
-                  "AKo", "AQo", "AJo", "KQo"],
-            "BTN": ["AA", "KK", "QQ", "JJ", "TT", "99", "88", "77", "66", "55",
-                   "AKs", "AQs", "AJs", "ATs", "A9s", "A8s", "A7s", "A6s", "A5s",
-                   "KQs", "KJs", "KTs", "K9s", "QJs", "QTs", "Q9s", "JTs", "J9s",
-                   "T9s", "98s", "AKo", "AQo", "AJo", "ATo", "KQo", "KJo"],
-            "SB": ["AA", "KK", "QQ", "JJ", "TT", "99", "88", "77", "66", "55", "44",
-                  "AKs", "AQs", "AJs", "ATs", "A9s", "A8s", "A7s", "A6s", "A5s",
-                  "KQs", "KJs", "KTs", "K9s", "QJs", "QTs", "Q9s", "JTs", "J9s",
-                  "T9s", "98s", "87s", "AKo", "AQo", "AJo", "ATo", "KQo", "KJo", "QJo"],
-            "BB": ["AA", "KK", "QQ", "JJ", "TT", "99", "88", "77", "66", "55", "44", "33", "22",
-                  "AKs", "AQs", "AJs", "ATs", "A9s", "A8s", "A7s", "A6s", "A5s", "A4s", "A3s", "A2s",
-                  "KQs", "KJs", "KTs", "K9s", "K8s", "K7s", "K6s", "K5s", "K4s", "K3s", "K2s",
-                  "QJs", "QTs", "Q9s", "Q8s", "Q7s", "Q6s", "Q5s", "Q4s", "Q3s", "Q2s",
-                  "JTs", "J9s", "J8s", "J7s", "J6s", "J5s", "J4s", "J3s", "J2s",
-                  "T9s", "T8s", "T7s", "T6s", "T5s", "T4s", "T3s", "T2s",
-                  "98s", "97s", "96s", "95s", "94s", "93s", "92s",
-                  "87s", "86s", "85s", "84s", "83s", "82s",
-                  "76s", "75s", "74s", "73s", "72s",
-                  "65s", "64s", "63s", "62s",
-                  "54s", "53s", "52s",
-                  "43s", "42s",
-                  "32s",
-                  "AKo", "AQo", "AJo", "ATo", "A9o", "A8o", "A7o", "A6o", "A5o", "A4o", "A3o", "A2o",
-                  "KQo", "KJo", "KTo", "K9o", "K8o", "K7o", "K6o", "K5o", "K4o", "K3o", "K2o",
-                  "QJo", "QTo", "Q9o", "Q8o", "Q7o", "Q6o", "Q5o", "Q4o", "Q3o", "Q2o",
-                  "JTo", "J9o", "J8o", "J7o", "J6o", "J5o", "J4o", "J3o", "J2o",
-                  "T9o", "T8o", "T7o", "T6o", "T5o", "T4o", "T3o", "T2o",
-                  "98o", "97o", "96o", "95o", "94o", "93o", "92o",
-                  "87o", "86o", "85o", "84o", "83o", "82o",
-                  "76o", "75o", "74o", "73o", "72o",
-                  "65o", "64o", "63o", "62o",
-                  "54o", "53o", "52o",
-                  "43o", "42o",
-                  "32o"]
-        }
-        
-        # Ajustes para torneos (más tight)
-        tournament_ranges = {}
-        for position in cash_ranges:
-            # En torneos jugamos 20-30% menos manos
-            tournament_ranges[position] = cash_ranges[position][:int(len(cash_ranges[position]) * 0.7)]
-            
-        return tournament_ranges if self.mode == "tournament" else cash_ranges
-    
-    def get_decision(self, game_state: Dict, mode: str = "cash") -> Dict:
+    def __init__(self, aggression_factor: float = 1.0, tightness_factor: float = 1.0):
         """
-        Obtener decisión óptima basada en el estado del juego
+        Inicializar motor de poker
         
         Args:
-            game_state: Diccionario con estado del juego
-            mode: Modo de juego ('cash' o 'tournament')
-            
-        Returns:
-            Dict con decisión y explicación
+            aggression_factor: 0.5=pasivo, 1.0=normal, 1.5=agresivo
+            tightness_factor: 0.5=loose, 1.0=normal, 1.5=tight
         """
+        self.aggression_factor = max(0.1, min(2.0, aggression_factor))
+        self.tightness_factor = max(0.1, min(2.0, tightness_factor))
         
-        # Validar estado mínimo
-        if not game_state or 'hero_cards' not in game_state:
-            return self._get_default_decision()
+        # Cargar rangos preflop
+        self.preflop_ranges = self._load_preflop_ranges()
         
-        # Determinar fase del juego
-        if game_state.get('street') == 'preflop':
-            decision = self._preflop_decision(game_state, mode)
-        else:
-            decision = self._postflop_decision(game_state, mode)
+        # Cargar estrategias postflop
+        self.postflop_strategies = self._load_postflop_strategies()
         
-        # Ajustar por modo torneo si es necesario
-        if mode == "tournament":
-            decision = self._adjust_for_tournament(decision, game_state)
+        # Estadísticas
+        self.decisions_made = 0
+        self.average_confidence = 0.0
         
-        # Guardar en historial
-        self.hand_history.append({
-            'game_state': game_state,
-            'decision': decision,
-            'timestamp': time.time()
-        })
-        
-        return decision
+        print(f"✅ PokerEngine inicializado (agresión: {aggression_factor}, tightness: {tightness_factor})")
     
-    def _preflop_decision(self, game_state: Dict, mode: str) -> Dict:
-        """Tomar decisión preflop"""
-        
-        hero_cards = game_state.get('hero_cards', [])
-        position = game_state.get('position', '')
-        action_to_us = game_state.get('action_to_us', False)
-        pot_size = game_state.get('pot_size', 0)
-        bet_to_call = game_state.get('bet_to_call', 0)
-        
-        # Convertir cartas a formato de rango
-        card_str = self._cards_to_string(hero_cards)
-        
-        # Verificar si está en rango para la posición
-        if position in self.preflop_ranges:
-            in_range = card_str in self.preflop_ranges[position]
-        else:
-            in_range = False
-        
-        # Lógica básica de decisión
-        if not action_to_us:
-            # Somos primeros en actuar
-            if in_range:
-                return {
-                    'action': Action.RAISE.value,
-                    'size': self._get_preflop_raise_size(position),
-                    'confidence': 85,
-                    'reason': f"Mano fuerte para posición {position}. Abrir estándar.",
-                    'alternatives': [Action.FOLD.value]
-                }
-            else:
-                return {
-                    'action': Action.FOLD.value,
-                    'size': 0,
-                    'confidence': 90,
-                    'reason': f"Mano fuera de rango para {position}. Fold disciplinado.",
-                    'alternatives': []
-                }
-        else:
-            # Hay acción antes que nosotros
-            if bet_to_call > 0:
-                # Hay que pagar apuesta
-                pot_odds = bet_to_call / (pot_size + bet_to_call)
-                
-                if in_range and pot_odds < 0.3:  # Buena relación riesgo/recompensa
-                    return {
-                        'action': Action.CALL.value,
-                        'size': bet_to_call,
-                        'confidence': 75,
-                        'reason': f"Mano jugable con buenas pot odds ({pot_odds:.1%}).",
-                        'alternatives': [Action.RAISE.value, Action.FOLD.value]
-                    }
-                else:
-                    return {
-                        'action': Action.FOLD.value,
-                        'size': 0,
-                        'confidence': 80,
-                        'reason': "Mano débil o malas odds. Fold.",
-                        'alternatives': []
-                    }
-        
-        # Decisión por defecto si no se cumple nada
+    def _load_preflop_ranges(self) -> Dict[str, List[str]]:
+        """Cargar rangos preflop GTO para 6-max"""
+        # Rangos básicos GTO (simplificados)
         return {
-            'action': Action.FOLD.value,
-            'size': 0,
-            'confidence': 60,
-            'reason': "Situación marginal. Fold conservador.",
-            'alternatives': []
-        }
-    
-    def _postflop_decision(self, game_state: Dict, mode: str) -> Dict:
-        """Tomar decisión postflop"""
-        
-        street = game_state.get('street', 'flop')
-        hero_cards = game_state.get('hero_cards', [])
-        board_cards = game_state.get('board_cards', [])
-        position = game_state.get('position', '')
-        pot_size = game_state.get('pot_size', 0)
-        bet_to_call = game_state.get('bet_to_call', 0)
-        
-        # Evaluar fuerza de mano
-        hand_strength = self._evaluate_hand_strength(hero_cards, board_cards)
-        
-        if bet_to_call > 0:
-            # Hay apuesta que pagar
-            pot_odds = bet_to_call / (pot_size + bet_to_call)
-            
-            if hand_strength > 0.7:  # Mano muy fuerte
-                return {
-                    'action': Action.RAISE.value,
-                    'size': pot_size * 0.75,  # Raise 75% del pot
-                    'confidence': 85,
-                    'reason': "Mano muy fuerte. Raise por value.",
-                    'alternatives': [Action.CALL.value]
-                }
-            elif hand_strength > 0.4 and pot_odds < 0.25:  # Mano decente con buenas odds
-                return {
-                    'action': Action.CALL.value,
-                    'size': bet_to_call,
-                    'confidence': 70,
-                    'reason': f"Mano jugable con buenas odds ({pot_odds:.1%}).",
-                    'alternatives': [Action.FOLD.value]
-                }
-            else:
-                return {
-                    'action': Action.FOLD.value,
-                    'size': 0,
-                    'confidence': 80,
-                    'reason': "Mano débil o odds insuficientes.",
-                    'alternatives': []
-                }
-        else:
-            # Sin apuesta que pagar (podemos apostar o checkear)
-            if hand_strength > 0.6:
-                return {
-                    'action': Action.BET.value,
-                    'size': pot_size * 0.5,  # Bet 50% del pot
-                    'confidence': 80,
-                    'reason': "Mano fuerte. Bet por value.",
-                    'alternatives': [Action.CHECK.value]
-                }
-            elif hand_strength > 0.3 and street == 'flop':
-                return {
-                    'action': Action.BET.value,
-                    'size': pot_size * 0.33,  # C-bet estándar
-                    'confidence': 65,
-                    'reason': "C-bet estándar con algo de equity.",
-                    'alternatives': [Action.CHECK.value]
-                }
-            else:
-                return {
-                    'action': Action.CHECK.value,
-                    'size': 0,
-                    'confidence': 75,
-                    'reason': "Mano débil. Check y ver desarrollo.",
-                    'alternatives': [Action.BET.value]
-                }
-    
-    def _adjust_for_tournament(self, decision: Dict, game_state: Dict) -> Dict:
-        """Ajustar decisión para modo torneo"""
-        
-        # En torneos, ser más conservador con stack pequeño
-        stack_bb = game_state.get('stack_bb', 100)
-        
-        if stack_bb < 20:  # Stack corto
-            if decision['action'] in [Action.CALL.value, Action.RAISE.value]:
-                # Ser más agresivo con stack corto
-                if 'size' in decision and decision['size'] > 0:
-                    decision['size'] = min(decision['size'] * 1.2, stack_bb)
-                decision['reason'] += " Stack corto: juego push/fold."
-        
-        elif stack_bb > 50:  # Stack profundo
-            if decision['action'] == Action.RAISE.value:
-                # Reducir tamaño de apuesta con stack profundo
-                if 'size' in decision:
-                    decision['size'] = decision['size'] * 0.8
-        
-        return decision
-    
-    def _get_preflop_raise_size(self, position: str) -> float:
-        """Obtener tamaño de raise preflop según posición y plataforma"""
-        
-        if self.platform == "ggpoker":
-            # GG Poker usa 2.2BB estándar
-            base_size = 2.2
-        else:  # pokerstars
-            # PokerStars usa 2.5BB estándar
-            base_size = 2.5
-        
-        # Ajustar por posición
-        adjustments = {
-            'UTG': 1.0,
-            'MP': 1.0,
-            'CO': 0.95,  # Un poco menos desde CO
-            'BTN': 0.9,  # Menos desde BTN
-            'SB': 3.0,   # Desde SB raise más grande
-        }
-        
-        adjustment = adjustments.get(position, 1.0)
-        return base_size * adjustment
-    
-    def _cards_to_string(self, cards: List) -> str:
-        """Convertir lista de cartas a formato de rango"""
-        if not cards or len(cards) < 2:
-            return ""
-        
-        # Ordenar cartas por valor
-        values = []
-        suits = []
-        
-        for card in cards:
-            if len(card) >= 2:
-                values.append(card[0].upper())
-                suits.append(card[1].lower())
-        
-        # Determinar si son suited
-        if len(suits) == 2 and suits[0] == suits[1]:
-            suited = "s"
-        else:
-            suited = "o"
-        
-        # Ordenar valores (A high)
-        value_order = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10}
-        for i in range(2, 10):
-            value_order[str(i)] = i
-        
-        if len(values) == 2:
-            val1 = value_order.get(values[0], 0)
-            val2 = value_order.get(values[1], 0)
-            
-            if val1 == val2:
-                return f"{values[0]}{values[1]}"  # Pocket pair
-            elif val1 > val2:
-                return f"{values[0]}{values[1]}{suited}"
-            else:
-                return f"{values[1]}{values[0]}{suited}"
-        
-        return ""
-    
-    def _evaluate_hand_strength(self, hero_cards: List, board_cards: List) -> float:
-        """
-        Evaluar fuerza de mano simplificada (0-1)
-        """
-        if not hero_cards or len(hero_cards) < 2:
-            return 0.0
-        
-        # Evaluación simplificada
-        # En un sistema real usaríamos equity calculator
-        card_values = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10}
-        for i in range(2, 10):
-            card_values[str(i)] = i
-        
-        # Valor de las cartas hole
-        hole_strength = 0
-        for card in hero_cards:
-            if len(card) > 0:
-                value = card_values.get(card[0].upper(), 0)
-                hole_strength += value / 14
-        
-        hole_strength = hole_strength / 2  # Normalizar
-        
-        # Bonus por suited
-        if len(hero_cards) >= 2:
-            if hero_cards[0][-1] == hero_cards[1][-1]:
-                hole_strength += 0.1
-        
-        # Bonus por connectedness
-        if len(hero_cards) >= 2:
-            val1 = card_values.get(hero_cards[0][0].upper(), 0)
-            val2 = card_values.get(hero_cards[1][0].upper(), 0)
-            if abs(val1 - val2) <= 2:
-                hole_strength += 0.1
-        
-        return min(hole_strength, 1.0)
-    
-    def _get_default_decision(self) -> Dict:
-        """Decisión por defecto cuando no hay información suficiente"""
-        return {
-            'action': Action.FOLD.value,
-            'size': 0,
-            'confidence': 50,
-            'reason': "Información insuficiente. Fold conservador.",
-            'alternatives': []
-        }
-
-# Versión simplificada para inicio rápido
-class SimplePokerEngine(PokerEngine):
-    """Versión simplificada del motor para pruebas"""
-    
-    def get_simple_decision(self, street="preflop", position="BTN", has_good_cards=True) -> Dict:
-        """Decisión simplificada para testing"""
-        
-        situations = {
-            "preflop": [
-                ("RAISE", "2.2BB", "Open estándar desde posición tardía", 85),
-                ("FOLD", "", "Mano débil, disciplina", 90),
-                ("CALL", "1BB", "Defensa ciega con mano jugable", 70)
+            "UTG": [
+                "AA", "KK", "QQ", "JJ", "TT", "99",
+                "AKs", "AQs", "AJs", "ATs",
+                "AKo", "AQo",
+                "KQs", "KJs",
+                "QJs", "JTs", "T9s", "98s"
             ],
-            "flop": [
-                ("BET", "33% pot", "C-bet estándar", 80),
-                ("CHECK", "", "Board peligroso", 75),
-                ("RAISE", "2.5x", "Aumentar con mano fuerte", 85)
+            "MP": [
+                "AA", "KK", "QQ", "JJ", "TT", "99", "88",
+                "AKs", "AQs", "AJs", "ATs", "A9s",
+                "AKo", "AQo", "AJo",
+                "KQs", "KJs", "KTs",
+                "QJs", "QTs",
+                "JTs", "T9s", "98s", "87s"
             ],
-            "turn": [
-                ("BET", "60% pot", "Continuar agresión", 70),
-                ("CHECK", "", "Controlar olla", 65)
+            "CO": [
+                "AA", "KK", "QQ", "JJ", "TT", "99", "88", "77", "66",
+                "AKs", "AQs", "AJs", "ATs", "A9s", "A8s", "A7s", "A6s", "A5s", "A4s", "A3s", "A2s",
+                "AKo", "AQo", "AJo", "ATo",
+                "KQs", "KJs", "KTs", "K9s",
+                "QJs", "QTs", "Q9s",
+                "JTs", "J9s",
+                "T9s", "T8s",
+                "98s", "97s",
+                "87s", "86s",
+                "76s", "65s", "54s"
             ],
-            "river": [
-                ("BET", "70% pot", "Value bet fino", 75),
-                ("CHECK", "", "Mostdown, no value", 60)
+            "BTN": [
+                "AA", "KK", "QQ", "JJ", "TT", "99", "88", "77", "66", "55", "44", "33", "22",
+                "AKs", "AQs", "AJs", "ATs", "A9s", "A8s", "A7s", "A6s", "A5s", "A4s", "A3s", "A2s",
+                "AKo", "AQo", "AJo", "ATo", "A9o",
+                "KQs", "KJs", "KTs", "K9s", "K8s", "K7s", "K6s", "K5s", "K4s", "K3s", "K2s",
+                "KQo", "KJo", "KTo",
+                "QJs", "QTs", "Q9s", "Q8s", "Q7s", "Q6s", "Q5s", "Q4s", "Q3s", "Q2s",
+                "QJo", "QTo",
+                "JTs", "J9s", "J8s", "J7s", "J6s", "J5s", "J4s", "J3s", "J2s",
+                "JTo",
+                "T9s", "T8s", "T7s", "T6s", "T5s", "T4s", "T3s", "T2s",
+                "98s", "97s", "96s", "95s", "94s", "93s", "92s",
+                "87s", "86s", "85s", "84s", "83s", "82s",
+                "76s", "75s", "74s", "73s", "72s",
+                "65s", "64s", "63s", "62s",
+                "54s", "53s", "52s",
+                "43s", "42s",
+                "32s"
+            ],
+            "SB": [
+                # Similar a BTN pero más tight
+                "AA", "KK", "QQ", "JJ", "TT", "99", "88", "77", "66", "55",
+                "AKs", "AQs", "AJs", "ATs", "A9s", "A8s", "A7s", "A6s", "A5s",
+                "AKo", "AQo", "AJo",
+                "KQs", "KJs", "KTs", "K9s",
+                "QJs", "QTs", "Q9s",
+                "JTs", "J9s",
+                "T9s", "T8s",
+                "98s", "97s",
+                "87s", "86s",
+                "76s", "65s"
+            ],
+            "BB": [
+                # Defensa amplia contra steals
+                "AA", "KK", "QQ", "JJ", "TT", "99", "88", "77", "66", "55", "44", "33", "22",
+                "AKs", "AQs", "AJs", "ATs", "A9s", "A8s", "A7s", "A6s", "A5s", "A4s", "A3s", "A2s",
+                "AKo", "AQo", "AJo", "ATo", "A9o", "A8o", "A7o", "A6o", "A5o", "A4o", "A3o", "A2o",
+                "KQs", "KJs", "KTs", "K9s", "K8s", "K7s", "K6s", "K5s", "K4s", "K3s", "K2s",
+                "KQo", "KJo", "KTo", "K9o",
+                "QJs", "QTs", "Q9s", "Q8s", "Q7s", "Q6s", "Q5s", "Q4s", "Q3s", "Q2s",
+                "QJo", "QTo", "Q9o",
+                "JTs", "J9s", "J8s", "J7s", "J6s", "J5s", "J4s", "J3s", "J2s",
+                "JTo", "J9o",
+                "T9s", "T8s", "T7s", "T6s", "T5s", "T4s", "T3s", "T2s",
+                "T9o", "T8o",
+                "98s", "97s", "96s", "95s", "94s", "93s", "92s",
+                "98o", "97o",
+                "87s", "86s", "85s", "84s", "83s", "82s",
+                "87o", "86o",
+                "76s", "75s", "74s", "73s", "72s",
+                "76o",
+                "65s", "64s", "63s", "62s",
+                "65o",
+                "54s", "53s", "52s",
+                "54o",
+                "43s", "42s",
+                "32s"
             ]
         }
-        
-        street_sits = situations.get(street, situations["preflop"])
-        action, size, reason, confidence = random.choice(street_sits)
-        
+    
+    def _load_postflop_strategies(self) -> Dict[str, Dict]:
+        """Cargar estrategias postflop básicas"""
         return {
-            'action': action,
-            'size': size,
-            'confidence': confidence,
-            'reason': reason,
-            'alternatives': []
+            "cbet_frequencies": {
+                "dry": 0.7,      # Flops secos: 70% c-bet
+                "wet": 0.4,      # Flops húmedos: 40% c-bet
+                "paired": 0.3,   # Flops pareados: 30% c-bet
+                "monotone": 0.2  # Flops monocolor: 20% c-bet
+            },
+            "bet_sizings": {
+                "dry": 0.33,     # 33% del pot
+                "wet": 0.50,     # 50% del pot
+                "paired": 0.66,  # 66% del pot
+                "value": 0.75,   # 75% del pot para value bets
+                "bluff": 0.45    # 45% del pot para bluffs
+            },
+            "continuation_ranges": {
+                "overpairs": 1.0,      # Siempre continuar con overpairs
+                "top_pair": 0.8,       # 80% con top pair
+                "middle_pair": 0.5,    # 50% con middle pair
+                "weak_pair": 0.2,      # 20% con weak pair
+                "draws": 0.7,          # 70% con draws fuertes
+                "air": 0.3             # 30% con nada (bluffs balanceados)
+            }
         }
+    
+    def evaluate_hand_strength(self, hero_cards: List[str], board_cards: List[str]) -> HandStrength:
+        """
+        Evaluar fuerza de la mano actual
+        
+        Args:
+            hero_cards: Lista de 2 cartas del hero (ej: ['Ah', 'Ks'])
+            board_cards: Lista de 0-5 cartas del board
+            
+        Returns:
+            HandStrength con evaluación
+        """
+        # Convertir cartas a formato numérico
+        all_cards = hero_cards + board_cards
+        numeric_cards = self._cards_to_numeric(all_cards)
+        
+        if len(board_cards) == 0:
+            # Evaluación preflop
+            return self._evaluate_preflop_hand(hero_cards)
+        else:
+            # Evaluación postflop
+            return self._evaluate_postflop_hand(numeric_cards)
+    
+    def _cards_to_numeric(self, cards: List[str]) -> List[Tuple[int, int]]:
+        """Convertir cartas a formato numérico (rank, suit)"""
+        rank_map = {
+            '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+            'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
+        }
+        suit_map = {'s': 0, 'h': 1, 'd': 2, 'c': 3}
+        
+        numeric = []
+        for card in cards:
+            if len(card) >= 2:
+                rank = rank_map.get(card[0].upper(), 0)
+                suit = suit_map.get(card[-1].lower(), 0)
+                numeric.append((rank, suit))
+        
+        return numeric
+    
+    def _evaluate_preflop_hand(self, hero_cards: List[str]) -> HandStrength:
+        """Evaluar fuerza de mano preflop"""
+        if len(hero_cards) != 2:
+            return HandStrength(hand_type='unknown', rank=0, kickers=[], equity=0.5)
+        
+        # Simplificación: clasificar manos preflop
+        card1, card2 = hero_cards
+        rank1, suit1 = card1[0], card1[-1]
+        rank2, suit2 = card2[0], card2[-1]
+        
+        # Pareja
+        if rank1 == rank2:
+            rank_value = self._rank_to_value(rank1)
+            # Equity aproximada de parejas
+            equity_map = {14: 0.85, 13: 0.82, 12: 0.80, 11: 0.78, 10: 0.75}
+            equity = equity_map.get(rank_value, 0.65)
+            return HandStrength(
+                hand_type='pair',
+                rank=rank_value,
+                kickers=[rank_value],
+                equity=equity
+            )
+        
+        # Cartas suited
+        elif suit1 == suit2:
+            rank_value = max(self._rank_to_value(rank1), self._rank_to_value(rank2))
+            # Equity aproximada de suited connectors
+            equity = 0.55 if abs(self._rank_to_value(rank1) - self._rank_to_value(rank2)) <= 4 else 0.48
+            return HandStrength(
+                hand_type='suited',
+                rank=rank_value,
+                kickers=[min(self._rank_to_value(rank1), self._rank_to_value(rank2))],
+                equity=equity
+            )
+        
+        # Cartas offsuit
+        else:
+            rank_value = max(self._rank_to_value(rank1), self._rank_to_value(rank2))
+            equity = 0.45
+            return HandStrength(
+                hand_type='offsuit',
+                rank=rank_value,
+                kickers=[min(self._rank_to_value(rank1), self._rank_to_value(rank2))],
+                equity=equity
+            )
+    
+    def _rank_to_value(self, rank: str) -> int:
+        """Convertir rank de carta a valor numérico"""
+        rank_map = {
+            '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+            'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
+        }
+        return rank_map.get(rank.upper(), 0)
+    
+    def _evaluate_postflop_hand(self, cards: List[Tuple[int, int]]) -> HandStrength:
+        """Evaluar fuerza de mano postflop (simplificado)"""
+        # Implementación simplificada - en realidad necesitaría hand evaluator completo
+        ranks = [card[0] for card in cards]
+        suits = [card[1] for card in cards]
+        
+        # Contar frecuencias de ranks
+        rank_counts = {}
+        for rank in ranks:
+            rank_counts[rank] = rank_counts.get(rank, 0) + 1
+        
+        # Verificar posibles manos (simplificado)
+        sorted_ranks = sorted(ranks, reverse=True)
+        
+        # Verificar póker
+        for rank, count in rank_counts.items():
+            if count == 4:
+                return HandStrength(
+                    hand_type='four_of_a_kind',
+                    rank=rank,
+                    kickers=[max(r for r in ranks if r != rank)],
+                    equity=0.95
+                )
+        
+        # Verificar full house
+        three_of_a_kind = None
+        pair = None
+        for rank, count in rank_counts.items():
+            if count == 3:
+                three_of_a_kind = rank
+            elif count == 2:
+                pair = rank
+        
+        if three_of_a_kind and pair:
+            return HandStrength(
+                hand_type='full_house',
+                rank=three_of_a_kind,
+                kickers=[pair],
+                equity=0.90
+            )
+        
+        # Verificar color (simplificado)
+        suit_counts = {}
+        for suit in suits:
+            suit_counts[suit] = suit_counts.get(suit, 0) + 1
+        
+        for suit, count in suit_counts.items():
+            if count >= 5:
+                # Encontrar la carta más alta del color
+                flush_ranks = [r for r, s in zip(ranks, suits) if s == suit]
+                high_card = max(flush_ranks)
+                return HandStrength(
+                    hand_type='flush',
+                    rank=high_card,
+                    kickers=sorted(flush_ranks, reverse=True)[:5],
+                    equity=0.85
+                )
+        
+        # Verificar escalera (simplificado)
+        unique_ranks = sorted(set(ranks))
+        straight_length = 1
+        max_straight_rank = unique_ranks[0]
+        
+        for i in range(1, len(unique_ranks)):
+            if unique_ranks[i] == unique_ranks[i-1] + 1:
+                straight_length += 1
+                if straight_length >= 5:
+                    max_straight_rank = unique_ranks[i]
+            else:
+                straight_length = 1
+        
+        if straight_length >= 5:
+            return HandStrength(
+                hand_type='straight',
+                rank=max_straight_rank,
+                kickers=[max_straight_rank - i for i in range(5)],
+                equity=0.80
+            )
+        
+        # Verificar trio
+        for rank, count in rank_counts.items():
+            if count == 3:
+                kickers = sorted([r for r in ranks if r != rank], reverse=True)[:2]
+                return HandStrength(
+                    hand_type='three_of_a_kind',
+                    rank=rank,
+                    kickers=kickers,
+                    equity=0.70
+                )
+        
+        # Verificar doble pareja
+        pairs = sorted([rank for rank, count in rank_counts.items() if count == 2], reverse=True)
+        if len(pairs) >= 2:
+            kicker = max([r for r in ranks if r not in pairs[:2]])
+            return HandStrength(
+                hand_type='two_pair',
+                rank=pairs[0],
+                kickers=[pairs[1], kicker],
+                equity=0.55
+            )
+        
+        # Verificar pareja
+        if len(pairs) == 1:
+            kickers = sorted([r for r in ranks if r != pairs[0]], reverse=True)[:3]
+            return HandStrength(
+                hand_type='pair',
+                rank=pairs[0],
+                kickers=kickers,
+                equity=0.40
+            )
+        
+        # Carta alta
+        return HandStrength(
+            hand_type='high_card',
+            rank=max(ranks),
+            kickers=sorted(ranks, reverse=True)[:5],
+            equity=0.15
+        )
+    
+    def make_decision(self, game_state: Dict) -> Dict:
+        """
+        Tomar decisión basada en el estado del juego
+        
+        Args:
+            game_state: Diccionario con estado del juego de GGPokerAdapter
+            
+        Returns:
+            Dict con decisión y detalles
+        """
+        self.decisions_made += 1
+        
+        try:
+            hero_cards = game_state.get('hero_cards', [])
+            board_cards = game_state.get('board_cards', [])
+            current_street = game_state.get('current_street', 'preflop')
+            hero_position = game_state.get('hero_position', 'BTN')
+            pot_amount = game_state.get('pot_amount', 0)
+            hero_stack = game_state.get('hero_stack', 100)
+            available_actions = game_state.get('available_actions', {})
+            
+            # Evaluar fuerza de mano
+            hand_strength = self.evaluate_hand_strength(hero_cards, board_cards)
+            
+            # Tomar decisión basada en calle
+            if current_street == 'preflop':
+                decision = self._preflop_decision(
+                    hero_cards, hero_position, pot_amount, hand_strength, available_actions
+                )
+            else:
+                decision = self._postflop_decision(
+                    hero_cards, board_cards, current_street, pot_amount, hand_strength, available_actions
+                )
+            
+            # Ajustar por factores de agresión/tightness
+            decision = self._adjust_decision_by_factors(decision, hand_strength)
+            
+            # Calcular confianza
+            confidence = self._calculate_decision_confidence(decision, hand_strength)
+            
+            # Actualizar estadísticas
+            self._update_stats(confidence)
+            
+            return {
+                "action": decision["action"],
+                "amount": decision.get("amount", 0),
+                "confidence": confidence,
+                "reason": decision["reason"],
+                "alternatives": decision.get("alternatives", []),
+                "hand_strength": str(hand_strength),
+                "equity": hand_strength.equity,
+                "decision_id": self.decisions_made
+            }
+            
+        except Exception as e:
+            print(f"❌ Error en make_decision: {e}")
+            # Decisión por defecto en caso de error
+            return {
+                "action": "CHECK" if "check" in game_state.get('available_actions', {}) else "FOLD",
+                "amount": 0,
+                "confidence": 0.3,
+                "reason": f"Error en análisis: {str(e)[:50]}",
+                "alternatives": ["FOLD", "CHECK"],
+                "hand_strength": "Desconocida",
+                "equity": 0.5,
+                "decision_id": self.decisions_made
+            }
+    
+    def _preflop_decision(self, hero_cards: List[str], position: str, 
+                         pot: float, hand_strength: HandStrength, 
+                         available_actions: Dict) -> Dict:
+        """Tomar decisión preflop"""
+        # Verificar si la mano está en el rango para la posición
+        hand_str = ''.join(sorted([c[0] for c in hero_cards]))
+        suited = hero_cards[0][-1] == hero_cards[1][-1] if len(hero_cards) == 2 else False
+        
+        if suited:
+            hand_str += 's'
+        
+        position_range = self.preflop_ranges.get(position, [])
+        
+        # Decisión basada en rango y fuerza
+        if hand_strength.equity >= 0.75 or hand_str in position_range[:10]:
+            # Mano premium
+            return {
+                "action": "RAISE",
+                "amount": pot * 0.75 if pot > 0 else 2.2,  # 2.2BB standard
+                "reason": "Mano premium en rango de apertura",
+                "alternatives": ["CALL", "FOLD"]
+            }
+        elif hand_strength.equity >= 0.60 or hand_str in position_range:
+            # Mano jugable
+            return {
+                "action": "CALL" if "call" in available_actions else "CHECK",
+                "amount": pot * 0.25 if pot > 0 else 0,
+                "reason": "Mano jugable dentro de rango",
+                "alternatives": ["RAISE", "FOLD"]
+            }
+        else:
+            # Mano débil
+            return {
+                "action": "FOLD",
+                "amount": 0,
+                "reason": "Mano fuera de rango óptimo",
+                "alternatives": ["CALL", "CHECK"]
+            }
+    
+    def _postflop_decision(self, hero_cards: List[str], board_cards: List[str],
+                          street: str, pot: float, hand_strength: HandStrength,
+                          available_actions: Dict) -> Dict:
+        """Tomar decisión postflop"""
+        
+        # Basado en fuerza de mano
+        if hand_strength.equity >= 0.80:
+            # Mano muy fuerte - value bet
+            bet_size = pot * self.postflop_strategies["bet_sizings"]["value"]
+            return {
+                "action": "BET" if "bet" in available_actions else "RAISE",
+                "amount": bet_size,
+                "reason": f"Mano fuerte: {hand_strength}",
+                "alternatives": ["CHECK", "CALL"]
+            }
+        elif hand_strength.equity >= 0.60:
+            # Mano decente - continuation bet o call
+            if street == "flop" and len(board_cards) == 3:
+                # C-bet en flop
+                cbet_freq = self.postflop_strategies["cbet_frequencies"]["dry"]
+                if np.random.random() < cbet_freq:
+                    bet_size = pot * self.postflop_strategies["bet_sizings"]["dry"]
+                    return {
+                        "action": "BET",
+                        "amount": bet_size,
+                        "reason": f"C-bet estándar con {hand_strength}",
+                        "alternatives": ["CHECK", "FOLD"]
+                    }
+            
+            return {
+                "action": "CALL" if "call" in available_actions else "CHECK",
+                "amount": pot * 0.33 if pot > 0 else 0,
+                "reason": f"Mano jugable: {hand_strength}",
+                "alternatives": ["FOLD", "RAISE"]
+            }
+        elif hand_strength.equity >= 0.40:
+            # Mano marginal - bluff o fold
+            bluff_freq = 0.3  # 30% de bluffs
+            if np.random.random() < bluff_freq:
+                bet_size = pot * self.postflop_strategies["bet_sizings"]["bluff"]
+                return {
+                    "action": "BET",
+                    "amount": bet_size,
+                    "reason": "Bluff balanceado",
+                    "alternatives": ["FOLD", "CHECK"]
+                }
+            else:
+                return {
+                    "action": "FOLD",
+                    "amount": 0,
+                    "reason": "Mano demasiado débil para continuar",
+                    "alternatives": ["CHECK", "CALL"]
+                }
+        else:
+            # Mano muy débil
+            return {
+                "action": "FOLD",
+                "amount": 0,
+                "reason": "Mano sin valor",
+                "alternatives": ["CHECK", "CALL"]
+            }
+    
+    def _adjust_decision_by_factors(self, decision: Dict, hand_strength: HandStrength) -> Dict:
+        """Ajustar decisión basado en factores de agresión/tightness"""
+        action = decision["action"]
+        
+        # Ajustar por agresión
+        if self.aggression_factor > 1.0:
+            # Más agresivo
+            if action in ["CALL", "CHECK"]:
+                # Convertir algunos calls/checks en raises/bets
+                if hand_strength.equity > 0.5 and np.random.random() < 0.3:
+                    decision["action"] = "RAISE" if action == "CALL" else "BET"
+                    decision["amount"] = decision.get("amount", 0) * 1.5
+                    decision["reason"] += " (ajustado: modo agresivo)"
+        
+        elif self.aggression_factor < 1.0:
+            # Más pasivo
+            if action in ["RAISE", "BET"]:
+                # Convertir algunos raises/bets en calls/checks
+                if hand_strength.equity < 0.7 and np.random.random() < 0.3:
+                    decision["action"] = "CALL" if action == "RAISE" else "CHECK"
+                    decision["amount"] = 0
+                    decision["reason"] += " (ajustado: modo pasivo)"
+        
+        # Ajustar por tightness
+        if self.tightness_factor > 1.0:
+            # Más tight
+            if action in ["CALL", "RAISE", "BET"]:
+                if hand_strength.equity < 0.6 and np.random.random() < 0.4:
+                    decision["action"] = "FOLD"
+                    decision["amount"] = 0
+                    decision["reason"] += " (ajustado: modo tight)"
+        
+        elif self.tightness_factor < 1.0:
+            # Más loose
+            if action == "FOLD":
+                if hand_strength.equity > 0.3 and np.random.random() < 0.3:
+                    decision["action"] = "CALL"
+                    decision["reason"] += " (ajustado: modo loose)"
+        
+        return decision
+    
+    def _calculate_decision_confidence(self, decision: Dict, hand_strength: HandStrength) -> float:
+        """Calcular confianza en la decisión"""
+        base_confidence = hand_strength.equity
+        
+        # Ajustar por acción
+        action_confidence = {
+            "FOLD": 0.8,
+            "CHECK": 0.7,
+            "CALL": 0.75,
+            "RAISE": 0.65,
+            "BET": 0.60
+        }.get(decision["action"], 0.5)
+        
+        # Confianza combinada
+        confidence = (base_confidence * 0.6) + (action_confidence * 0.4)
+        
+        # Limitar entre 0.1 y 0.95
+        return max(0.1, min(0.95, confidence))
+    
+    def _update_stats(self, confidence: float):
+        """Actualizar estadísticas"""
+        # Promedio móvil de confianza
+        if self.decisions_made == 1:
+            self.average_confidence = confidence
+        else:
+            self.average_confidence = (
+                (self.average_confidence * (self.decisions_made - 1) + confidence) 
+                / self.decisions_made
+            )
+    
+    def get_stats(self) -> Dict:
+        """Obtener estadísticas del motor"""
+        return {
+            "decisions_made": self.decisions_made,
+            "average_confidence": round(self.average_confidence, 3),
+            "aggression_factor": self.aggression_factor,
+            "tightness_factor": self.tightness_factor
+        }
+    
+    def save_config(self):
+        """Guardar configuración del motor"""
+        config = {
+            "aggression_factor": self.aggression_factor,
+            "tightness_factor": self.tightness_factor,
+            "preflop_ranges_summary": {
+                pos: len(ranges) for pos, ranges in self.preflop_ranges.items()
+            },
+            "stats": self.get_stats()
+        }
+        
+        config_path = Path("config/poker_engine_config.json")
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(config_path, 'w') as f:
+            json.dump(config, f, indent=2)
+        
+        print(f"✅ Configuración de motor guardada: {config_path}")
 
-# Para importaciones
-import time
+# ============================================================================
+# PRUEBAS
+# ============================================================================
+
+def test_poker_engine():
+    """Probar el motor de decisiones"""
+    print("🧪 TEST: Poker Engine")
+    print("=" * 60)
+    
+    try:
+        # Crear motor
+        engine = PokerEngine(aggression_factor=1.0, tightness_factor=1.0)
+        
+        # Estados de juego de prueba
+        test_states = [
+            {
+                "hero_cards": ["Ah", "Ks"],
+                "board_cards": [],
+                "current_street": "preflop",
+                "hero_position": "BTN",
+                "pot_amount": 5.0,
+                "hero_stack": 100.0,
+                "available_actions": {"fold": True, "call": True, "raise": True}
+            },
+            {
+                "hero_cards": ["7c", "2d"],
+                "board_cards": ["Ah", "Ks", "Qd"],
+                "current_street": "flop",
+                "hero_position": "BB",
+                "pot_amount": 15.0,
+                "hero_stack": 85.0,
+                "available_actions": {"fold": True, "check": True, "bet": True}
+            },
+            {
+                "hero_cards": ["Th", "Th"],
+                "board_cards": ["9s", "8d", "2c", "Jh"],
+                "current_street": "turn",
+                "hero_position": "CO",
+                "pot_amount": 25.0,
+                "hero_stack": 75.0,
+                "available_actions": {"fold": True, "call": True, "raise": True}
+            }
+        ]
+        
+        print("🎯 Probando decisiones...")
+        
+        for i, state in enumerate(test_states):
+            print(f"\n📋 Estado de prueba {i+1}:")
+            print(f"   Hero: {state['hero_cards']}")
+            print(f"   Board: {state['board_cards']}")
+            print(f"   Street: {state['current_street']}")
+            print(f"   Posición: {state['hero_position']}")
+            
+            # Tomar decisión
+            decision = engine.make_decision(state)
+            
+            print(f"   🤖 DECISIÓN: {decision['action']}")
+            print(f"      Cantidad: ${decision.get('amount', 0):.2f}")
+            print(f"      Confianza: {decision['confidence']:.1%}")
+            print(f"      Razón: {decision['reason']}")
+            print(f"      Fuerza de mano: {decision['hand_strength']}")
+        
+        # Mostrar estadísticas
+        print(f"\n📊 Estadísticas del motor:")
+        stats = engine.get_stats()
+        for key, value in stats.items():
+            print(f"   {key}: {value}")
+        
+        # Guardar configuración
+        engine.save_config()
+        
+        print("\n✅ Test de motor completado")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error en test de motor: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+if __name__ == "__main__":
+    test_poker_engine()
