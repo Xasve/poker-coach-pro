@@ -92,7 +92,7 @@ class PokerStarsAdapter:
             self.card_recognizer = CardRecognizer("pokerstars", self.stealth_level)
             
             # Detector de mesa PokerStars
-            self.table_detector = TableDetector("pokerstars")
+            self.table_detector = TableDetector()
             
             # OCR para textos
             self.text_ocr = TextOCR("pokerstars")
