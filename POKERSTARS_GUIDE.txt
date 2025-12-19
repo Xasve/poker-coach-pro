@@ -1,0 +1,40 @@
+# CONFIGURACIÓN POKERSTARS PARA CAPTURA BALANCEADA
+
+##  PASO 1: ELEGIR MESA CORRECTA
+ USAR ESTAS MESAS (cartas rojas visibles):
+    "Classic" tables
+    "Triton" series tables  
+    "Sunday Million" tables
+    Tables with BRIGHT backgrounds
+
+ EVITAR ESTAS MESAS (solo cartas negras):
+    "Dark" tables
+    "Stealth" tables
+    "Night" mode tables
+    Tables with DARK backgrounds
+
+##  PASO 2: CONFIGURAR PANTALLA
+1. Resolución: 1920x1080 recomendada
+2. Brillo del monitor: 70-80%
+3. Contraste: 60-70%
+4. Apagar "Night Light" o modos oscuros
+
+##  PASO 3: CONFIGURAR POKERSTARS
+1. Table Appearance -> "Classic"
+2. Card Deck -> "Standard" (no "Dark")
+3. Background -> "Light" or "Default"
+4. Desactivar "4-Color Deck" (opcional)
+
+##  PASO 4: POSICIÓN DE MESA
+1. Mesa NO maximizada (ventana normal)
+2. Posición: centro de la pantalla
+3. Sin superposiciones (chat, estadísticas a un lado)
+
+##  PASO 5: DETECCIÓN DE COORDENADAS
+1. Ejecutar: python detect_coords.py
+2. Seleccionar región de cartas del HERO
+3. Seleccionar región de cartas COMUNITARIAS
+4. Guardar configuración
+
+##  CAPTURA BALANCEADA
+Ejecutar: python smart_capture_fixed.py
