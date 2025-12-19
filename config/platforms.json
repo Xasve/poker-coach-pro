@@ -1,0 +1,12 @@
+{
+    "pokerstars": {
+        "table_color": [0, 100, 0],
+        "card_size": [71, 96],
+        "table_region": [0, 0, 1920, 1080]
+    },
+    "ggpoker": {
+        "table_color": [30, 60, 30],
+        "card_size": [75, 100],
+        "table_region": [0, 0, 1920, 1080]
+    }
+}
