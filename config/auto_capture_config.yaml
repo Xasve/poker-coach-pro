@@ -1,0 +1,73 @@
+﻿# config/auto_capture_config.yaml
+auto_capture:
+  # Configuración general
+  enabled: true
+  mode: "continuous"  # continuous, timed, quantity
+  default_duration: 300  # segundos (5 minutos)
+  default_interval: 1.5  # segundos entre capturas
+  
+  # Detección
+  detection:
+    min_card_area: 3000
+    max_card_area: 8000
+    aspect_ratio_range: [0.6, 0.9]
+    confidence_threshold: 0.7
+    use_edge_detection: true
+    use_color_analysis: true
+    
+  # Clasificación
+  classification:
+    auto_classify: true
+    confidence_threshold: 0.65
+    move_classified: true
+    generate_reports: true
+    clustering_enabled: true
+    
+  # Carpetas y almacenamiento
+  storage:
+    base_path: "data/card_templates/auto_captured"
+    keep_raw_images: true
+    max_session_size_mb: 500
+    compress_old_sessions: false
+    
+  # Performance
+  performance:
+    max_concurrent_captures: 1
+    use_gpu_if_available: false
+    image_quality: "high"  # high, medium, low
+    resize_captures: true
+    target_size: [70, 95]
+    
+  # Notificaciones
+  notifications:
+    on_capture_complete: true
+    on_classification_complete: true
+    on_error: true
+    
+  # Seguridad
+  security:
+    max_runtime_minutes: 60
+    memory_limit_mb: 1024
+    auto_stop_on_idle: true
+    idle_timeout_seconds: 300
+
+# Regiones de captura (se sobrescriben con detect_coords.py)
+regions:
+  table: [650, 300, 600, 400]
+  card_regions:
+    hero: [[870, 750, 70, 95], [950, 750, 70, 95]]
+    community: [[750, 450, 70, 95], [830, 450, 70, 95], [910, 450, 70, 95]]
+  pot: [850, 550, 200, 40]
+
+# Templates existentes
+templates:
+  base_path: "data/card_templates/pokerstars_real"
+  suits: ["hearts", "diamonds", "clubs", "spades"]
+  values: ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"]
+
+# Sistema de aprendizaje
+learning:
+  enabled: false  # Próxima versión
+  min_training_samples: 100
+  model_path: "models/card_classifier.pkl"
+  retrain_interval_hours: 24
