@@ -1,7 +1,1 @@
-{
-    "stealth_level": 1,
-    "capture_delay": 0.5,
-    "overlay_opacity": 0.8,
-    "analysis_delay": 0.3,
-    "auto_adjust": true
-}
+{"stealth_level": 1, "capture_delay": 0.5}
