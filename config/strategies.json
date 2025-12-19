@@ -1,1 +1,6 @@
-{"default_strategy": "minimal"}
+{
+    "default_strategy": "gto_basic",
+    "aggression_factor": 0.7,
+    "risk_tolerance": 0.5,
+    "bluff_frequency": 0.25
+}
