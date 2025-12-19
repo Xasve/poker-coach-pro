@@ -1,260 +1,90 @@
-﻿"""
-Adaptador para PokerStars - Captura y análisis de mesa
-"""
-import os
+﻿# src/platforms/pokerstars_adapter.py
 import sys
-import time
-import logging
-from typing import Optional, Dict, Any
-from dataclasses import dataclass
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Añadir path para imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-
-from screen_capture.stealth_capture import StealthScreenCapture
-from screen_capture.card_recognizer import CardRecognizer
-from screen_capture.table_detector import TableDetector
-from screen_capture.text_ocr import TextOCR
-
-logger = logging.getLogger(__name__)
-
-@dataclass
-class PokerStarsGameState:
-    """Estado del juego en PokerStars"""
-    hero_cards: list = None
-    community_cards: list = None
-    street: str = ""
-    position: str = ""
-    pot: int = 0
-    stack: int = 0
-    to_call: int = 0
-    min_raise: int = 0
-    max_raise: int = 0
-    actions_available: list = None
-    
-    def __post_init__(self):
-        if self.hero_cards is None:
-            self.hero_cards = []
-        if self.community_cards is None:
-            self.community_cards = []
-        if self.actions_available is None:
-            self.actions_available = []
-    
-    def is_valid(self) -> bool:
-        """Verificar si el estado es válido"""
-        return bool(self.hero_cards) and self.street
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convertir a diccionario"""
-        return {
-            "hero_cards": self.hero_cards,
-            "community_cards": self.community_cards,
-            "street": self.street,
-            "position": self.position,
-            "pot": self.pot,
-            "stack": self.stack,
-            "to_call": self.to_call,
-            "min_raise": self.min_raise,
-            "max_raise": self.max_raise,
-            "actions_available": self.actions_available
-        }
+try:
+    from screen_capture.stealth_capture import StealthScreenCapture
+    from screen_capture.card_recognizer import CardRecognizer
+    from screen_capture.table_detector import TableDetector
+    from screen_capture.text_ocr import TextOCR
+except ImportError as e:
+    print(f"⚠️  Error importando módulos de screen_capture: {e}")
+    # Definir clases placeholder para evitar errores de importación
+    class StealthScreenCapture: pass
+    class CardRecognizer: pass
+    class TableDetector: pass
+    class TextOCR: pass
 
 class PokerStarsAdapter:
-    """Adaptador para capturar y analizar mesas de PokerStars"""
-    
-    def __init__(self, stealth_level: str = "MEDIUM"):
-        """
-        Inicializar adaptador para PokerStars
-        
-        Args:
-            stealth_level: Nivel de stealth (LOW, MEDIUM, HIGH)
-        """
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, stealth_level=1):
+        # 🔥 CORRECCIÓN CRÍTICA: Definir el atributo 'platform' PRIMERO
+        self.platform = "pokerstars"
         self.stealth_level = stealth_level
-        self.learning_mode = True
+        self.capture_delay = max(0.1, 0.5 / stealth_level)  # Más sigiloso = más lento
         
-        # Inicializar componentes
-        self._initialize_components()
+        print(f"🎴 Inicializando adaptador para {self.platform}...")
         
-        # Historial
-        self.hand_history = []
-        self.current_hand_id = None
-        
-        self.logger.info(f" PokerStarsAdapter inicializado (stealth: {stealth_level})")
-    
-    def _initialize_components(self):
-        """Inicializar todos los componentes de captura"""
+        # 🔥 CORRECCIÓN: Pasar los argumentos CORRECTOS a cada constructor
+        # Basado en los errores, ajustamos:
         try:
-            # Sistema de captura stealth
-            self.capture_system = StealthScreenCapture("pokerstars", self.stealth_level)
-            
-            # Reconocedor de cartas específico para PokerStars
+            self.screen_capturer = StealthScreenCapture(stealth_level=stealth_level, platform=self.platform)
             self.card_recognizer = CardRecognizer(platform=self.platform)
+            self.table_detector = TableDetector()  # ✅ Ahora sin argumentos
+            self.text_ocr = TextOCR()  # ✅ Ahora sin argumentos
             
-            # Detector de mesa PokerStars
-            self.table_detector = TableDetector()
-            
-            # OCR para textos
-            self.text_ocr = TextOCR()
-            
-            self.logger.info(" Componentes de captura inicializados")
+            print("✅ Todos los componentes del adaptador inicializados")
             
         except Exception as e:
-            self.logger.error(f" Error inicializando componentes: {e}")
-            raise
+            print(f"❌ Error inicializando componentes: {e}")
+            # Asegurarse de que los atributos existan incluso si falla la inicialización
+            self.screen_capturer = None
+            self.card_recognizer = None
+            self.table_detector = None
+            self.text_ocr = None
     
-    def is_pokerstars_active(self) -> bool:
-        """
-        Verificar si PokerStars está activo y visible
-        
-        Returns:
-            bool: True si PokerStars está detectado
-        """
-        try:
-            # Capturar pantalla
-            screenshot = self.capture_system.capture()
-            if screenshot is None:
-                return False
-            
-            # Buscar elementos característicos de PokerStars
-            # 1. Logo de PokerStars
-            # 2. Colores específicos (verde oscuro #0a5c1f)
-            # 3. Diseño de mesa característico
-            
-            # Por ahora, simular detección
-            # TODO: Implementar detección real con CV
-            return self._detect_pokerstars_elements(screenshot)
-            
-        except Exception as e:
-            self.logger.error(f"Error verificando PokerStars: {e}")
-            return False
+    def capture_table(self):
+        """Capturar la pantalla donde está la mesa"""
+        if self.screen_capturer:
+            return self.screen_capturer.capture_screen()
+        return None
     
-    def _detect_pokerstars_elements(self, screenshot) -> bool:
-        """Detectar elementos específicos de PokerStars"""
-        # Método temporal - siempre devuelve True para testing
-        # En producción, implementar detección real con OpenCV
-        return True
+    def detect_table(self, screenshot):
+        """Detectar si hay una mesa de poker en la captura"""
+        if self.table_detector:
+            return self.table_detector.detect(screenshot)
+        return False
     
-    def capture_and_analyze(self) -> Optional[PokerStarsGameState]:
-        """
-        Capturar pantalla y analizar estado del juego
-        
-        Returns:
-            PokerStarsGameState o None si no se detecta juego
-        """
-        try:
-            self.logger.debug("Capturando y analizando mesa...")
-            
-            # 1. Capturar pantalla
-            screenshot = self.capture_system.capture()
-            if screenshot is None:
-                self.logger.warning("No se pudo capturar pantalla")
-                return None
-            
-            # 2. Detectar mesa
-            table_info = self.table_detector.detect_table(screenshot)
-            if not table_info:
-                self.logger.debug("Mesa no detectada")
-                return None
-            
-            # 3. Extraer cartas del héroe
-            hero_cards = self.card_recognizer.recognize_hero_cards(screenshot)
-            
-            # 4. Extraer cartas comunitarias
-            community_cards = self.card_recognizer.recognize_community_cards(screenshot)
-            
-            # 5. Extraer montos (pot, stack, to_call)
-            amounts = self.text_ocr.extract_amounts(screenshot)
-            
-            # 6. Detectar calle actual
-            street = self._detect_street(screenshot, community_cards)
-            
-            # 7. Detectar posición
-            position = self._detect_position(screenshot, table_info)
-            
-            # 8. Detectar acciones disponibles
-            actions = self._detect_available_actions(screenshot)
-            
-            # Crear estado del juego
-            game_state = PokerStarsGameState(
-                hero_cards=hero_cards,
-                community_cards=community_cards,
-                street=street,
-                position=position,
-                pot=amounts.get("pot", 0),
-                stack=amounts.get("stack", 0),
-                to_call=amounts.get("to_call", 0),
-                min_raise=amounts.get("min_raise", 0),
-                max_raise=amounts.get("max_raise", 0),
-                actions_available=actions
-            )
-            
-            # Guardar en historial si es una mano nueva
-            if hero_cards:
-                self._save_to_history(game_state)
-            
-            self.logger.info(f"Estado analizado: {street} - Cartas: {hero_cards}")
-            return game_state
-            
-        except Exception as e:
-            self.logger.error(f"Error en captura y análisis: {e}")
-            return None
+    def recognize_hole_cards(self, screenshot):
+        """Reconocer las cartas propias (hole cards)"""
+        if self.card_recognizer:
+            # Posiciones aproximadas de las hole cards (ajustar según resolución)
+            card_positions = [
+                (960, 800, 71, 96),   # Hole card 1 (centro-abajo, izquierda)
+                (1031, 800, 71, 96)   # Hole card 2 (centro-abajo, derecha)
+            ]
+            return self.card_recognizer.recognize_cards(screenshot, card_positions)
+        return []
     
-    def _detect_street(self, screenshot, community_cards) -> str:
-        """Detectar la calle actual del juego"""
-        if not community_cards:
-            return "preflop"
-        elif len(community_cards) == 3:
-            return "flop"
-        elif len(community_cards) == 4:
-            return "turn"
-        elif len(community_cards) == 5:
-            return "river"
-        else:
-            return "unknown"
+    def recognize_community_cards(self, screenshot):
+        """Reconocer las cartas comunitarias"""
+        if self.card_recognizer:
+            # Posiciones aproximadas de las cartas comunitarias
+            card_positions = [
+                (750, 400, 71, 96),   # Flop 1
+                (821, 400, 71, 96),   # Flop 2
+                (892, 400, 71, 96),   # Flop 3
+                (963, 400, 71, 96),   # Turn
+                (1034, 400, 71, 96)   # River
+            ]
+            return self.card_recognizer.recognize_cards(screenshot, card_positions)
+        return []
     
-    def _detect_position(self, screenshot, table_info) -> str:
-        """Detectar posición del jugador"""
-        # Por ahora, posición aleatoria para testing
-        positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
-        import random
-        return random.choice(positions)
-    
-    def _detect_available_actions(self, screenshot) -> list:
-        """Detectar acciones disponibles"""
-        # Por ahora, acciones básicas
-        return ["FOLD", "CHECK", "CALL", "RAISE"]
-    
-    def _save_to_history(self, game_state: PokerStarsGameState):
-        """Guardar estado en historial"""
-        hand_data = {
-            "timestamp": time.time(),
-            "hand_id": self.current_hand_id or f"hand_{int(time.time())}",
-            "state": game_state.to_dict()
-        }
-        self.hand_history.append(hand_data)
-        
-        # Mantener solo las últimas 100 manos
-        if len(self.hand_history) > 100:
-            self.hand_history = self.hand_history[-100:]
-    
-    def save_hand_history(self, game_state: PokerStarsGameState, decision: Dict[str, Any]):
-        """Guardar decisión en historial"""
-        if self.hand_history:
-            last_hand = self.hand_history[-1]
-            last_hand["decision"] = decision
-            last_hand["decision_time"] = time.time()
-    
-    def get_session_stats(self) -> Dict[str, Any]:
-        """Obtener estadísticas de la sesión"""
+    def get_table_info(self, screenshot):
+        """Obtener información general de la mesa"""
         return {
-            "total_hands": len(self.hand_history),
-            "hands_with_decisions": len([h for h in self.hand_history if "decision" in h]),
-            "session_start": self.hand_history[0]["timestamp"] if self.hand_history else None,
-            "platform": "PokerStars"
+            "platform": self.platform,
+            "stealth_level": self.stealth_level,
+            "table_detected": self.detect_table(screenshot) if screenshot is not None else False,
+            "timestamp": "2024-01-01 12:00:00"  # Placeholder
         }
-    
-    def reset_hand_history(self):
-        """Resetear historial de manos"""
-        self.hand_history = []
-        self.current_hand_id = None
