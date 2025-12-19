@@ -1,4 +1,4 @@
-# calibrate_detector.py - Calibrar detector de mesa automáticamente
+# calibrate_detector.py - Calibrar detector de mesa automáticamente (CORREGIDO)
 import sys
 import os
 import cv2
@@ -11,6 +11,39 @@ print("=" * 60)
 
 # Añadir src al path
 sys.path.insert(0, 'src')
+
+def create_histogram_image(hist_h, cal_dir):
+    """Crear imagen visual del histograma"""
+    # Crear imagen para histograma
+    hist_image = np.zeros((300, 360, 3), dtype=np.uint8)
+    hist_image[:] = (40, 40, 40)  # Fondo gris
+    
+    # Normalizar histograma para visualización
+    hist_normalized = hist_h.copy()
+    cv2.normalize(hist_h, hist_normalized, 0, hist_image.shape[0], cv2.NORM_MINMAX)
+    
+    # Dibujar histograma
+    bin_w = 2
+    for i in range(180):
+        height = int(hist_normalized[i][0])  # 🔥 CORRECCIÓN: Acceder correctamente al array
+        cv2.rectangle(hist_image, 
+                     (i*bin_w, hist_image.shape[0]),
+                     (i*bin_w + bin_w, hist_image.shape[0] - height),
+                     (0, 255, 0) if 35 <= i <= 85 else (100, 100, 100),  # Verde en rango verde
+                     -1)
+    
+    # Añadir etiquetas
+    cv2.putText(hist_image, "Histograma de Colores (HUE)", (10, 20), 
+               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+    cv2.putText(hist_image, "Rango verde: 35-85", (10, 40), 
+               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
+    
+    # Guardar histograma
+    hist_path = os.path.join(cal_dir, "color_histogram.png")
+    cv2.imwrite(hist_path, hist_image)
+    print(f"💾 Histograma guardado: {hist_path}")
+    
+    return hist_path
 
 try:
     from screen_capture.table_detector import TableDetector
@@ -63,7 +96,7 @@ try:
         if hist_h[i] > hist_h[i-1] and hist_h[i] > hist_h[i+1]:
             if hist_h[i] > 1000:  # Umbral mínimo para considerar pico
                 peaks.append(i)
-                peak_values.append(float(hist_h[i]))
+                peak_values.append(float(hist_h[i][0]))  # 🔥 CORRECCIÓN: hist_h[i][0]
     
     print(f"   Picos de color encontrados: {peaks}")
     
@@ -107,7 +140,7 @@ try:
         print(f"💾 Máscara de verde guardada: {mask_path}")
         
         # Crear imagen con histograma
-        self.create_histogram_image(hist_h, cal_dir)
+        create_histogram_image(hist_h, cal_dir)  # 🔥 CORRECCIÓN: Sin self
         
         # Recomendación basada en porcentaje de verde
         print("\n🎯 DIAGNÓSTICO:")
@@ -122,10 +155,6 @@ try:
             print("   - Abre PokerStars en una mesa")
             print("   - Usa el tema CLÁSICO (verde)")
             print("   - Asegúrate de que la mesa sea visible")
-            
-            # Mostrar vista previa de la captura
-            print("\n   👀 ¿Qué capturó el sistema?")
-            print("   Revisa: debug/calibration/detector_calibration.png")
             
         elif green_percent < 3.0:
             print(f"   ⚠️  POCO VERDE ({green_percent:.1f}%)")
@@ -215,34 +244,3 @@ except Exception as e:
     print(f"❌ Error: {e}")
     import traceback
     traceback.print_exc()
-
-def create_histogram_image(self, hist_h, cal_dir):
-    """Crear imagen visual del histograma"""
-    # Crear imagen para histograma
-    hist_image = np.zeros((300, 360, 3), dtype=np.uint8)
-    hist_image[:] = (40, 40, 40)  # Fondo gris
-    
-    # Normalizar histograma para visualización
-    cv2.normalize(hist_h, hist_h, 0, hist_image.shape[0], cv2.NORM_MINMAX)
-    
-    # Dibujar histograma
-    bin_w = 2
-    for i in range(180):
-        cv2.rectangle(hist_image, 
-                     (i*bin_w, hist_image.shape[0]),
-                     (i*bin_w + bin_w, hist_image.shape[0] - int(hist_h[i])),
-                     (0, 255, 0) if 35 <= i <= 85 else (100, 100, 100),  # Verde en rango verde
-                     -1)
-    
-    # Añadir etiquetas
-    cv2.putText(hist_image, "Histograma de Colores (HUE)", (10, 20), 
-               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-    cv2.putText(hist_image, "Rango verde: 35-85", (10, 40), 
-               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
-    
-    # Guardar histograma
-    hist_path = os.path.join(cal_dir, "color_histogram.png")
-    cv2.imwrite(hist_path, hist_image)
-    print(f"💾 Histograma guardado: {hist_path}")
-    
-    return hist_path

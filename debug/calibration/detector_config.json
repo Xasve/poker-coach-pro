@@ -1,0 +1,13 @@
+{
+  "calibration_date": "2025-12-18 21:12:42",
+  "screen_resolution": "1920x1080",
+  "detected_green_percent": 16.059944058641975,
+  "green_pixels": 333019,
+  "total_pixels": 2073600,
+  "green_peaks_found": [
+    68
+  ],
+  "current_threshold": 0.015,
+  "recommended_threshold": 0.008029972029320988,
+  "notes": "Ajustar green_threshold en table_detector.py si es necesario"
+}

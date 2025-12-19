@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-12-18T21:08:26.603389",
+  "runtime_seconds": 7.063101,
+  "captures": 7,
+  "tables_detected": 0,
+  "hands_analyzed": 0,
+  "recommendations_given": 0,
+  "config": {
+    "stealth_level": 1,
+    "confidence_threshold": 0.7,
+    "min_table_detections": 3,
+    "save_debug_images": true,
+    "capture_delay": 0.5,
+    "overlay_opacity": 0.8,
+    "analysis_delay": 0.3,
+    "auto_adjust": true
+  }
+}
