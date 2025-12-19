@@ -102,6 +102,35 @@ class PokerCoachPro:
         
         # Variables para estado del juego
         consecutive_detections = 0
+            def run(self):
+        """Ejecutar el sistema principal"""
+        if not self.initialize_components():
+            print("❌ No se pudieron inicializar componentes")
+            return
+        
+        self.running = True
+        self.stats["start_time"] = datetime.now().isoformat()
+        
+        print(f"\n🔧 CONFIGURACIÓN:")
+        print(f"   Plataforma: {self.platform}")
+        print(f"   Nivel sigilo: {self.stealth_level}")
+        print(f"   Delay captura: {self.adapter.capture_delay}s")
+        print(f"   Umbral confianza: {self.config['confidence_threshold']}")
+        
+        print("\n🎯 INSTRUCCIONES:")
+        print("1. Abre PokerStars y siéntate en una mesa")
+        print("2. Asegúrate de que la mesa sea visible")
+        print("3. El sistema analizará automáticamente")
+        print("4. Presiona Ctrl+C para detener")
+        print("\n⏳ Iniciando en 3 segundos...")
+        time.sleep(3)
+        
+        print("\n📡 INICIANDO ANÁLISIS EN TIEMPO REAL...")
+        print("-" * 50)
+        
+        # Variables para estado del juego
+        consecutive_detections = 0
+        last_detection_time = time.time()
         
         try:
             while self.running:
@@ -119,8 +148,13 @@ class PokerCoachPro:
                 if table_detected:
                     consecutive_detections += 1
                     self.stats["tables_detected"] += 1
+                    last_detection_time = time.time()
                     
-                    print(f"✅ Mesa detectada ({consecutive_detections}/{self.config['min_table_detections']})")
+                    # Mostrar progreso de detecciones consecutivas
+                    if consecutive_detections == 1:
+                        print(f"\n✅ ¡MESA ENCONTRADA! Iniciando análisis...")
+                    else:
+                        print(f"   🔍 Confirmando mesa ({consecutive_detections}/{self.config['min_table_detections']})")
                     
                     # Solo analizar después de varias detecciones consecutivas
                     if consecutive_detections >= self.config["min_table_detections"]:
@@ -128,6 +162,17 @@ class PokerCoachPro:
                         consecutive_detections = 0  # Resetear después de analizar
                 
                 else:
+                    consecutive_detections = 0
+                    
+                    # Mostrar mensaje periódicamente si no hay detección
+                    current_time = time.time()
+                    if current_time - last_detection_time > 5:  # Cada 5 segundos sin detección
+                        if self.stats["captures"] % 5 == 0:
+                            print(f"   🔍 Buscando mesa... ({self.stats['captures']} capturas)")
+                        last_detection_time = current_time
+                
+                # Delay entre iteraciones
+                    time.sleep(self.adapter.capture_delay)
                     consecutive_detections = 0
                     if self.stats["captures"] % 10 == 0:
                         print(f"   🔍 Buscando mesa... ({self.stats['captures']} capturas)")
