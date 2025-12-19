@@ -59,32 +59,36 @@ def check_configuration():
 def show_menu():
     """Mostrar menú principal mejorado"""
     print("\n" + "=" * 60)
-    print(" MENÚ PRINCIPAL - CAPTURA AUTOMÁTICA")
+    print("MENÚ PRINCIPAL - CAPTURA AUTOMÁTICA")
     print("=" * 60)
     
     # Estado del sistema
     sessions_count = count_sessions()
     templates_count = count_templates()
     
-    print("📊 ESTADO DEL SISTEMA:")
+    print(" ESTADO DEL SISTEMA:")
     print(f"   📁 Sesiones: {sessions_count}")
-    print(f"    Templates: {templates_count}")
+    print(f"   🎴 Templates: {templates_count}")
     
-    print("\n OPCIONES DISPONIBLES:")
-    print("1.  Sistema Completo (recomendado)")
-    print("2.  Capturar Templates Básico")
-    print("3.  Clasificar Cartas Existentes")
-    print("4.  Ver Sesiones de Captura")
-    print("5.   Gestionar Sesiones (eliminar/limpiar)")
-    print("6.   Verificar/Reparar Instalación")
-    print("7.  Generar Reportes")
-    print("8.  Ayuda y Tutorial")
-    print("9. 🚪 Salir")
+    print("\nOPCIONES DISPONIBLES:")
+    print("1. Sistema Completo (recomendado)")
+    print("2. Capturar Templates Básico")
+    print("3. Clasificar Cartas Existentes")
+    print("4. Ver Sesiones de Captura")
+    print("5. Gestionar Sesiones (eliminar/limpiar)")
+    print("6. Verificar/Reparar Instalación")
+    print("7. Generar Reportes")
+    print("8. Ayuda y Tutorial")
+    print("9. Salir")
     print("=" * 60)
     
     try:
-        choice = int(input("\n👉 Selecciona opción (1-9): "))
+        choice = int(input("\n Selecciona opción (1-9): "))
         return choice
+    except:
+        return 0
+    except:
+        return 0
     except:
         return 0
 
@@ -144,33 +148,27 @@ def manage_sessions():
                 choice = int(input("\n Selecciona opción (1-7): "))
                 
                 if choice == 1:
-                    manager.list_sessions(show_all=True)
-                elif choice == 2:
-                    sessions = manager.list_sessions(show_all=False, max_display=15)
-                    if sessions:
-                        try:
-                            num = int(input("\nNúmero de sesión a eliminar (0 para cancelar): "))
-                            if 1 <= num <= len(sessions):
-                                manager.delete_session(sessions[num-1]["id"])
-                            elif num != 0:
-                                print(" Número fuera de rango")
-                        except ValueError:
-                            print(" Entrada no válida")
-                elif choice == 3:
-                    manager.delete_empty_sessions()
-                elif choice == 4:
-                    days = input("Días de antigüedad (default 30): ")
-                    days = int(days) if days.isdigit() else 30
-                    manager.delete_old_sessions(days_old=days)
-                elif choice == 5:
-                    manager.show_disk_usage()
-                elif choice == 6:
-                    manager.cleanup_system()
-                elif choice == 7:
-                    print("\n👋 Volviendo al menú principal...")
-                    break
-                else:
-                    print("❌ Opción no válida")
+    run_full_system()
+elif choice == 2:
+    run_basic_capturer()
+elif choice == 3:
+    run_classifier()
+elif choice == 4:
+    view_sessions()
+elif choice == 5:
+    manage_sessions()
+elif choice == 6:
+    repair_installation()
+elif choice == 7:
+    generate_reports()
+elif choice == 8:
+    show_help()
+elif choice == 9:
+    print("\n Gracias por usar Poker Coach Pro!")
+    print("Hasta pronto!")
+    break
+else:
+    print("\n Opción inválida. Por favor, selecciona 1-9.")("\n❌ Opción inválida. Por favor, selecciona 1-9.")("❌ Opción no válida")
                 
                 if choice != 7:
                     input("\n�� Presiona Enter para continuar...")
@@ -669,25 +667,27 @@ def main():
         choice = show_menu()
         
         if choice == 1:
-            run_full_system()
-        elif choice == 2:
-            run_basic_capturer()
-        elif choice == 3:
-            run_classifier()
-        elif choice == 4:
-            view_sessions()
-        elif choice == 8:
-            repair_installation()
-        elif choice == 8:
-            generate_reports()
-        elif choice == 8:
-            show_help()
-        elif choice == 8:
-            print("\n👋 ¡Gracias por usar Poker Coach Pro!")
-            print("¡Hasta pronto!")
-            break
-        else:
-            print("\n❌ Opción inválida. Por favor, selecciona 1-8.")
+    run_full_system()
+elif choice == 2:
+    run_basic_capturer()
+elif choice == 3:
+    run_classifier()
+elif choice == 4:
+    view_sessions()
+elif choice == 5:
+    manage_sessions()
+elif choice == 6:
+    repair_installation()
+elif choice == 7:
+    generate_reports()
+elif choice == 8:
+    show_help()
+elif choice == 9:
+    print("\n Gracias por usar Poker Coach Pro!")
+    print("Hasta pronto!")
+    break
+else:
+    print("\n Opción inválida. Por favor, selecciona 1-9.")("\n❌ Opción inválida. Por favor, selecciona 1-9.")("\n❌ Opción inválida. Por favor, selecciona 1-8.")
         
         if choice != 8:
             input("\nPresiona Enter para continuar...")
@@ -700,5 +700,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Error inesperado: {e}")
         print("💡 Intenta ejecutar la opción 5 (Reparar instalación)")
+
+
 
 

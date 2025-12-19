@@ -8,20 +8,24 @@ sys.path.insert(0, "src")
 def show_menu():
     """Mostrar menú del gestor"""
     print("\n" + "=" * 60)
-    print("  GESTOR DE SESIONES - POKER COACH PRO")
+    print("GESTOR DE SESIONES - POKER COACH PRO")
     print("=" * 60)
-    print("1.  Listar todas las sesiones")
-    print("2.   Eliminar sesión específica")
-    print("3.   Eliminar sesiones vacías (< 5 imágenes)")
-    print("4.   Eliminar sesiones antiguas (> 30 días)")
-    print("5. 💾 Ver uso de disco")
-    print("6. 🧹 Limpieza completa")
-    print("7. 🔙 Salir")
+    print("1. Listar todas las sesiones")
+    print("2. Eliminar sesión específica")
+    print("3. Eliminar sesiones vacías (< 5 imágenes)")
+    print("4. Eliminar sesiones antiguas (> 30 días)")
+    print("5. Ver uso de disco")
+    print("6. Limpieza completa")
+    print("7. Salir")
     print("=" * 60)
     
     try:
-        choice = int(input("\n👉 Selecciona opción (1-7): "))
+        choice = int(input("\n Selecciona opción (1-7): "))
         return choice
+    except:
+        return 0
+    except:
+        return 0
     except:
         return 0
 
@@ -87,3 +91,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\n\n  Gestión de sesiones interrumpida")
+
+
