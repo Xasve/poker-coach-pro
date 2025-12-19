@@ -59,21 +59,191 @@ def check_configuration():
 def show_menu():
     """Mostrar menú principal mejorado"""
     print("\n" + "=" * 60)
-    print("🎮 MENÚ PRINCIPAL - CAPTURA AUTOMÁTICA")
+    print(" MENÚ PRINCIPAL - CAPTURA AUTOMÁTICA")
     print("=" * 60)
-    print("1. 🚀 Sistema Completo (recomendado)")
-    print("2. 📸 Capturar Templates Básico")
-    print("3. 🎯 Clasificar Cartas Existentes")
-    print("4. �� Ver Sesiones de Captura")
-    print("5. ⚙️  Verificar/Reparar Instalación")
-    print("6. 📊 Generar Reportes")
-    print("7. ❓ Ayuda y Tutorial")
-    print("8. 🚪 Salir")
+    
+    # Estado del sistema
+    sessions_count = count_sessions()
+    templates_count = count_templates()
+    
+    print("📊 ESTADO DEL SISTEMA:")
+    print(f"   📁 Sesiones: {sessions_count}")
+    print(f"    Templates: {templates_count}")
+    
+    print("\n OPCIONES DISPONIBLES:")
+    print("1.  Sistema Completo (recomendado)")
+    print("2.  Capturar Templates Básico")
+    print("3.  Clasificar Cartas Existentes")
+    print("4.  Ver Sesiones de Captura")
+    print("5.   Gestionar Sesiones (eliminar/limpiar)")
+    print("6.   Verificar/Reparar Instalación")
+    print("7.  Generar Reportes")
+    print("8.  Ayuda y Tutorial")
+    print("9. 🚪 Salir")
     print("=" * 60)
     
     try:
-        choice = int(input("\n👉 Selecciona opción (1-8): "))
+        choice = int(input("\n👉 Selecciona opción (1-9): "))
         return choice
+    except:
+        return 0
+
+def count_sessions():
+    """Contar sesiones disponibles"""
+    base_path = "data/card_templates/auto_captured"
+    if not os.path.exists(base_path):
+        return 0
+    
+    sessions = [d for d in os.listdir(base_path) 
+               if os.path.isdir(os.path.join(base_path, d))]
+    return len(sessions)
+
+def count_templates():
+    """Contar templates organizados"""
+    base_path = "data/card_templates/pokerstars_real"
+    if not os.path.exists(base_path):
+        return 0
+    
+    total = 0
+    suits = ['hearts', 'diamonds', 'clubs', 'spades']
+    for suit in suits:
+        suit_path = os.path.join(base_path, suit)
+        if os.path.exists(suit_path):
+            count = len([f for f in os.listdir(suit_path) 
+                       if f.endswith(('.png', '.jpg', '.jpeg'))])
+            total += count
+    
+    return total
+
+def manage_sessions():
+    """Gestión completa de sesiones"""
+    print("\n" + "=" * 60)
+    print("🗑️  GESTIÓN DE SESIONES DE CAPTURA")
+    print("=" * 60)
+    
+    try:
+        from src.session_manager import SessionManager
+        manager = SessionManager()
+        manager.main()
+    except ImportError as e:
+        print(f" Error importando gestor de sesiones: {e}")
+        print("\n El módulo session_manager.py no está disponible")
+        print("   Usando gestión básica...")
+        basic_session_management()
+
+def basic_session_management():
+    """Gestión básica de sesiones (fallback)"""
+    print("\n  GESTIÓN BÁSICA DE SESIONES")
+    print("=" * 50)
+    
+    base_path = "data/card_templates/auto_captured"
+    
+    if not os.path.exists(base_path):
+        print(" No hay sesiones de captura")
+        return
+    
+    sessions = []
+    for item in sorted(os.listdir(base_path), reverse=True):
+        session_path = os.path.join(base_path, item)
+        if os.path.isdir(session_path):
+            # Contar imágenes
+            raw_path = os.path.join(session_path, "raw_captures")
+            image_count = 0
+            if os.path.exists(raw_path):
+                image_count = len([f for f in os.listdir(raw_path) 
+                                 if f.endswith(('.png', '.jpg'))])
+            
+            # Calcular tamaño
+            size_mb = 0
+            if os.path.exists(session_path):
+                total_size = 0
+                for dirpath, dirnames, filenames in os.walk(session_path):
+                    for f in filenames:
+                        fp = os.path.join(dirpath, f)
+                        total_size += os.path.getsize(fp)
+                size_mb = round(total_size / (1024 * 1024), 2)
+            
+            sessions.append({
+                "id": item,
+                "image_count": image_count,
+                "size_mb": size_mb
+            })
+    
+    if not sessions:
+        print(" No hay sesiones de captura")
+        return
+    
+    print(f"\n SESIONES DISPONIBLES ({len(sessions)}):")
+    print("-" * 60)
+    
+    for i, session in enumerate(sessions[:15], 1):
+        print(f"{i:2}. {session['id']} - {session['image_count']} imágenes ({session['size_mb']} MB)")
+    
+    if len(sessions) > 15:
+        print(f"   ... y {len(sessions) - 15} sesiones más")
+    
+    print("\n🎯 OPCIONES:")
+    print("   d [número] - Eliminar sesión específica")
+    print("   v - Ver todas las sesiones")
+    print("   c - Ver espacio total usado")
+    print("   Enter - Volver")
+    
+    choice = input("\n Opción: ").strip().lower()
+    
+    if choice.startswith('d ') and choice[2:].isdigit():
+        idx = int(choice[2:]) - 1
+        if 0 <= idx < len(sessions):
+            delete_session(sessions[idx]["id"])
+    elif choice == 'v':
+        for session in sessions:
+            print(f"    {session['id']}: {session['image_count']} imágenes, {session['size_mb']} MB")
+    elif choice == 'c':
+        total_size = sum(s["size_mb"] for s in sessions)
+        total_images = sum(s["image_count"] for s in sessions)
+        print(f"\n USO TOTAL:")
+        print(f"   Sesiones: {len(sessions)}")
+        print(f"   Imágenes: {total_images}")
+        print(f"   Espacio: {total_size:.1f} MB")
+
+def delete_session(session_id):
+    """Eliminar una sesión específica"""
+    session_path = f"data/card_templates/auto_captured/{session_id}"
+    
+    if not os.path.exists(session_path):
+        print(f"❌ Sesión no encontrada: {session_id}")
+        return
+    
+    print(f"\n⚠️  ELIMINAR SESIÓN: {session_id}")
+    print(f"   Ruta: {session_path}")
+    
+    # Contar imágenes
+    raw_path = os.path.join(session_path, "raw_captures")
+    image_count = 0
+    if os.path.exists(raw_path):
+        image_count = len([f for f in os.listdir(raw_path) if f.endswith(('.png', '.jpg'))])
+    
+    print(f"   Imágenes: {image_count}")
+    
+    confirm = input("\n Estás SEGURO? (escribe 'ELIMINAR' para confirmar): ")
+    
+    if confirm != "ELIMINAR":
+        print(" Eliminación cancelada")
+        return
+    
+    try:
+        import shutil
+        # Crear carpeta de backup
+        backup_base = "data/card_templates/deleted_sessions"
+        os.makedirs(backup_base, exist_ok=True)
+        backup_path = os.path.join(backup_base, session_id)
+        
+        # Mover a backup en lugar de eliminar
+        shutil.move(session_path, backup_path)
+        print(f" Sesión movida a backup: {backup_path}")
+        
+    except Exception as e:
+        print(f" Error eliminando sesión: {e}")
+        print(" Intenta eliminar manualmente la carpeta")
     except:
         return 0
 
@@ -453,11 +623,11 @@ def main():
             run_classifier()
         elif choice == 4:
             view_sessions()
-        elif choice == 5:
+        elif choice == 8:
             repair_installation()
-        elif choice == 6:
+        elif choice == 8:
             generate_reports()
-        elif choice == 7:
+        elif choice == 8:
             show_help()
         elif choice == 8:
             print("\n👋 ¡Gracias por usar Poker Coach Pro!")
@@ -477,3 +647,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Error inesperado: {e}")
         print("💡 Intenta ejecutar la opción 5 (Reparar instalación)")
+
