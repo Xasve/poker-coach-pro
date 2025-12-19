@@ -86,7 +86,7 @@ class PokerStarsAdapter:
         """Inicializar todos los componentes de captura"""
         try:
             # Sistema de captura stealth
-            self.capture_system = StealthScreenCapture("POKERSTARS", self.stealth_level)
+            self.capture_system = StealthScreenCapture("pokerstars", self.stealth_level)
             
             # Reconocedor de cartas específico para PokerStars
             self.card_recognizer = CardRecognizer("pokerstars", self.stealth_level)

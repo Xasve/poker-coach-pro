@@ -1,7 +1,18 @@
 """
-Módulo de captura de pantalla - Poker Coach Pro
+Screen Capture Module for Poker Coach Pro
 """
-__version__ = "1.0.0"
-__author__ = "Poker Coach Pro Team"
+from .stealth_capture import StealthScreenCapture
+from .table_detector import TableDetector
+from .card_recognizer import CardRecognizer
+from .text_ocr import TextOCR
 
-# Las importaciones se harán de forma perezosa para evitar problemas
+__all__ = [
+    'StealthScreenCapture',
+    'TableDetector',
+    'CardRecognizer',
+    'TextOCR'
+]
+
+__version__ = "2.0.0"
+
+print("✅ screen_capture module loaded")

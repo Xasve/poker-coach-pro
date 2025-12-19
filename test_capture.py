@@ -1,61 +1,54 @@
 #!/usr/bin/env python3
 """
-Test básico de captura de pantalla
+Test script for screen capture functionality
 """
 import sys
 import os
+
+# Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from screen_capture.stealth_capture import StealthScreenCapture
+from screen_capture.stealth_capture import StealthScreenCapture, test_capture_system
 import cv2
 import time
 
-def test_capture():
+def main():
     print("=" * 60)
-    print("📸 PRUEBA DE CAPTURA DE PANTALLA")
+    print("📸 TESTING SCREEN CAPTURE SYSTEM")
     print("=" * 60)
     
-    print("\n1. Creando capturador...")
-    capture = StealthScreenCapture()
+    # Option 1: Use test function
+    print("\nOption 1: Running built-in test...")
+    test_capture_system()
     
-    print("2. Capturando pantalla...")
+    # Option 2: Manual test
+    print("\nOption 2: Manual test...")
+    capture = StealthScreenCapture(platform="pokerstars", stealth_level="MEDIUM")
     
-    try:
-        # Intentar capturar
-        screenshot = capture.capture_screen()
+    if capture.initialize():
+        print("✅ Capture system initialized")
         
-        if screenshot is not None and screenshot.size > 0:
-            print(f"✅ Captura exitosa!")
-            print(f"   Tamaño: {screenshot.shape}")
-            print(f"   Tipo: {screenshot.dtype}")
+        # Capture and display
+        screenshot = capture.capture_screen()
+        if screenshot is not None:
+            print(f"✅ Screenshot captured: {screenshot.shape}")
             
-            # Guardar para revisión
-            debug_dir = "debug_captures"
-            os.makedirs(debug_dir, exist_ok=True)
+            # Save
+            os.makedirs("debug", exist_ok=True)
+            cv2.imwrite("debug/test_manual.png", screenshot)
+            print("💾 Saved to: debug/test_manual.png")
             
-            filename = os.path.join(debug_dir, "test_capture.png")
-            cv2.imwrite(filename, screenshot)
-            print(f"💾 Guardado como: {filename}")
-            
-            # Mostrar info adicional
-            height, width, channels = screenshot.shape
-            print(f"\n📊 Información:")
-            print(f"   Ancho: {width} px")
-            print(f"   Alto: {height} px")
-            print(f"   Canales: {channels}")
-            print(f"   Tamaño: {screenshot.nbytes / 1024:.1f} KB")
-            
+            # Display info
+            height, width = screenshot.shape[:2]
+            print(f"📊 Resolution: {width}x{height}")
         else:
-            print("❌ Captura fallida o vacía")
-            
-    except Exception as e:
-        print(f"❌ Error durante la captura: {e}")
-        import traceback
-        traceback.print_exc()
+            print("❌ Failed to capture screenshot")
+    else:
+        print("❌ Failed to initialize capture system")
     
     print("\n" + "=" * 60)
-    print("✅ Prueba completada")
+    print("✅ Test completed")
     print("=" * 60)
 
 if __name__ == "__main__":
-    test_capture()
+    main()
