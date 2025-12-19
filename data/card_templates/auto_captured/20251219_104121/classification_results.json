@@ -1,0 +1,152 @@
+{
+  "session_path": "data/card_templates/auto_captured\\20251219_104121",
+  "classification_date": "2025-12-19T10:46:37.740490",
+  "total_cards": 59,
+  "suits_distribution": {
+    "spades": 57,
+    "clubs": 1,
+    "diamonds": 1
+  },
+  "sample_cards": [
+    {
+      "filename": "capture_0000_104150_245.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.031181153094733342,
+        "brightness": 90.37475578833603,
+        "mean_r": 93.03767614415763,
+        "mean_g": 94.61467036621357,
+        "mean_b": 62.01669472502806,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0001_104152_275.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.031181153094733342,
+        "brightness": 90.86726316664588,
+        "mean_r": 93.08885147774036,
+        "mean_g": 95.46350854221225,
+        "mean_b": 61.83708484017126,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0002_104154_312.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.031181153094733342,
+        "brightness": 90.07479631708027,
+        "mean_r": 92.59087271895913,
+        "mean_g": 94.36524712141996,
+        "mean_b": 61.848791412063015,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0003_104156_341.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.031181153094733342,
+        "brightness": 90.58784345512741,
+        "mean_r": 93.24139543583988,
+        "mean_g": 94.82670844244919,
+        "mean_b": 62.256333915284536,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0004_104158_372.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.031181153094733342,
+        "brightness": 91.08035083343725,
+        "mean_r": 93.29257076942262,
+        "mean_g": 95.67554661844785,
+        "mean_b": 62.076724030427734,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0005_104200_402.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.031181153094733342,
+        "brightness": 91.49720455584654,
+        "mean_r": 93.8411169306231,
+        "mean_g": 96.07589786756454,
+        "mean_b": 62.223614748306105,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0006_104202_427.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.031181153094733342,
+        "brightness": 91.49720455584654,
+        "mean_r": 93.8411169306231,
+        "mean_g": 96.07589786756454,
+        "mean_b": 62.223614748306105,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0007_104204_463.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.0,
+        "brightness": 87.97737145113689,
+        "mean_r": 89.36639023984704,
+        "mean_g": 92.999028349337,
+        "mean_b": 58.954072619196076,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0008_104206_493.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.0,
+        "brightness": 88.27937814357567,
+        "mean_r": 89.814565407158,
+        "mean_g": 93.25081057488465,
+        "mean_b": 59.12465186847903,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0009_104208_517.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.0,
+        "brightness": 88.27937814357567,
+        "mean_r": 89.814565407158,
+        "mean_g": 93.25081057488465,
+        "mean_b": 59.12465186847903,
+        "is_red_suit": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "session_path": "data/card_templates/auto_captured\\20251219_102529",
+  "classification_date": "2025-12-19T10:46:39.114906",
+  "total_cards": 59,
+  "suits_distribution": {
+    "spades": 59
+  },
+  "sample_cards": [
+    {
+      "filename": "capture_0000_102531_568.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.0,
+        "brightness": 24.0,
+        "mean_r": 24.0,
+        "mean_g": 24.0,
+        "mean_b": 24.0,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0001_102533_587.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.0,
+        "brightness": 24.0,
+        "mean_r": 24.0,
+        "mean_g": 24.0,
+        "mean_b": 24.0,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0002_102535_614.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.0,
+        "brightness": 24.0,
+        "mean_r": 24.0,
+        "mean_g": 24.0,
+        "mean_b": 24.0,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0003_102537_642.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.0,
+        "brightness": 24.0,
+        "mean_r": 24.0,
+        "mean_g": 24.0,
+        "mean_b": 24.0,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0004_102539_659.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.007289977968990315,
+        "brightness": 98.71555576339527,
+        "mean_r": 106.84063889928088,
+        "mean_g": 100.38589599700711,
+        "mean_b": 68.7716672901858,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0005_102541_684.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.007289977968990315,
+        "brightness": 98.20268009311219,
+        "mean_r": 105.9519682420917,
+        "mean_g": 99.75557530032839,
+        "mean_b": 69.85942241343476,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0006_102543_714.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.031201937066134597,
+        "brightness": 90.80515546410608,
+        "mean_r": 93.45595876460074,
+        "mean_g": 95.04526748971193,
+        "mean_b": 62.476259508666914,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0007_102545_744.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.006276759363179116,
+        "brightness": 99.5836295049258,
+        "mean_r": 100.90261670199942,
+        "mean_g": 104.22698175167311,
+        "mean_b": 72.6895965831151,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0008_102547_770.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.007315957933241884,
+        "brightness": 99.25306563578168,
+        "mean_r": 101.39791952446274,
+        "mean_g": 103.5288741322692,
+        "mean_b": 72.0937305150268,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "capture_0009_102549_796.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 2.078397140125535e-05,
+        "brightness": 88.71157043687909,
+        "mean_r": 90.23553435590473,
+        "mean_g": 93.68310159205221,
+        "mean_b": 59.58406077233238,
+        "is_red_suit": false
+      }
+    }
+  ]
+}

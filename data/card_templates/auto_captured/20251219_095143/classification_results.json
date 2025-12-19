@@ -1,0 +1,38 @@
+{
+  "session_path": "data/card_templates/auto_captured\\20251219_095143",
+  "classification_date": "2025-12-19T10:46:40.608418",
+  "total_cards": 2,
+  "suits_distribution": {
+    "spades": 2
+  },
+  "sample_cards": [
+    {
+      "filename": "card_0000_095234_687.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.0,
+        "brightness": 85.21673005777944,
+        "mean_r": 86.20915949619653,
+        "mean_g": 90.21245375566363,
+        "mean_b": 57.248368458245004,
+        "is_red_suit": false
+      }
+    },
+    {
+      "filename": "card_0000_095501_877.png",
+      "suit": "spades",
+      "value": "unknown",
+      "confidence": 0.7,
+      "features": {
+        "red_ratio": 0.031181153094733342,
+        "brightness": 89.81161408321903,
+        "mean_r": 92.9064773246872,
+        "mean_g": 93.661413517895,
+        "mean_b": 62.31604626512034,
+        "is_red_suit": false
+      }
+    }
+  ]
+}
