@@ -1,4 +1,4 @@
-﻿# auto_template_capturer.py - Sistema automático de captura
+﻿# auto_template_capturer.py - VERSIÓN CORREGIDA
 import cv2
 import numpy as np
 import os
@@ -9,13 +9,14 @@ import mss
 from pathlib import Path
 
 class AutoTemplateCapturer:
-    """Capturador automático de templates de cartas"""
+    """Capturador automático de templates de cartas - VERSIÓN CORREGIDA"""
     
     def __init__(self, config_path="config/pokerstars_coords.json"):
         self.config_path = config_path
         self.regions = self.load_regions()
         self.captured_count = 0
         self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.session_folder = None
         
     def load_regions(self):
         """Cargar regiones de captura desde configuración"""
@@ -26,23 +27,38 @@ class AutoTemplateCapturer:
         return {}
     
     def setup_capture_folders(self):
-        """Configurar estructura de carpetas para captura"""
+        """Configurar estructura de carpetas para captura - VERSIÓN SIMPLIFICADA"""
         base_path = "data/card_templates/auto_captured"
         
+        # SOLO DOS CARPETAS: raw_captures y reports
         folders = [
-            "session_data",
             "raw_captures", 
-            "processed_cards",
-            "classified",
-            "training_data"
+            "reports"
         ]
         
-        for folder in folders:
-            path = os.path.join(base_path, self.session_id, folder)
-            os.makedirs(path, exist_ok=True)
-            print(f" {path}")
-        
+        # Crear carpeta de sesión principal
         self.session_folder = os.path.join(base_path, self.session_id)
+        os.makedirs(self.session_folder, exist_ok=True)
+        
+        # Crear subcarpetas
+        for folder in folders:
+            path = os.path.join(self.session_folder, folder)
+            os.makedirs(path, exist_ok=True)
+        
+        print(f" Sesión creada: {self.session_folder}")
+        
+        # Guardar información básica de la sesión
+        session_info = {
+            "session_id": self.session_id,
+            "created_at": datetime.now().isoformat(),
+            "folders": folders,
+            "regions_used": list(self.regions.keys()) if self.regions else []
+        }
+        
+        info_path = os.path.join(self.session_folder, "session_info.json")
+        with open(info_path, 'w') as f:
+            json.dump(session_info, f, indent=2)
+        
         return self.session_folder
     
     def capture_table_screenshot(self):
@@ -50,164 +66,97 @@ class AutoTemplateCapturer:
         try:
             with mss.mss() as sct:
                 if not self.regions:
-                    print("❌ No hay regiones configuradas")
-                    return None
-                
-                mesa = self.regions.get("mesa", [0, 0, 1920, 1080])
-                monitor = {
-                    "top": mesa[1],
-                    "left": mesa[0],
-                    "width": mesa[2],
-                    "height": mesa[3]
-                }
+                    print("  Usando pantalla completa (regiones no configuradas)")
+                    monitor = sct.monitors[1]
+                else:
+                    mesa = self.regions.get("mesa", sct.monitors[1])
+                    if isinstance(mesa, list) and len(mesa) >= 4:
+                        monitor = {
+                            "top": mesa[1],
+                            "left": mesa[0],
+                            "width": min(mesa[2], 800),  # Limitar tamaño para performance
+                            "height": min(mesa[3], 600)
+                        }
+                    else:
+                        monitor = sct.monitors[1]
                 
                 screenshot = np.array(sct.grab(monitor))
                 return screenshot
         except Exception as e:
-            print(f" Error capturando pantalla: {e}")
+            print(f"❌ Error capturando pantalla: {e}")
             return None
     
-    def detect_card_candidates(self, screenshot):
-        """Detectar posibles cartas en la captura"""
-        if screenshot is None:
-            return []
-        
-        # Convertir a escala de grises
-        gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
-        
-        # Aplicar filtros para encontrar cartas
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        edges = cv2.Canny(blurred, 50, 150)
-        
-        # Dilatar para conectar bordes
-        kernel = np.ones((3, 3), np.uint8)
-        dilated = cv2.dilate(edges, kernel, iterations=1)
-        
-        # Encontrar contornos
-        contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, 
-                                      cv2.CHAIN_APPROX_SIMPLE)
-        
-        candidates = []
-        for contour in contours:
-            area = cv2.contourArea(contour)
-            x, y, w, h = cv2.boundingRect(contour)
-            
-            # Filtrar por tamaño y relación de aspecto (cartas ~70x95)
-            if 3000 < area < 8000 and 0.6 < w/h < 0.9:
-                candidates.append({
-                    "contour": contour,
-                    "bbox": (x, y, w, h),
-                    "area": area,
-                    "image": screenshot[y:y+h, x:x+w]
-                })
-        
-        print(f" Candidatos detectados: {len(candidates)}")
-        return candidates
-    
-    def extract_card_features(self, card_image):
-        """Extraer características de una carta para identificación"""
-        if card_image.size == 0:
-            return None
-        
-        # Redimensionar a tamaño estándar
-        standard_size = (70, 95)
-        resized = cv2.resize(card_image, standard_size)
-        
-        # Convertir a diferentes espacios de color
-        gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
-        hsv = cv2.cvtColor(resized, cv2.COLOR_BGR2HSV)
-        
-        # Detectar esquinas
-        corners = cv2.goodFeaturesToTrack(gray, 4, 0.01, 10)
-        
-        # Calcular histogramas
-        hist_bgr = []
-        for i in range(3):  # B, G, R
-            hist = cv2.calcHist([resized], [i], None, [32], [0, 256])
-            hist_bgr.append(hist.flatten())
-        
-        # Características combinadas
-        features = {
-            "size": card_image.shape[:2],
-            "aspect_ratio": card_image.shape[1] / card_image.shape[0],
-            "corners_count": len(corners) if corners is not None else 0,
-            "histograms": hist_bgr,
-            "mean_color": np.mean(card_image, axis=(0, 1)).tolist()
-        }
-        
-        return features
-    
-    def save_card_candidate(self, card_image, candidate_info):
-        """Guardar candidato a carta"""
-        timestamp = datetime.now().strftime("%H%M%S_%f")[:-3]
-        filename = f"card_{self.captured_count:04d}_{timestamp}.png"
-        
-        # Guardar en raw_captures
-        raw_path = os.path.join(self.session_folder, "raw_captures", filename)
-        cv2.imwrite(raw_path, card_image)
-        
-        # Guardar metadatos
-        metadata = {
-            "filename": filename,
-            "candidate_id": self.captured_count,
-            "timestamp": datetime.now().isoformat(),
-            "bbox": candidate_info["bbox"],
-            "area": candidate_info["area"],
-            "features": self.extract_card_features(card_image),
-            "session_id": self.session_id
-        }
-        
-        metadata_path = raw_path.replace('.png', '.json')
-        with open(metadata_path, 'w') as f:
-            json.dump(metadata, f, indent=2)
-        
-        self.captured_count += 1
-        print(f" Guardado: {filename}")
-        
-        return raw_path, metadata
-    
-    def continuous_capture_mode(self, duration_seconds=300, interval=2):
-        """Modo de captura continua"""
-        print(f"\n MODO CAPTURA CONTINUA")
+    def simple_capture_mode(self, duration_seconds=120, interval=2):
+        """Modo de captura simple y robusto"""
+        print(f"\n INICIANDO CAPTURA SIMPLE")
         print(f"   Duración: {duration_seconds} segundos")
         print(f"   Intervalo: {interval} segundos")
-        print("   Presiona Ctrl+C para detener")
         print("=" * 50)
         
+        # Configurar carpetas
         self.setup_capture_folders()
         
         start_time = time.time()
-        capture_cycles = 0
+        last_save_time = time.time()
         
         try:
-            while time.time() - start_time < duration_seconds:
-                capture_cycles += 1
-                print(f"\n Ciclo {capture_cycles}")
+            with mss.mss() as sct:
+                # Configurar monitor
+                if not self.regions:
+                    monitor = sct.monitors[1]
+                else:
+                    mesa = self.regions.get("mesa", sct.monitors[1])
+                    if isinstance(mesa, list) and len(mesa) >= 4:
+                        monitor = {
+                            "top": mesa[1],
+                            "left": mesa[0],
+                            "width": min(mesa[2], 800),
+                            "height": min(mesa[3], 600)
+                        }
+                    else:
+                        monitor = sct.monitors[1]
                 
-                # Capturar pantalla
-                screenshot = self.capture_table_screenshot()
-                if screenshot is None:
-                    print("    Fallo captura, esperando...")
-                    time.sleep(interval)
-                    continue
-                
-                # Detectar candidatos
-                candidates = self.detect_card_candidates(screenshot)
-                
-                # Procesar cada candidato
-                for candidate in candidates:
-                    card_img = candidate["image"]
+                while time.time() - start_time < duration_seconds:
+                    elapsed = time.time() - start_time
+                    remaining = duration_seconds - elapsed
                     
-                    # Filtrar imágenes muy oscuras o claras
-                    mean_brightness = np.mean(cv2.cvtColor(card_img, cv2.COLOR_BGR2GRAY))
-                    if 30 < mean_brightness < 220:  # Rango de brillo aceptable
-                        self.save_card_candidate(card_img, candidate)
-                
-                print(f"    Total capturadas: {self.captured_count}")
-                
-                # Esperar intervalo
-                time.sleep(interval)
-                
+                    # Actualizar progreso
+                    print(f"\r  {int(elapsed)}s / {duration_seconds}s |  {self.captured_count} imágenes", end="")
+                    
+                    # Capturar cada 'interval' segundos
+                    if time.time() - last_save_time >= interval:
+                        try:
+                            # Capturar pantalla
+                            screenshot = np.array(sct.grab(monitor))
+                            
+                            if screenshot is not None and screenshot.size > 0:
+                                # Guardar imagen
+                                timestamp = datetime.now().strftime("%H%M%S_%f")[:-3]
+                                filename = f"capture_{self.captured_count:04d}_{timestamp}.png"
+                                filepath = os.path.join(self.session_folder, "raw_captures", filename)
+                                
+                                cv2.imwrite(filepath, screenshot)
+                                
+                                # Guardar metadatos básicos
+                                metadata = {
+                                    "filename": filename,
+                                    "timestamp": datetime.now().isoformat(),
+                                    "capture_number": self.captured_count,
+                                    "elapsed_seconds": elapsed
+                                }
+                                
+                                metadata_path = filepath.replace('.png', '.json')
+                                with open(metadata_path, 'w') as f:
+                                    json.dump(metadata, f, indent=2)
+                                
+                                self.captured_count += 1
+                                last_save_time = time.time()
+                        
+                        except Exception as e:
+                            print(f"\n  Error en captura: {e}")
+                    
+                    time.sleep(0.1)  # Pequeña pausa para no saturar CPU
+        
         except KeyboardInterrupt:
             print("\n\n  Captura interrumpida por usuario")
         
@@ -215,49 +164,51 @@ class AutoTemplateCapturer:
             self.generate_session_report()
     
     def generate_session_report(self):
-        """Generar reporte de la sesión de captura"""
+        """Generar reporte básico de la sesión"""
         report = {
             "session_id": self.session_id,
-            "start_time": self.session_id,
+            "start_time": self.session_id,  # El ID contiene la fecha/hora
             "end_time": datetime.now().strftime("%Y%m%d_%H%M%S"),
-            "total_captured": self.captured_count,
+            "total_captures": self.captured_count,
             "session_folder": self.session_folder,
-            "regions_used": self.regions,
-            "system_info": {
-                "opencv_version": cv2.__version__,
-                "numpy_version": np.__version__
+            "capture_settings": {
+                "duration_seconds": "120",  # Podría ser configurable
+                "interval_seconds": "2"
             }
         }
         
-        report_path = os.path.join(self.session_folder, "session_report.json")
+        report_path = os.path.join(self.session_folder, "reports", "session_report.json")
         with open(report_path, 'w') as f:
             json.dump(report, f, indent=2)
         
-        print(f"\n REPORTE DE SESIÓN:")
-        print(f"   📁 Carpeta: {self.session_folder}")
-        print(f"   📸 Cartas capturadas: {self.captured_count}")
+        print(f"\n\n REPORTE DE SESIÓN:")
+        print(f"    Carpeta: {self.session_folder}")
+        print(f"    Imágenes capturadas: {self.captured_count}")
         print(f"    Reporte: {report_path}")
         
         return report_path
+    
+    def continuous_capture_mode(self, duration_seconds=300, interval=1.5):
+        """Modo de captura continua (alias para compatibilidad)"""
+        self.simple_capture_mode(duration_seconds, interval)
 
 # Función principal
 def main():
-    """Función principal del capturador automático"""
-    print(" CAPTURADOR AUTOMÁTICO DE TEMPLATES")
+    """Función principal del capturador"""
+    print(" CAPTURADOR SIMPLIFICADO DE TEMPLATES")
     print("=" * 60)
     
     capturer = AutoTemplateCapturer()
     
     if not capturer.regions:
-        print(" No hay configuración de PokerStars")
-        print("   Ejecuta primero: python detect_coords.py")
-        return
+        print("  No hay configuración específica de PokerStars")
+        print("   Usando pantalla completa...")
     
-    print(" Configuración cargada")
-    print(f"   Regiones: {len(capturer.regions)}")
+    print(" Capturador inicializado")
+    print(f"   Sesión ID: {capturer.session_id}")
     
-    # Iniciar captura continua (5 minutos por defecto)
-    capturer.continuous_capture_mode(duration_seconds=300, interval=2)
+    # Iniciar captura (2 minutos por defecto)
+    capturer.simple_capture_mode(duration_seconds=120, interval=2)
 
 if __name__ == "__main__":
     main()

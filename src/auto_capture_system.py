@@ -1,4 +1,4 @@
-﻿# auto_capture_system.py - Versión corregida y robusta
+﻿# auto_capture_system.py - VERSIÓN CON MEJOR INTEGRACIÓN
 import os
 import sys
 import time
@@ -8,21 +8,13 @@ from datetime import datetime
 # Añadir src al path
 sys.path.insert(0, "src")
 
-# Manejo de importaciones condicionales
-try:
-    import cv2
-    import numpy as np
-    CV2_AVAILABLE = True
-except ImportError:
-    CV2_AVAILABLE = False
-    print("⚠️  OpenCV no disponible")
-
+# Manejo de importaciones
 try:
     from card_detector import CardDetector
     DETECTOR_AVAILABLE = True
 except ImportError as e:
     DETECTOR_AVAILABLE = False
-    print(f"⚠️  CardDetector no disponible: {e}")
+    print(f"  CardDetector no disponible: {e}")
 
 try:
     from auto_template_capturer import AutoTemplateCapturer
@@ -36,498 +28,476 @@ try:
     CLASSIFIER_AVAILABLE = True
 except ImportError as e:
     CLASSIFIER_AVAILABLE = False
-    print(f"⚠️  Clasificador no disponible: {e}")
+    print(f"  Clasificador no disponible: {e}")
 
 class AutoCaptureSystem:
-    """Sistema completo de captura automática - Versión robusta"""
+    """Sistema completo de captura automática - VERSIÓN MEJORADA"""
     
     def __init__(self):
-        self.mode = "BASIC"
-        self.detector = None
+        self.session_id = None
         self.capturer = None
         self.classifier = None
-        self.session_id = None
         
-        # Inicializar componentes disponibles
-        self.initialize_components()
+        self.initialize_system()
     
-    def initialize_components(self):
-        """Inicializar componentes disponibles"""
-        print("🔄 INICIALIZANDO COMPONENTES...")
+    def initialize_system(self):
+        """Inicializar sistema"""
+        print("🔄 INICIALIZANDO SISTEMA...")
         
-        # Verificar configuración mínima
+        # Verificar configuración
         config_file = "config/pokerstars_coords.json"
         if not os.path.exists(config_file):
             print("⚠️  No hay configuración de PokerStars")
             print("💡 Ejecuta: python detect_coords.py")
-            self.mode = "UNCONFIGURED"
-            return False
+            print("   O usa pantalla completa (modo básico)")
         
         # Crear carpetas necesarias
-        os.makedirs("data/card_templates/pokerstars_real", exist_ok=True)
-        os.makedirs("data/card_templates/auto_captured", exist_ok=True)
+        self.create_required_folders()
         
-        # Inicializar componentes según disponibilidad
-        if DETECTOR_AVAILABLE:
-            try:
-                self.detector = CardDetector()
-                print("✅ Detector de cartas: OK")
-            except:
-                print("⚠️  Error inicializando detector")
-        
+        # Inicializar componentes
         if CAPTURER_AVAILABLE:
             try:
                 self.capturer = AutoTemplateCapturer()
-                print("✅ Capturador automático: OK")
-            except:
-                print("⚠️  Error inicializando capturador")
+                print(" Capturador: LISTO")
+            except Exception as e:
+                print(f"  Error inicializando capturador: {e}")
         
         if CLASSIFIER_AVAILABLE:
             try:
                 self.classifier = CardClassifier()
-                print("✅ Clasificador: OK")
-            except:
-                print("⚠️  Error inicializando clasificador")
+                print(" Clasificador: LISTO")
+            except Exception as e:
+                print(f"  Error inicializando clasificador: {e}")
         
-        print(f"\n🎯 MODO: {self.mode}")
-        return True
+        print(f"\n SISTEMA INICIALIZADO")
+        print(f"   Capturador: {'' if self.capturer else ''}")
+        print(f"   Clasificador: {'' if self.classifier else ''}")
+    
+    def create_required_folders(self):
+        """Crear carpetas necesarias"""
+        folders = [
+            "data/card_templates/pokerstars_real",
+            "data/card_templates/pokerstars_real/hearts",
+            "data/card_templates/pokerstars_real/diamonds",
+            "data/card_templates/pokerstars_real/clubs",
+            "data/card_templates/pokerstars_real/spades",
+            "data/card_templates/auto_captured",
+            "logs",
+            "debug"
+        ]
+        
+        for folder in folders:
+            os.makedirs(folder, exist_ok=True)
     
     def show_main_menu(self):
-        """Mostrar menú principal del sistema"""
+        """Mostrar menú principal"""
         print("\n" + "=" * 60)
-        print("🎴 SISTEMA DE CAPTURA AUTOMÁTICA")
+        print(" SISTEMA DE CAPTURA AUTOMÁTICA")
         print("=" * 60)
         
-        # Estado del sistema
-        print("📊 ESTADO DEL SISTEMA:")
-        print(f"   • Detector: {'✅' if self.detector else '❌'}")
-        print(f"   • Capturador: {'✅' if self.capturer else '❌'}")
-        print(f"   • Clasificador: {'✅' if self.classifier else '❌'}")
+        # Información de estado
+        sessions_count = self.count_sessions()
+        templates_count = self.count_templates()
         
-        print("\n🎮 OPCIONES DISPONIBLES:")
+        print(f" ESTADO ACTUAL:")
+        print(f"    Sesiones: {sessions_count}")
+        print(f"    Templates: {templates_count}")
         
-        # Opción 1 siempre disponible
-        print("1. 📸 Captura Rápida (2 minutos)")
+        print("\n OPCIONES PRINCIPALES:")
+        print("1.  Captura Rápida (2 minutos)")
         
-        # Otras opciones condicionales
         if self.capturer:
-            print("2. 🎬 Captura Extendida (5 minutos)")
-            print("3. ⏱️  Captura Personalizada")
+            print("2.  Captura Extendida (5 minutos)")
+            print("3.   Captura Personalizada")
         
-        if self.classifier and self.get_session_count() > 0:
-            print("4. 🎯 Clasificar Última Sesión")
-            print("5. 🔄 Clasificar Todas las Sesiones")
+        if self.classifier and sessions_count > 0:
+            print("4.  Clasificar Última Sesión")
+            print("5.  Clasificar Todas las Sesiones")
         
-        print("6. 📁 Ver Sesiones Guardadas")
-        print("7. 📊 Ver Estadísticas")
-        print("8. ⚙️  Configuración")
-        print("9. 🚪 Volver al Menú Principal")
+        print("6.  Ver Sesiones Guardadas")
+        print("7.  Ver Estadísticas Completas")
+        print("8.  Diagnóstico del Sistema")
+        print("9.   Configuración y Ayuda")
+        print("0.  Volver al Menú Principal")
         print("=" * 60)
         
         try:
-            choice = int(input("\n👉 Selecciona opción: "))
-            return choice
+            choice = input("\n Selecciona opción: ")
+            return int(choice) if choice.isdigit() else 0
         except:
             return 0
     
-    def get_session_count(self):
-        """Obtener número de sesiones disponibles"""
-        capture_path = "data/card_templates/auto_captured"
-        if not os.path.exists(capture_path):
+    def count_sessions(self):
+        """Contar sesiones disponibles"""
+        base_path = "data/card_templates/auto_captured"
+        if not os.path.exists(base_path):
             return 0
         
-        sessions = [d for d in os.listdir(capture_path) 
-                   if os.path.isdir(os.path.join(capture_path, d))]
+        sessions = [d for d in os.listdir(base_path) 
+                   if os.path.isdir(os.path.join(base_path, d))]
         return len(sessions)
     
-    def run_quick_capture(self):
-        """Captura rápida de 2 minutos"""
-        print("\n⚡ CAPTURA RÁPIDA (2 minutos)")
-        print("=" * 50)
+    def count_templates(self):
+        """Contar templates organizados"""
+        base_path = "data/card_templates/pokerstars_real"
+        if not os.path.exists(base_path):
+            return 0
         
+        total = 0
+        suits = ['hearts', 'diamonds', 'clubs', 'spades']
+        for suit in suits:
+            suit_path = os.path.join(base_path, suit)
+            if os.path.exists(suit_path):
+                count = len([f for f in os.listdir(suit_path) 
+                           if f.endswith(('.png', '.jpg', '.jpeg'))])
+                total += count
+        
+        return total
+    
+    def run_quick_capture(self):
+        """Captura rápida mejorada"""
         if not self.capturer:
-            print("❌ Capturador no disponible")
-            print("💡 Instala las dependencias necesarias")
+            print(" Capturador no disponible")
             return
         
-        print("Preparando captura...")
-        print("💡 Asegúrate de tener PokerStars abierto y visible")
+        print("\n" + "=" * 60)
+        print(" CAPTURA RÁPIDA MEJORADA")
+        print("=" * 60)
         
-        input("\nPresiona Enter para comenzar (Ctrl+C para cancelar)...")
+        print(" INSTRUCCIONES:")
+        print("   1. Abre PokerStars en una mesa")
+        print("   2. Asegúrate que la ventana sea VISIBLE")
+        print("   3. No minimices la ventana")
+        print("   4. Presiona Enter para comenzar")
+        
+        input("\n Presiona Enter cuando estés listo (Ctrl+C para cancelar)...")
         
         try:
-            # Configurar y ejecutar captura
-            self.capturer.setup_capture_folders()
+            print("\n INICIANDO CAPTURA...")
+            
+            # Ejecutar captura
+            self.capturer.simple_capture_mode(duration_seconds=120, interval=2)
+            
+            # Obtener ID de sesión
             self.session_id = self.capturer.session_id
             
-            print("\n🎬 CAPTURANDO...")
-            print("⏱️  Duración: 2 minutos")
-            print("📸 Capturando cada 2 segundos")
+            print(f"\n CAPTURA COMPLETADA")
+            print(f"    Sesión: {self.session_id}")
+            print(f"    Imágenes: {self.capturer.captured_count}")
             
-            # Captura simplificada
-            self.simple_capture(120, 2)  # 120 segundos, intervalo 2s
-            
-            print("\n✅ Captura rápida completada")
-            
-            # Preguntar si clasificar
-            if self.classifier:
-                self.ask_classification()
+            # Preguntar por clasificación automática
+            if self.classifier and self.capturer.captured_count > 0:
+                self.ask_auto_classification()
                 
         except KeyboardInterrupt:
-            print("\n\n⏹️  Captura cancelada")
+            print("\n\n  Captura cancelada por usuario")
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"\n Error durante captura: {e}")
     
-    def simple_capture(self, duration_seconds, interval):
-        """Captura simplificada"""
-        import mss
-        
-        start_time = time.time()
-        capture_count = 0
-        
-        with mss.mss() as sct:
-            # Cargar configuración
-            config_file = "config/pokerstars_coords.json"
-            if os.path.exists(config_file):
-                with open(config_file, 'r') as f:
-                    config = json.load(f)
-                    mesa = config.get("pokerstars_regions", {}).get("mesa", [0,0,1920,1080])
-            else:
-                mesa = [0, 0, 1920, 1080]
-            
-            monitor = {
-                "top": mesa[1],
-                "left": mesa[0],
-                "width": min(mesa[2], 800),
-                "height": min(mesa[3], 600)
-            }
-            
-            while time.time() - start_time < duration_seconds:
-                elapsed = time.time() - start_time
-                remaining = duration_seconds - elapsed
-                
-                print(f"\r⏱️  {int(elapsed)}s / {duration_seconds}s | 📸 {capture_count} cartas", end="")
-                
-                try:
-                    # Capturar pantalla
-                    screenshot = np.array(sct.grab(monitor))
-                    
-                    # Guardar cada 10 segundos
-                    if capture_count % 5 == 0:
-                        timestamp = datetime.now().strftime("%H%M%S_%f")[:-3]
-                        filename = f"card_{capture_count:04d}_{timestamp}.png"
-                        
-                        raw_path = os.path.join(self.capturer.session_folder, "raw_captures", filename)
-                        cv2.imwrite(raw_path, screenshot)
-                        
-                        capture_count += 1
-                
-                except Exception as e:
-                    print(f"\n⚠️  Error capturando: {e}")
-                
-                time.sleep(interval)
-        
-        print(f"\n\n📊 Total capturado: {capture_count} imágenes")
-    
-    def run_extended_capture(self):
-        """Captura extendida de 5 minutos"""
-        if not self.capturer:
-            print("❌ Capturador no disponible")
+    def ask_auto_classification(self):
+        """Preguntar por clasificación automática"""
+        if not self.classifier or not self.session_id:
             return
         
-        print("\n🎬 CAPTURA EXTENDIDA (5 minutos)")
-        print("=" * 50)
+        print("\n" + "=" * 50)
+        response = input("Clasificar automáticamente las imágenes capturadas? (s/n): ")
         
-        try:
-            self.capturer.continuous_capture_mode(duration_seconds=300, interval=1.5)
-            self.session_id = self.capturer.session_id
-            
-            if self.classifier:
-                self.ask_classification()
-                
-        except Exception as e:
-            print(f"❌ Error: {e}")
-    
-    def run_custom_capture(self):
-        """Captura personalizada"""
-        if not self.capturer:
-            print("❌ Capturador no disponible")
-            return
-        
-        print("\n⏱️  CAPTURA PERSONALIZADA")
-        print("=" * 50)
-        
-        try:
-            minutes = int(input("Duración en minutos (1-30): "))
-            if 1 <= minutes <= 30:
-                seconds = minutes * 60
-                
-                interval = float(input("Intervalo entre capturas (0.5-5 segundos): "))
-                if 0.5 <= interval <= 5:
-                    self.capturer.continuous_capture_mode(
-                        duration_seconds=seconds,
-                        interval=interval
-                    )
-                    self.session_id = self.capturer.session_id
-                    
-                    if self.classifier:
-                        self.ask_classification()
-                else:
-                    print("❌ Intervalo fuera de rango")
-            else:
-                print("❌ Duración fuera de rango")
-                
-        except ValueError:
-            print("❌ Entrada inválida")
-    
-    def ask_classification(self):
-        """Preguntar si clasificar"""
-        if not self.classifier:
-            return
-        
-        response = input("\n¿Clasificar automáticamente las cartas? (s/n): ")
         if response.lower() == 's':
-            print("🔍 Clasificando...")
+            print(" Iniciando clasificación...")
             
-            if self.session_id:
-                results = self.classifier.auto_classify_session(self.session_id)
-                if results:
-                    print(f"✅ Clasificadas {len(results)} cartas")
+            # Dar un pequeño tiempo para que se guarden todos los archivos
+            time.sleep(1)
+            
+            # Clasificar sesión
+            success = self.classify_session(self.session_id)
+            
+            if success:
+                print(" Clasificación completada exitosamente")
             else:
-                print("❌ No hay sesión para clasificar")
+                print(" Error en clasificación")
+                print(" Puedes intentar clasificar manualmente más tarde")
     
-    def classify_last_session(self):
-        """Clasificar la última sesión"""
+    def classify_session(self, session_id):
+        """Clasificar una sesión específica"""
         if not self.classifier:
-            print("❌ Clasificador no disponible")
+            print(" Clasificador no disponible")
+            return False
+        
+        try:
+            print(f"\n CLASIFICANDO SESIÓN: {session_id}")
+            
+            # Buscar sesión en el clasificador
+            session = self.classifier.get_session_by_id(session_id)
+            
+            if not session:
+                print(f" Sesión no encontrada en clasificador: {session_id}")
+                print(" El clasificador buscará automáticamente...")
+            
+            # Ejecutar clasificación
+            results = self.classifier.auto_classify_session(session_id)
+            
+            if results:
+                print(f" {len(results)} imágenes clasificadas")
+                return True
+            else:
+                print(" No se pudieron clasificar imágenes")
+                return False
+                
+        except Exception as e:
+            print(f" Error clasificando sesión: {e}")
+            return False
+    
+    def classify_latest_session(self):
+        """Clasificar la sesión más reciente"""
+        if not self.classifier:
+            print(" Clasificador no disponible")
             return
         
-        sessions = self.get_sessions_list()
-        if not sessions:
-            print("❌ No hay sesiones para clasificar")
+        # Obtener sesión más reciente
+        latest = self.classifier.get_latest_session()
+        
+        if not latest:
+            print(" No hay sesiones para clasificar")
             return
         
-        last_session = sessions[-1]  # La más reciente
-        print(f"\n🎯 CLASIFICANDO SESIÓN: {last_session['id']}")
+        print(f"\n CLASIFICANDO SESIÓN MÁS RECIENTE:")
+        print(f"    {latest['id']}")
+        print(f"    {latest['card_count']} imágenes")
         
-        results = self.classifier.auto_classify_session(last_session["id"])
-        if results:
-            print(f"✅ Clasificadas {len(results)} cartas")
+        self.classify_session(latest["id"])
     
     def classify_all_sessions(self):
         """Clasificar todas las sesiones"""
         if not self.classifier:
-            print("❌ Clasificador no disponible")
+            print(" Clasificador no disponible")
             return
         
-        sessions = self.get_sessions_list()
+        sessions = self.get_valid_sessions()
+        
         if not sessions:
-            print("❌ No hay sesiones para clasificar")
+            print(" No hay sesiones válidas para clasificar")
             return
         
-        print(f"\n🔄 CLASIFICANDO {len(sessions)} SESIONES...")
+        print(f"\n CLASIFICANDO {len(sessions)} SESIONES...")
         
         for session in sessions:
-            print(f"\n📁 Sesión: {session['id']}")
-            results = self.classifier.auto_classify_session(session["id"])
-            if results:
-                print(f"   ✅ {len(results)} cartas clasificadas")
+            print(f"\n{'='*50}")
+            print(f" Sesión: {session['id']} ({session['card_count']} imágenes)")
+            
+            self.classify_session(session["id"])
+            
+            # Pequeña pausa entre sesiones
+            time.sleep(1)
         
-        print("\n🎉 ¡Todas las sesiones clasificadas!")
+        print("\n Todas las sesiones clasificadas!")
     
-    def get_sessions_list(self):
-        """Obtener lista de sesiones"""
-        capture_path = "data/card_templates/auto_captured"
-        if not os.path.exists(capture_path):
+    def get_valid_sessions(self):
+        """Obtener sesiones válidas para clasificación"""
+        if not self.classifier:
             return []
         
-        sessions = []
-        for item in sorted(os.listdir(capture_path)):
-            session_path = os.path.join(capture_path, item)
-            if os.path.isdir(session_path):
-                # Contar cartas
-                raw_path = os.path.join(session_path, "raw_captures")
-                card_count = 0
-                if os.path.exists(raw_path):
-                    card_count = len([f for f in os.listdir(raw_path) 
-                                    if f.endswith('.png')])
-                
-                sessions.append({
-                    "id": item,
-                    "path": session_path,
-                    "cards": card_count
-                })
-        
-        return sessions
+        return [s for s in self.classifier.sessions if s["card_count"] > 0]
     
     def view_sessions(self):
         """Ver sesiones guardadas"""
-        print("\n📁 SESIONES DE CAPTURA")
-        print("=" * 50)
+        print("\n" + "=" * 60)
+        print(" SESIONES DE CAPTURA GUARDADAS")
+        print("=" * 60)
         
-        sessions = self.get_sessions_list()
+        sessions = self.get_valid_sessions()
         
         if not sessions:
-            print("📭 No hay sesiones de captura")
-            print("\n💡 Ejecuta una captura primero")
+            print("�� No hay sesiones de captura")
+            print("\n💡 Ejecuta una captura primero (opción 1)")
             return
         
-        print(f"📊 Total: {len(sessions)} sesiones")
-        print("\n📋 LISTA:")
-        print("-" * 50)
+        print(f"📊 Total sesiones: {len(sessions)}")
+        print("\n📋 LISTA DE SESIONES (más recientes primero):")
+        print("-" * 60)
         
-        total_cards = 0
-        for i, session in enumerate(sessions, 1):
-            print(f"{i:2}. {session['id']:20} {session['cards']:3} cartas")
-            total_cards += session["cards"]
+        total_images = 0
+        for i, session in enumerate(sessions[:10], 1):  # Mostrar primeras 10
+            print(f"{i:2}. {session['id']} - {session['card_count']:3} imágenes")
+            total_images += session["card_count"]
         
-        print("-" * 50)
-        print(f"   TOTAL CARTAS: {total_cards}")
+        if len(sessions) > 10:
+            print(f"   ... y {len(sessions) - 10} sesiones más")
         
-        # Mostrar opciones
+        print("-" * 60)
+        print(f" Total imágenes capturadas: {total_images}")
+        
+        # Opciones adicionales
         if sessions and self.classifier:
-            print("\n🎯 OPCIONES:")
-            print("   c - Clasificar última sesión")
+            print("\n OPCIONES:")
+            print("   n - Clasificar por número (ej: 1 para la primera)")
+            print("   u - Clasificar la más reciente")
             print("   a - Clasificar todas")
-            print("   número - Seleccionar sesión específica")
+            print("   Enter - Volver al menú")
             
-            choice = input("\n👉 Opción (Enter para volver): ")
+            choice = input("\n👉 Opción: ").strip().lower()
             
-            if choice.lower() == 'c':
-                self.classify_last_session()
-            elif choice.lower() == 'a':
+            if choice == 'u':
+                self.classify_latest_session()
+            elif choice == 'a':
                 self.classify_all_sessions()
             elif choice.isdigit():
                 idx = int(choice) - 1
                 if 0 <= idx < len(sessions):
-                    session_id = sessions[idx]["id"]
-                    print(f"\n🔍 Procesando sesión: {session_id}")
-                    self.classifier.auto_classify_session(session_id)
+                    self.classify_session(sessions[idx]["id"])
+                else:
+                    print(" Número fuera de rango")
     
     def show_statistics(self):
-        """Mostrar estadísticas"""
-        print("\n📊 ESTADÍSTICAS DEL SISTEMA")
-        print("=" * 50)
+        """Mostrar estadísticas completas"""
+        print("\n" + "=" * 60)
+        print("📊 ESTADÍSTICAS COMPLETAS DEL SISTEMA")
+        print("=" * 60)
         
         # Templates organizados
+        print("\n TEMPLATES ORGANIZADOS:")
         templates_path = "data/card_templates/pokerstars_real"
-        template_count = 0
-        suit_counts = {}
         
         if os.path.exists(templates_path):
             suits = ['hearts', 'diamonds', 'clubs', 'spades']
+            suit_counts = {}
+            total_templates = 0
+            
             for suit in suits:
                 suit_path = os.path.join(templates_path, suit)
                 if os.path.exists(suit_path):
                     count = len([f for f in os.listdir(suit_path) 
                                if f.endswith(('.png', '.jpg', '.jpeg'))])
                     suit_counts[suit] = count
-                    template_count += count
-        
-        print("\n🎴 TEMPLATES ORGANIZADOS:")
-        if template_count > 0:
-            for suit, count in suit_counts.items():
-                if count > 0:
-                    print(f"   {suit.upper():10} {count:3}")
-            print(f"\n   TOTAL:      {template_count:3}")
+                    total_templates += count
+            
+            if total_templates > 0:
+                for suit, count in suit_counts.items():
+                    if count > 0:
+                        percentage = (count / total_templates) * 100
+                        print(f"   {suit.upper():10} {count:3} ({percentage:.1f}%)")
+                
+                print(f"\n    TOTAL:      {total_templates:3}")
+                
+                # Evaluación
+                if total_templates >= 100:
+                    print("    EXCELENTE para reconocimiento")
+                elif total_templates >= 50:
+                    print("    BUENO para pruebas")
+                elif total_templates >= 20:
+                    print("     MÍNIMO aceptable")
+                else:
+                    print("    INSUFICIENTE, captura más cartas")
+            else:
+                print("    No hay templates organizados")
         else:
-            print("   📭 No hay templates organizados")
+            print("    Carpeta no existe")
         
         # Sesiones de captura
-        sessions = self.get_sessions_list()
-        print(f"\n📁 SESIONES DE CAPTURA: {len(sessions)}")
+        print("\n SESIONES DE CAPTURA:")
+        sessions = self.get_valid_sessions()
         
         if sessions:
-            total_cards = sum(s["cards"] for s in sessions)
-            print(f"   📸 Total cartas capturadas: {total_cards}")
-            print(f"   📈 Promedio por sesión: {total_cards // len(sessions) if sessions else 0}")
-        
-        # Evaluación
-        print("\n📈 EVALUACIÓN:")
-        if template_count >= 100:
-            print("   ✅ EXCELENTE: Más de 100 templates")
-            print("   🎯 El sistema de reconocimiento debería funcionar bien")
-        elif template_count >= 20:
-            print("   📊 BUENO: Más de 20 templates")
-            print("   💡 Podría mejorar con más capturas")
-        elif template_count > 0:
-            print("   ⚠️  MÍNIMO: Menos de 20 templates")
-            print("   🔄 Se recomienda capturar más cartas")
+            total_sessions = len(sessions)
+            total_images = sum(s["card_count"] for s in sessions)
+            avg_images = total_images / total_sessions if total_sessions > 0 else 0
+            
+            print(f"    Sesiones:     {total_sessions:3}")
+            print(f"    Imágenes:     {total_images:3}")
+            print(f"    Promedio/sesión: {avg_images:.1f}")
+            
+            # Última sesión
+            if sessions:
+                latest = sessions[0]
+                print(f"    Última sesión: {latest['id']} ({latest['card_count']} imágenes)")
         else:
-            print("   ❌ INSUFICIENTE: No hay templates")
-            print("   🚀 Ejecuta capturas para comenzar")
+            print("    No hay sesiones")
+        
+        # Recomendaciones
+        print("\n RECOMENDACIONES:")
+        
+        templates_needed = max(0, 50 - self.count_templates())
+        if templates_needed > 0:
+            print(f"   1.  Captura al menos {templates_needed} cartas más")
+        
+        if sessions:
+            unclassified = [s for s in sessions if not os.path.exists(os.path.join(s["path"], "classification_results.json"))]
+            if unclassified:
+                print(f"   2.  Clasifica {len(unclassified)} sesiones pendientes")
+        
+        print("   3.  Usa diferentes mesas/styles en PokerStars")
     
-    def show_configuration(self):
-        """Mostrar y ajustar configuración"""
-        print("\n⚙️  CONFIGURACIÓN")
-        print("=" * 50)
+    def run_diagnosis(self):
+        """Ejecutar diagnóstico del sistema"""
+        print("\n" + "=" * 60)
+        print(" DIAGNÓSTICO DEL SISTEMA")
+        print("=" * 60)
+        
+        print("Ejecutando diagnóstico completo...")
+        
+        # Importar y ejecutar diagnóstico
+        try:
+            import subprocess
+            subprocess.run([sys.executable, "diagnose_sessions.py"])
+        except Exception as e:
+            print(f" Error ejecutando diagnóstico: {e}")
+            print("\n Ejecuta manualmente: python diagnose_sessions.py")
+    
+    def show_configuration_help(self):
+        """Mostrar configuración y ayuda"""
+        print("\n" + "=" * 60)
+        print("  CONFIGURACIÓN Y AYUDA")
+        print("=" * 60)
+        
+        print("\n CONFIGURACIÓN ACTUAL:")
         
         config_file = "config/pokerstars_coords.json"
-        
         if os.path.exists(config_file):
-            with open(config_file, 'r') as f:
-                config = json.load(f)
-            
-            print("✅ Configuración cargada:")
-            print(f"   Resolución: {config.get('screen_resolution', 'Desconocida')}")
-            print(f"   Detectada: {config.get('detected_at', 'Desconocido')}")
-            
-            regions = config.get("pokerstars_regions", {})
-            print(f"   Regiones configuradas: {len(regions)}")
+            try:
+                with open(config_file, 'r') as f:
+                    config = json.load(f)
+                
+                print(f"    Configuración cargada")
+                print(f"    Resolución: {config.get('screen_resolution', 'Desconocida')}")
+                print(f"    Detectada: {config.get('detected_at', 'Desconocido')}")
+            except:
+                print("    Error leyendo configuración")
         else:
-            print("❌ No hay configuración")
-            print("\n💡 Para configurar:")
-            print("   1. Abre PokerStars en una mesa")
+            print("    No hay configuración")
+            print("\n Para configurar:")
+            print("   1. Abre PokerStars")
             print("   2. Ejecuta: python detect_coords.py")
         
-        print("\n🔧 OPCIONES:")
-        print("   1. Re-detectar PokerStars")
-        print("   2. Ver configuración detallada")
-        print("   3. Volver")
+        print("\n FLUJO DE TRABAJO RECOMENDADO:")
+        print("   1.   Configura PokerStars (si no está configurado)")
+        print("   2.  Captura cartas (opción 1)")
+        print("   3.  Clasifica automáticamente")
+        print("   4.  Repite para diferentes cartas/posiciones")
         
-        try:
-            choice = int(input("\n👉 Opción: "))
-            
-            if choice == 1:
-                print("\n🔍 Redetectando PokerStars...")
-                os.system("python detect_coords.py")
-            elif choice == 2:
-                if os.path.exists(config_file):
-                    with open(config_file, 'r') as f:
-                        print("\n📄 CONFIGURACIÓN DETALLADA:")
-                        print(json.dumps(json.load(f), indent=2))
-                input("\nPresiona Enter para continuar...")
-                
-        except:
-            print("❌ Entrada inválida")
+        print("\n SOLUCIÓN DE PROBLEMAS:")
+        print("    Si no detecta PokerStars: verifica ventana visible")
+        print("    Si no captura: aumenta brillo/contraste de mesa")
+        print("    Si no clasifica: verifica diagnose_sessions.py")
+        
+        input("\n Presiona Enter para volver...")
     
     def run(self):
         """Ejecutar sistema principal"""
-        print("🎴 SISTEMA DE CAPTURA AUTOMÁTICA")
+        print(" SISTEMA DE CAPTURA AUTOMÁTICA - VERSIÓN MEJORADA")
         print("=" * 70)
         
-        # Verificar estado inicial
-        if self.mode == "UNCONFIGURED":
-            print("\n⚠️  Sistema no configurado")
-            print("💡 Ejecuta primero: python detect_coords.py")
-            response = input("¿Ejecutar ahora? (s/n): ")
-            if response.lower() == 's':
-                os.system("python detect_coords.py")
-            else:
-                return
-        
-        # Bucle principal
         while True:
             choice = self.show_main_menu()
             
             if choice == 1:
                 self.run_quick_capture()
             elif choice == 2 and self.capturer:
-                self.run_extended_capture()
+                print("\n Captura extendida (próximamente)")
+                # self.run_extended_capture()
             elif choice == 3 and self.capturer:
-                self.run_custom_capture()
+                print("\n Captura personalizada (próximamente)")
+                # self.run_custom_capture()
             elif choice == 4 and self.classifier:
-                self.classify_last_session()
+                self.classify_latest_session()
             elif choice == 5 and self.classifier:
                 self.classify_all_sessions()
             elif choice == 6:
@@ -535,25 +505,28 @@ class AutoCaptureSystem:
             elif choice == 7:
                 self.show_statistics()
             elif choice == 8:
-                self.show_configuration()
+                self.run_diagnosis()
             elif choice == 9:
-                print("\n👋 Volviendo al menú principal...")
+                self.show_configuration_help()
+            elif choice == 0:
+                print("\n Volviendo al menú principal...")
                 break
             else:
-                print("\n❌ Opción inválida o no disponible")
+                print("\n Opción no válida o no disponible")
             
-            if choice != 9:
-                input("\nPresiona Enter para continuar...")
+            if choice != 0:
+                input("\n Presiona Enter para continuar...")
 
 def main():
-    """Punto de entrada principal"""
+    """Función principal"""
     try:
         system = AutoCaptureSystem()
         system.run()
     except KeyboardInterrupt:
-        print("\n\n⏹️  Sistema interrumpido")
+        print("\n\n  Sistema interrumpido por usuario")
     except Exception as e:
-        print(f"\n❌ Error inesperado: {e}")
+        print(f"\n Error inesperado: {e}")
+        print(" Ejecuta: python diagnose_sessions.py para diagnóstico")
 
 if __name__ == "__main__":
     main()
