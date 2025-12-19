@@ -3,6 +3,7 @@ import sys
 import os
 import cv2
 import numpy as np
+import json  # 🔥 AÑADE ESTA LÍNEA
 
 print("🎯 CALIBRACIÓN DE POSICIONES DE CARTAS")
 print("=" * 60)
