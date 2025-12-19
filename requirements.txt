@@ -1,14 +1,13 @@
-# DEPENDENCIAS PRINCIPALES
+# DEPENDENCIAS BÁSICAS
 opencv-python>=4.8.0
 mss>=9.0.1
 numpy>=1.24.0
 
-# DEPENDENCIAS OPCIONALES (para funcionalidad completa)
-pygame>=2.5.0        # Para overlay alternativo
-pytesseract>=0.3.10  # Para OCR de texto
-Pillow>=10.0.0       # Para procesamiento de imágenes
-pyautogui>=0.9.54    # Para interacción automática
+# DEPENDENCIAS OPCIONALES
+# pygame>=2.5.0        # Para overlay
+# pytesseract>=0.3.10  # Para OCR
+# Pillow>=10.0.0       # Para imágenes
+# pyautogui>=0.9.54    # Para automatización
 
 # UTILIDADES
-colorama>=0.4.6      # Colores en consola
-tqdm>=4.66.0         # Barras de progreso
+colorama>=0.4.6        # Colores en consola

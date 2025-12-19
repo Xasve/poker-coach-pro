@@ -2,42 +2,30 @@ import cv2
 import numpy as np
 
 class TableDetector:
-    """Detector simple de mesas"""
+    """Detector básico de mesas"""
     
-    def __init__(self):
-        self.min_table_area = 50000
-    
-    def detect_table(self, screenshot):
-        """Detectar mesa verde"""
-        if screenshot is None or screenshot.size == 0:
-            return None
+    def detect(self, image):
+        """Detectar si hay una mesa en la imagen"""
+        if image is None:
+            return False
         
+        # Método simple: buscar áreas verdes grandes
         try:
-            # Convertir a HSV
-            hsv = cv2.cvtColor(screenshot, cv2.COLOR_BGR2HSV)
+            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
             
-            # Rango para verde (mesas típicas)
-            lower_green = np.array([35, 50, 50])
-            upper_green = np.array([85, 255, 255])
+            # Rango para verde
+            lower_green = np.array([40, 40, 40])
+            upper_green = np.array([80, 255, 255])
             
             mask = cv2.inRange(hsv, lower_green, upper_green)
             
-            # Encontrar contornos
-            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # Contar píxeles verdes
+            green_pixels = np.sum(mask > 0)
+            total_pixels = image.shape[0] * image.shape[1]
+            green_percentage = green_pixels / total_pixels
             
-            if not contours:
-                return None
-            
-            # Buscar el más grande
-            largest = max(contours, key=cv2.contourArea)
-            area = cv2.contourArea(largest)
-            
-            if area < self.min_table_area:
-                return None
-            
-            x, y, w, h = cv2.boundingRect(largest)
-            return (x, y, x + w, y + h)
+            return green_percentage > 0.1  # Más del 10% verde
             
         except Exception as e:
             print(f"Error detectando mesa: {e}")
-            return None
+            return False
