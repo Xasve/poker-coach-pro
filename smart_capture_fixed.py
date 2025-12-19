@@ -1,4 +1,4 @@
-# smart_capture_fixed.py - Captura balanceada automática
+﻿# smart_capture_fixed.py - Captura balanceada automática (COMPLETAMENTE REPARADO)
 import cv2
 import numpy as np
 import time
@@ -6,6 +6,7 @@ from datetime import datetime
 import os
 import json
 import sys
+import random
 
 # Añadir src al path para importar módulos
 sys.path.insert(0, "src")
@@ -71,7 +72,7 @@ class BalancedCapture:
                 return 'black'
                 
         except Exception as e:
-            print(f"  Error detección color: {e}")
+            print(f"⚠️  Error detección color: {e}")
             return 'unknown'
     
     def capture_screenshot(self):
@@ -104,8 +105,7 @@ class BalancedCapture:
     
     def run_capture(self, target_count=100):
         """Ejecutar captura balanceada"""
-        print(f"
- Capturando {target_count} cartas balanceadas...")
+        print(f"\n Capturando {target_count} cartas balanceadas...")
         print("   (Presiona Ctrl+C para detener)")
         print("-" * 50)
         
@@ -155,7 +155,7 @@ class BalancedCapture:
                 else:
                     # Color desconocido, asignar aleatorio
                     suits = ['hearts', 'diamonds', 'clubs', 'spades']
-                    suit = np.random.choice(suits)
+                    suit = random.choice(suits)
                 
                 # Guardar imagen
                 timestamp = datetime.now().strftime('%H%M%S_%f')[:-3]
@@ -168,8 +168,7 @@ class BalancedCapture:
                     # Actualizar estadísticas
                     self.stats['total'] += 1
                     self.stats[suit] += 1
-                    self.stats['red_percentage'] = ((self.stats['hearts'] + self.stats['diamonds']) / 
-                                                   self.stats['total'] * 100)
+                    self.stats['red_percentage'] = ((self.stats['hearts'] + self.stats['diamonds']) / self.stats['total'] * 100)
                     
                     # Mostrar progreso
                     red_count = self.stats['hearts'] + self.stats['diamonds']
@@ -177,8 +176,8 @@ class BalancedCapture:
                     
                     progress_bar = self._create_progress_bar(self.stats['total'], target_count)
                     
-                    print(f"{progress_bar} {self.stats['total']:3}/{target_count} | "
-                          f" {red_count:3} ({self.stats['red_percentage']:5.1f}%) | "
+                    print(f"{progress_bar} {self.stats['total']:3}/{target_count} | " +
+                          f" {red_count:3} ({self.stats['red_percentage']:5.1f}%) | " +
                           f"Última: {suit_symbol}")
                     
                 except Exception as e:
@@ -191,8 +190,7 @@ class BalancedCapture:
             self.stats['end_time'] = datetime.now().isoformat()
             self._save_results()
             
-            print("
-" + "=" * 60)
+            print("\n" + "=" * 60)
             print(" CAPTURA BALANCEADA COMPLETADA!")
             print("=" * 60)
             self._show_final_stats()
@@ -201,9 +199,7 @@ class BalancedCapture:
             self._auto_classify()
             
         except KeyboardInterrupt:
-            print("
-
-  Captura interrumpida por usuario")
+            print("\n\n  Captura interrumpida por usuario")
             self.stats['end_time'] = datetime.now().isoformat()
             self._save_results()
             self._show_final_stats()
@@ -243,8 +239,7 @@ class BalancedCapture:
     
     def _show_final_stats(self):
         """Mostrar estadísticas finales"""
-        print("
- ESTADÍSTICAS FINALES:")
+        print("\n ESTADÍSTICAS FINALES:")
         print("-" * 40)
         
         suits = ['hearts', 'diamonds', 'clubs', 'spades']
@@ -259,21 +254,17 @@ class BalancedCapture:
         red_total = self.stats['hearts'] + self.stats['diamonds']
         red_percentage = self.stats['red_percentage']
         
-        print(f"
-    ROJAS TOTAL: {red_total:4} ({red_percentage:5.1f}%)")
+        print(f"\n    ROJAS TOTAL: {red_total:4} ({red_percentage:5.1f}%)")
         
         if red_percentage >= 30:
-            print(f"
-    ÉXITO: Dataset balanceado correctamente")
+            print(f"\n    ÉXITO: Dataset balanceado correctamente")
         else:
-            print(f"
-     ADVERTENCIA: Necesitas más cartas rojas")
+            print(f"\n     ADVERTENCIA: Necesitas más cartas rojas")
             print(f"    Ejecuta otra sesión de captura")
     
     def _auto_classify(self):
         """Clasificar automáticamente las cartas"""
-        print("
- Clasificando cartas en templates...")
+        print("\n Clasificando cartas en templates...")
         
         # Aquí iría la lógica para mover imágenes a templates/
         # Por ahora solo mostrar mensaje
@@ -301,14 +292,12 @@ def main():
         target_count = 100
     
     # Confirmar
-    print(f"
- Configuración:")
+    print(f"\n Configuración:")
     print(f"    Cartas a capturar: {target_count}")
     print(f"    Objetivo rojas: {capture.stats['target_red_percentage']}%")
     print(f"    Sesión: {capture.session_name}")
     
-    confirm = input("
-Iniciar captura? (s/n): ").strip().lower()
+    confirm = input("\nIniciar captura? (s/n): ").strip().lower()
     if confirm == 's':
         capture.run_capture(target_count)
     else:

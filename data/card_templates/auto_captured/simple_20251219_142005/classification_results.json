@@ -1,0 +1,13 @@
+{
+  "session": "simple_20251219_142005",
+  "total_cards": 50,
+  "distribution": {
+    "hearts": 9,
+    "diamonds": 8,
+    "clubs": 17,
+    "spades": 16
+  },
+  "red_percentage": 34.0,
+  "simple_capture": true,
+  "timestamp": "2025-12-19T14:20:10.456802"
+}

@@ -1,4 +1,4 @@
-﻿# diagnostic.py - Diagnóstico completo del sistema
+﻿# diagnostic.py - Diagnóstico completo del sistema (REPARADO)
 import os
 import sys
 import json
@@ -12,7 +12,8 @@ def check_python_environment():
     """Verificar entorno Python"""
     print_header("VERIFICANDO ENTORNO PYTHON")
     
-    print(f"Python version: {sys.version}    print(f"Python executable: {sys.executable}")
+    print(f"Python version: {sys.version}")
+    print(f"Python executable: {sys.executable}")
     print(f"Working directory: {os.getcwd()}")
 
 def check_project_structure():
@@ -33,7 +34,7 @@ def check_project_structure():
     all_ok = True
     for path, required in required_paths:
         exists = os.path.exists(path)
-        status = "" if exists else (" " if not required else "")
+        status = "✅" if exists else ("⚠️ " if not required else "❌")
         
         if required and not exists:
             all_ok = False
@@ -48,22 +49,22 @@ def check_dataset_balance():
     
     sessions_path = "data/card_templates/auto_captured"
     if not os.path.exists(sessions_path):
-        print(" No hay directorio de sesiones")
+        print("❌ No hay directorio de sesiones")
         return False
     
     sessions = [d for d in os.listdir(sessions_path) 
                if os.path.isdir(os.path.join(sessions_path, d))]
     
     if not sessions:
-        print("❌ No hay sesiones de captura")
+        print(" No hay sesiones de captura")
         return False
     
-    print(f"📁 Sesiones encontradas: {len(sessions)}")
+    print(f" Sesiones encontradas: {len(sessions)}")
     
     total_cards = 0
     total_red = 0
     
-    print("\n ANÁLISIS POR SESIÓN:")
+    print("\n📊 ANÁLISIS POR SESIÓN:")
     for session in sessions[:5]:  # Analizar solo 5 más recientes
         results_file = os.path.join(sessions_path, session, "classification_results.json")
         
@@ -81,16 +82,21 @@ def check_dataset_balance():
                     total_cards += cards
                     total_red += red_cards
                     
-                    status = "" if red_percentage >= 30 else " " if red_percentage >= 10 else ""
+                    if red_percentage >= 30:
+                        status = "✅"
+                    elif red_percentage >= 10:
+                        status = "⚠️ "
+                    else:
+                        status = "❌"
                     
                     print(f"   {status} {session:30} {cards:4} cartas | {red_percentage:5.1f}% rojas")
-            except:
-                print(f"     {session:30} Error leyendo archivo")
+            except Exception as e:
+                print(f"     {session:30} Error leyendo archivo: {e}")
     
     if total_cards > 0:
         red_percentage = (total_red / total_cards * 100)
         
-        print(f"\n ESTADÍSTICAS GLOBALES:")
+        print(f"\n📈 ESTADÍSTICAS GLOBALES:")
         print(f"   Total cartas: {total_cards}")
         print(f"   Cartas rojas: {total_red} ({red_percentage:.1f}%)")
         print(f"   Cartas negras: {total_cards - total_red} ({100 - red_percentage:.1f}%)")
@@ -98,14 +104,14 @@ def check_dataset_balance():
         if red_percentage == 0:
             print(f"\n PROBLEMA CRÍTICO: 0% cartas rojas")
             print(" Estás capturando en mesa PokerStars incorrecta")
-            print(" Cambia a mesa 'Classic' (no 'Dark')")
+            print("💡 Cambia a mesa 'Classic' (no 'Dark')")
             return False
         elif red_percentage < 30:
-            print(f"\n  ADVERTENCIA: Solo {red_percentage:.1f}% cartas rojas")
-            print("💡 Necesitas al menos 30% para buen entrenamiento")
+            print(f"\n⚠️  ADVERTENCIA: Solo {red_percentage:.1f}% cartas rojas")
+            print(" Necesitas al menos 30% para buen entrenamiento")
             return False
         else:
-            print(f"\n✅ Dataset bien balanceado")
+            print(f"\n Dataset bien balanceado")
             return True
     else:
         print(" No hay cartas en las sesiones")
@@ -126,7 +132,7 @@ def check_scripts():
     
     for script, required in scripts:
         exists = os.path.exists(script)
-        status = "✅" if exists else ("⚠️ " if not required else "❌")
+        status = "✅" if exists else ("⚠️ " if not required else "")
         
         if exists:
             # Verificar sintaxis
@@ -137,9 +143,9 @@ def check_scripts():
                 if result.returncode == 0:
                     status += " (sintaxis OK)"
                 else:
-                    status += " (❌ error sintaxis)"
+                    status += " ( error sintaxis)"
             except:
-                status += " (⚠️  no verificado)"
+                status += " (  no verificado)"
         
         print(f"   {status} {script}")
 
@@ -160,11 +166,11 @@ def check_pokerstars_config():
                 print(f"   Regiones configuradas: {len(regions)}")
                 
                 for region_name, coords in regions.items():
-                    print(f"   • {region_name}: {coords}")
+                    print(f"    {region_name}: {coords}")
             
             return True
         except Exception as e:
-            print(f"❌ Error leyendo configuración: {e}")
+            print(f" Error leyendo configuración: {e}")
             return False
     else:
         print(" No hay configuración de PokerStars")

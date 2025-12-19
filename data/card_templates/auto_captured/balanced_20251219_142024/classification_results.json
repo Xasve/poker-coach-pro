@@ -1,0 +1,12 @@
+{
+  "session": "balanced_20251219_142024",
+  "total_cards": 40,
+  "distribution": {
+    "hearts": 0,
+    "diamonds": 0,
+    "clubs": 20,
+    "spades": 20
+  },
+  "red_percentage": 0.0,
+  "timestamp": "2025-12-19T14:21:29.306191"
+}

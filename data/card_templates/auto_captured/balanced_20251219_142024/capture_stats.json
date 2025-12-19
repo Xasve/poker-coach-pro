@@ -1,0 +1,11 @@
+{
+  "total": 40,
+  "hearts": 0,
+  "diamonds": 0,
+  "clubs": 20,
+  "spades": 20,
+  "red_percentage": 0.0,
+  "start_time": "2025-12-19T14:20:24.134013",
+  "target_red_percentage": 35,
+  "end_time": "2025-12-19T14:21:29.305182"
+}
