@@ -1,18 +1,25 @@
-﻿"""
-OCR básico para textos
-"""
+import cv2
+import numpy as np
+
 class TextOCR:
-    def __init__(self, platform: str = \"pokerstars\"):
-        self.platform = platform
-        print(f\"TextOCR inicializado para {platform}\")
+    """OCR simple para poker"""
     
-    def extract_amounts(self, screenshot):
-        \"\"\"Extraer montos (simulado)\"\"\"
-        import random
-        return {
-            \"pot\": random.randint(100, 1000),
-            \"stack\": random.randint(1000, 5000),
-            \"to_call\": random.randint(0, 200),
-            \"min_raise\": random.randint(50, 400),
-            \"max_raise\": random.randint(500, 2000)
-        }
+    def __init__(self):
+        self.ocr_available = False
+        
+        # Intentar importar pytesseract
+        try:
+            import pytesseract
+            self.ocr_available = True
+            print("✅ Tesseract OCR disponible")
+        except ImportError:
+            print("⚠️  Tesseract no disponible, usando modo simple")
+    
+    def extract_text(self, image, region=None):
+        """Extraer texto (simulación si no hay OCR)"""
+        if not self.ocr_available:
+            # Valores simulados para desarrollo
+            return "$42.50" if np.random.random() > 0.5 else "$125.75"
+        
+        # Aquí iría el código real de OCR
+        return "Texto extraído"

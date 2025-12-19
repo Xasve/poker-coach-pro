@@ -1,31 +1,27 @@
-﻿"""
-Card Recognizer básico para PokerStars
-"""
 import cv2
+import numpy as np
 import os
 
 class CardRecognizer:
-    def __init__(self, platform: str = \"pokerstars\", stealth_level: str = \"MEDIUM\"):
-        self.platform = platform
-        self.stealth_level = stealth_level
-        print(f\"CardRecognizer inicializado para {platform} (stealth: {stealth_level})\")
+    """Reconocedor simple de cartas"""
     
-    def recognize_hero_cards(self, screenshot):
-        \"\"\"Reconocer cartas del héroe (simulado por ahora)\"\"\"
-        # Por ahora, devolver cartas simuladas
-        import random
-        ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
-        suits = ['h', 'd', 'c', 's']
-        return [f\"{random.choice(ranks)}{random.choice(suits)}\" for _ in range(2)]
+    def __init__(self, template_dir="data/card_templates"):
+        self.template_dir = template_dir
+        self.templates = {}
+        
+    def load_templates(self):
+        """Cargar plantillas si existen"""
+        if os.path.exists(self.template_dir):
+            print(f"Directorio de plantillas encontrado: {self.template_dir}")
+            return True
+        else:
+            print(f"Directorio no encontrado: {self.template_dir}")
+            return False
     
-    def recognize_community_cards(self, screenshot):
-        \"\"\"Reconocer cartas comunitarias (simulado)\"\"\"
-        import random
-        streets = ['preflop', 'flop', 'turn', 'river']
-        street = random.choice(streets)
-        num_cards = {'preflop': 0, 'flop': 3, 'turn': 4, 'river': 5}[street]
+    def recognize_cards(self, image, card_regions):
+        """Reconocer cartas (simulación)"""
+        if not card_regions:
+            return []
         
-        ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
-        suits = ['h', 'd', 'c', 's']
-        
-        return [f\"{random.choice(ranks)}{random.choice(suits)}\" for _ in range(num_cards)]
+        # Por ahora devolver cartas de prueba
+        return ["A♠", "K♥"]

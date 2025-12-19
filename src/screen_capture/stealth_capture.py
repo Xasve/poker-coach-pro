@@ -2,20 +2,36 @@ import mss
 import cv2
 import numpy as np
 import time
-from typing import Optional, Tuple
 
 class StealthScreenCapture:
-    """Captura de pantalla stealth para evitar detección"""
+    """Captura de pantalla stealth"""
     
-    def __init__(self, monitor: int = 1):
+    def __init__(self, monitor=1):
         self.monitor = monitor
-        self.sct = mss.mss()
-        self.last_capture_time = 0
+        self.sct = None
+        self.last_capture = 0
         self.capture_delay = 0.1
         
-    def capture_screen(self, region: Optional[Tuple[int, int, int, int]] = None) -> np.ndarray:
-        """Captura pantalla o región específica"""
+    def initialize(self):
+        """Inicializar capturador"""
         try:
+            self.sct = mss.mss()
+            return True
+        except Exception as e:
+            print(f"Error inicializando MSS: {e}")
+            return False
+    
+    def capture_screen(self, region=None):
+        """Capturar pantalla"""
+        if not self.sct:
+            if not self.initialize():
+                return np.zeros((100, 100, 3), np.uint8)
+        
+        try:
+            current_time = time.time()
+            if current_time - self.last_capture < self.capture_delay:
+                time.sleep(self.capture_delay - (current_time - self.last_capture))
+            
             if region:
                 monitor = {
                     "left": region[0],
@@ -24,7 +40,10 @@ class StealthScreenCapture:
                     "height": region[3] - region[1]
                 }
             else:
-                monitor = self.sct.monitors[self.monitor]
+                if len(self.sct.monitors) > self.monitor:
+                    monitor = self.sct.monitors[self.monitor]
+                else:
+                    monitor = self.sct.monitors[1]
             
             screenshot = self.sct.grab(monitor)
             img = np.array(screenshot)
@@ -32,8 +51,9 @@ class StealthScreenCapture:
             if img.shape[2] == 4:
                 img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
             
+            self.last_capture = time.time()
             return img
             
         except Exception as e:
-            print(f"Error capturando pantalla: {e}")
-            return np.zeros((100, 100, 3), dtype=np.uint8)
+            print(f"Error capturando: {e}")
+            return np.zeros((100, 100, 3), np.uint8)
