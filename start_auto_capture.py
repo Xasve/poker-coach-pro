@@ -116,15 +116,68 @@ def count_templates():
     return total
 
 def manage_sessions():
-    """Gestión completa de sesiones"""
+    """Gestión completa de sesiones - VERSIÓN CORREGIDA"""
     print("\n" + "=" * 60)
-    print("🗑️  GESTIÓN DE SESIONES DE CAPTURA")
+    print("  GESTIÓN DE SESIONES DE CAPTURA")
     print("=" * 60)
     
     try:
         from src.session_manager import SessionManager
         manager = SessionManager()
-        manager.main()
+        
+        if not manager.sessions:
+            print("\n No hay sesiones de captura")
+            print(" Ejecuta primero una captura")
+            return
+        
+        while True:
+            print("\n MENÚ GESTIÓN DE SESIONES:")
+            print("1.  Listar todas las sesiones")
+            print("2.   Eliminar sesión específica")
+            print("3.   Eliminar sesiones vacías (< 5 imágenes)")
+            print("4.   Eliminar sesiones antiguas")
+            print("5.  Ver uso de disco")
+            print("6.  Limpieza completa")
+            print("7.  Volver al menú principal")
+            
+            try:
+                choice = int(input("\n Selecciona opción (1-7): "))
+                
+                if choice == 1:
+                    manager.list_sessions(show_all=True)
+                elif choice == 2:
+                    sessions = manager.list_sessions(show_all=False, max_display=15)
+                    if sessions:
+                        try:
+                            num = int(input("\nNúmero de sesión a eliminar (0 para cancelar): "))
+                            if 1 <= num <= len(sessions):
+                                manager.delete_session(sessions[num-1]["id"])
+                            elif num != 0:
+                                print(" Número fuera de rango")
+                        except ValueError:
+                            print(" Entrada no válida")
+                elif choice == 3:
+                    manager.delete_empty_sessions()
+                elif choice == 4:
+                    days = input("Días de antigüedad (default 30): ")
+                    days = int(days) if days.isdigit() else 30
+                    manager.delete_old_sessions(days_old=days)
+                elif choice == 5:
+                    manager.show_disk_usage()
+                elif choice == 6:
+                    manager.cleanup_system()
+                elif choice == 7:
+                    print("\n👋 Volviendo al menú principal...")
+                    break
+                else:
+                    print("❌ Opción no válida")
+                
+                if choice != 7:
+                    input("\n�� Presiona Enter para continuar...")
+                    
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                
     except ImportError as e:
         print(f" Error importando gestor de sesiones: {e}")
         print("\n El módulo session_manager.py no está disponible")
@@ -647,4 +700,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Error inesperado: {e}")
         print("💡 Intenta ejecutar la opción 5 (Reparar instalación)")
+
 
