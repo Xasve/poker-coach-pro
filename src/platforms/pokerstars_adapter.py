@@ -89,13 +89,13 @@ class PokerStarsAdapter:
             self.capture_system = StealthScreenCapture("pokerstars", self.stealth_level)
             
             # Reconocedor de cartas específico para PokerStars
-            self.card_recognizer = CardRecognizer("pokerstars", self.stealth_level)
+            self.card_recognizer = CardRecognizer(platform=self.platform)
             
             # Detector de mesa PokerStars
             self.table_detector = TableDetector()
             
             # OCR para textos
-            self.text_ocr = TextOCR("pokerstars")
+            self.text_ocr = TextOCR()
             
             self.logger.info(" Componentes de captura inicializados")
             
