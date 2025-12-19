@@ -1,0 +1,58 @@
+﻿# config/advanced_config.yaml
+platform: "pokerstars"
+version: "1.0"
+
+capture:
+  engine: "mss"  # mss, pyautogui, d3dshot
+  stealth_level: "MEDIUM"  # LOW, MEDIUM, HIGH
+  region: "auto"  # auto o [x, y, width, height]
+  interval: 1.5
+  debug: true
+  save_captures: false
+
+recognition:
+  card_templates_path: "data/card_templates/pokerstars_real"
+  confidence_threshold: 0.85
+  method: "template_matching"  # template_matching, edge_detection, ml
+  ocr_engine: "tesseract"
+  ocr_language: "eng"
+
+regions:  # Para 1920x1080 - AUTO-DETECTADAS
+  table: [650, 300, 600, 400]
+  hero_cards: [[870, 750, 70, 95], [950, 750, 70, 95]]
+  community_cards: [[750, 450, 70, 95], [830, 450, 70, 95], [910, 450, 70, 95]]
+  pot: [850, 550, 200, 40]
+  bet: [880, 650, 150, 35]
+
+gto_engine:
+  aggression: 1.2  # 0.5-2.0
+  tightness: 0.9   # 0.5-2.0
+  update_interval: 1.0
+  cache_size: 100
+  use_advanced_rules: true
+
+overlay:
+  enabled: true
+  position: "top_right"  # top_left, top_right, bottom_left, bottom_right
+  transparency: 0.85
+  show_recommendation: true
+  show_odds: true
+  show_gto_chart: false
+
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "logs/poker_coach.log"
+  max_size_mb: 10
+  backup_count: 5
+
+performance:
+  max_iterations_per_second: 2
+  use_multiprocessing: false
+  gpu_acceleration: false
+
+hotkeys:
+  enable_hotkeys: true
+  toggle_overlay: "F1"
+  pause_resume: "F2"
+  capture_region: "F3"
+  save_debug: "F4"
