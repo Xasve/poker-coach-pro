@@ -1,6 +1,6 @@
-﻿# requirements.txt - TODAS las dependencias
+﻿# requirements.txt - Dependencias específicas y compatibles
 
-# =========== CORE ===========
+# =========== CORE (REQUERIDOS) ===========
 numpy==1.24.4
 opencv-python==4.9.0.80
 pillow==10.3.0
@@ -9,25 +9,15 @@ pillow==10.3.0
 mss==9.0.1
 pyautogui==0.9.54
 
-# =========== MACHINE LEARNING (Captura Automática) ===========
-scikit-learn==1.3.2
-scikit-image==0.22.0
-pandas==2.1.4
-matplotlib==3.8.2
-
-# =========== OCR ===========
-pytesseract==0.3.10
-
-# =========== UTILS ===========
+# =========== UTILITIES ===========
 pyyaml==6.0.1
 colorama==0.4.6
-tqdm==4.66.1
+
+# =========== MACHINE LEARNING (OPCIONAL) ===========
+# Descomenta las siguientes líneas para funciones avanzadas
+# scikit-learn==1.3.2
+# matplotlib==3.8.2
+# pandas==2.1.4
 
 # =========== DEVELOPMENT ===========
 pytest==7.4.3
-black==23.11.0
-jupyter==1.0.0
-
-# =========== OPTIONAL ===========
-# pip install -r requirements.txt --no-deps scikit-learn
-# (scikit-learn puede requerir build tools en Windows)

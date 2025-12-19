@@ -1,32 +1,44 @@
-﻿# card_classifier.py - Clasificador automático de cartas
+﻿# card_classifier.py - Clasificador automático de cartas (VERSIÓN CORREGIDA)
 import cv2
 import numpy as np
 import os
 import json
 import shutil
 from pathlib import Path
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
+from datetime import datetime
+
+# Importar matplotlib condicionalmente (para evitar errores si no está instalado)
+try:
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+    print("  Matplotlib no disponible. Los gráficos estarán desactivados.")
+
+# Importar scikit-learn condicionalmente
+try:
+    from sklearn.cluster import KMeans
+    from sklearn.decomposition import PCA
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+    print("⚠️  scikit-learn no disponible. Clustering desactivado.")
 
 class CardClassifier:
-    """Clasificador automático de cartas usando machine learning"""
+    """Clasificador automático de cartas"""
     
     def __init__(self, data_path="data/card_templates/auto_captured"):
         self.data_path = data_path
         self.sessions = self.find_sessions()
         
-        # Mapeo de palos por color
+        # Mapeo de palos
         self.suit_colors = {
-            'hearts': 'red',     # Corazones - rojo
-            'diamonds': 'red',   # Diamantes - rojo  
-            'clubs': 'black',    # Tréboles - negro
-            'spades': 'black'    # Picas - negro
+            'hearts': 'red',
+            'diamonds': 'red',  
+            'clubs': 'black',
+            'spades': 'black'
         }
         
-        # Valores de cartas
-        self.card_values = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2']
-    
     def find_sessions(self):
         """Encontrar todas las sesiones de captura"""
         sessions = []
@@ -40,16 +52,15 @@ class CardClassifier:
                         "raw_captures": os.path.join(session_path, "raw_captures")
                     })
         
-        print(f" Sesiones encontradas: {len(sessions)}")
+        print(f"📂 Sesiones encontradas: {len(sessions)}")
         return sessions
     
     def load_captured_cards(self, session_path):
-        """Cargar cartas capturadas de una sesión"""
+        """Cargar cartas capturadas"""
         cards = []
         raw_path = os.path.join(session_path, "raw_captures")
         
         if not os.path.exists(raw_path):
-            print(f" No hay capturas en: {raw_path}")
             return cards
         
         for file in os.listdir(raw_path):
@@ -72,19 +83,17 @@ class CardClassifier:
                         "filename": file
                     })
         
-        print(f"    Cartas cargadas: {len(cards)}")
         return cards
     
     def extract_color_features(self, image):
-        """Extraer características de color para clasificar palos"""
+        """Extraer características de color"""
         if image is None or image.size == 0:
             return None
         
-        # Convertir a diferentes espacios de color
+        # Convertir a HSV para detección de rojo
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
         
-        # Definir rangos para rojo (dos rangos por la naturaleza circular de HSV)
+        # Rangos para rojo (dos rangos por naturaleza circular de HSV)
         lower_red1 = np.array([0, 50, 50])
         upper_red1 = np.array([10, 255, 255])
         lower_red2 = np.array([160, 50, 50])
@@ -100,78 +109,36 @@ class CardClassifier:
         total_pixels = image.shape[0] * image.shape[1]
         red_ratio = red_pixels / total_pixels if total_pixels > 0 else 0
         
-        # Características de color
+        # Características básicas de color
         mean_color = np.mean(image, axis=(0, 1))
-        std_color = np.std(image, axis=(0, 1))
         
-        features = {
+        return {
             "red_ratio": float(red_ratio),
             "mean_b": float(mean_color[0]),
             "mean_g": float(mean_color[1]),
             "mean_r": float(mean_color[2]),
-            "std_b": float(std_color[0]),
-            "std_g": float(std_color[1]),
-            "std_r": float(std_color[2]),
-            "is_red_suit": red_ratio > 0.05  # Umbral para considerar rojo
+            "is_red_suit": red_ratio > 0.05  # Umbral
         }
-        
-        return features
     
-    def extract_shape_features(self, image):
-        """Extraer características de forma para clasificar valores"""
-        if image is None:
-            return None
-        
-        # Convertir a escala de grises y binarizar
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-        
-        # Encontrar contornos
-        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
-        if not contours:
-            return None
-        
-        # Tomar el contorno más grande
-        main_contour = max(contours, key=cv2.contourArea)
-        
-        # Momentos de Hu (invariantes a escala, rotación, traslación)
-        moments = cv2.moments(main_contour)
-        hu_moments = cv2.HuMoments(moments).flatten()
-        
-        # Otras características geométricas
-        area = cv2.contourArea(main_contour)
-        perimeter = cv2.arcLength(main_contour, True)
-        x, y, w, h = cv2.boundingRect(main_contour)
-        
-        features = {
-            "area": float(area),
-            "perimeter": float(perimeter),
-            "aspect_ratio": float(w / h) if h > 0 else 0,
-            "compactness": (perimeter ** 2) / (4 * np.pi * area) if area > 0 else 0,
-            "hu_moments": [float(m) for m in hu_moments]
-        }
-        
-        return features
-    
-    def classify_suit_by_color(self, image):
-        """Clasificar palo basado en color"""
+    def classify_suit_simple(self, image):
+        """Clasificación simple por color"""
         color_features = self.extract_color_features(image)
         
         if color_features is None:
             return "unknown"
         
         if color_features["is_red_suit"]:
-            # Diferenciar entre corazones y diamantes
-            # Los corazones suelen tener más variación en el canal rojo
-            red_std = color_features["std_r"]
-            if red_std > 30:
+            # Intentar diferenciar corazones vs diamantes
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            std_dev = np.std(gray)
+            
+            # Los corazones suelen tener más contraste interno
+            if std_dev > 25:
                 return "hearts"
             else:
                 return "diamonds"
         else:
-            # Diferenciar entre tréboles y picas
-            # Los tréboles suelen ser más claros
+            # Tréboles vs picas
             mean_brightness = np.mean(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
             if mean_brightness > 100:
                 return "clubs"
@@ -179,12 +146,12 @@ class CardClassifier:
                 return "spades"
     
     def auto_classify_session(self, session_id):
-        """Clasificar automáticamente todas las cartas de una sesión"""
+        """Clasificar automáticamente una sesión"""
         session = next((s for s in self.sessions if s["id"] == session_id), None)
         
         if not session:
             print(f"❌ Sesión no encontrada: {session_id}")
-            return
+            return None
         
         print(f"\n🎯 CLASIFICANDO SESIÓN: {session_id}")
         
@@ -193,166 +160,200 @@ class CardClassifier:
         
         if not cards:
             print("❌ No hay cartas para clasificar")
-            return
+            return None
         
         # Clasificar cada carta
-        classification_results = []
+        results = []
+        classified_count = 0
         
         for i, card in enumerate(cards):
-            print(f"   Procesando carta {i+1}/{len(cards)}...", end='\r')
+            if i % 10 == 0:
+                print(f"   Procesando... {i+1}/{len(cards)}", end='\r')
             
             # Clasificar palo
-            suit = self.classify_suit_by_color(card["image"])
+            suit = self.classify_suit_simple(card["image"])
             
-            # Por ahora, valor desconocido (requeriría OCR)
+            # Valor desconocido por ahora (requeriría OCR)
             value = "unknown"
             
-            # Crear estructura de clasificación
-            classification = {
+            # Crear resultado
+            result = {
                 "filename": card["filename"],
                 "suit": suit,
                 "value": value,
-                "confidence": 0.7,  # Confianza aproximada
-                "features": {
-                    "color": self.extract_color_features(card["image"]),
-                    "shape": self.extract_shape_features(card["image"])
-                }
+                "confidence": 0.7,
+                "features": self.extract_color_features(card["image"])
             }
             
-            classification_results.append(classification)
+            results.append(result)
             
             # Mover a carpeta correspondiente
-            self.move_to_classified_folder(card, suit, value, session["path"])
+            if self.move_to_classified_folder(card, suit, value):
+                classified_count += 1
         
-        print(f"\n✅ Clasificación completada: {len(classification_results)} cartas")
+        print(f"\n✅ Clasificación completada: {classified_count}/{len(cards)} cartas")
         
         # Guardar resultados
-        self.save_classification_results(classification_results, session["path"])
+        self.save_classification_results(results, session["path"])
         
-        return classification_results
+        # Generar reporte si hay suficientes cartas
+        if len(cards) >= 5 and SKLEARN_AVAILABLE:
+            self.generate_clustering_report(session_id, cards)
+        
+        return results
     
-    def move_to_classified_folder(self, card, suit, value, session_path):
-        """Mover carta clasificada a carpeta correspondiente"""
-        # Carpeta destino
-        if value != "unknown":
-            dest_folder = os.path.join("data/card_templates/pokerstars_real", 
-                                      suit, value)
-        else:
-            dest_folder = os.path.join("data/card_templates/pokerstars_real", 
-                                      suit, "unknown")
-        
-        os.makedirs(dest_folder, exist_ok=True)
-        
-        # Nuevo nombre de archivo
-        new_filename = f"{value}_{suit}_{card['filename']}"
-        dest_path = os.path.join(dest_folder, new_filename)
-        
-        # Copiar archivo
-        shutil.copy2(card["path"], dest_path)
-        
-        # Copiar metadata si existe
-        metadata_src = card["path"].replace('.png', '.json')
-        metadata_dest = dest_path.replace('.png', '.json')
-        
-        if os.path.exists(metadata_src):
-            shutil.copy2(metadata_src, metadata_dest)
+    def move_to_classified_folder(self, card, suit, value):
+        """Mover carta clasificada"""
+        try:
+            # Carpeta destino
+            if value != "unknown":
+                dest_folder = os.path.join("data/card_templates/pokerstars_real", 
+                                          suit, value)
+            else:
+                dest_folder = os.path.join("data/card_templates/pokerstars_real", 
+                                          suit)
+            
+            os.makedirs(dest_folder, exist_ok=True)
+            
+            # Nuevo nombre
+            new_filename = f"{value}_{suit}_{card['filename']}"
+            dest_path = os.path.join(dest_folder, new_filename)
+            
+            # Copiar archivo
+            shutil.copy2(card["path"], dest_path)
+            
+            # Copiar metadata
+            metadata_src = card["path"].replace('.png', '.json')
+            metadata_dest = dest_path.replace('.png', '.json')
+            
+            if os.path.exists(metadata_src):
+                shutil.copy2(metadata_src, metadata_dest)
+            
+            return True
+        except Exception as e:
+            print(f"❌ Error moviendo {card['filename']}: {e}")
+            return False
     
     def save_classification_results(self, results, session_path):
-        """Guardar resultados de clasificación"""
+        """Guardar resultados"""
         output_path = os.path.join(session_path, "classification_results.json")
         
+        summary = {
+            "total_cards": len(results),
+            "classified_date": str(datetime.now()),
+            "suits_count": {},
+            "cards": results[:50]  # Solo guardar primeras 50 para no hacer archivo muy grande
+        }
+        
+        # Contar palos
+        for result in results:
+            suit = result["suit"]
+            summary["suits_count"][suit] = summary["suits_count"].get(suit, 0) + 1
+        
         with open(output_path, 'w') as f:
-            json.dump({
-                "total_cards": len(results),
-                "classification_date": str(datetime.now()),
-                "cards": results
-            }, f, indent=2)
+            json.dump(summary, f, indent=2)
         
-        print(f" Resultados guardados en: {output_path}")
-        return output_path
+        print(f"📊 Resultados guardados: {output_path}")
+        
+        # Mostrar resumen
+        print("\n📈 DISTRIBUCIÓN DE PALOS:")
+        for suit, count in summary["suits_count"].items():
+            percentage = (count / len(results)) * 100
+            print(f"   {suit.upper():10} {count:3} ({percentage:.1f}%)")
     
-    def generate_clustering_report(self, session_id):
-        """Generar reporte visual de clustering de cartas"""
-        session = next((s for s in self.sessions if s["id"] == session_id), None)
-        
-        if not session:
+    def generate_clustering_report(self, session_id, cards):
+        """Generar reporte visual (opcional)"""
+        if not SKLEARN_AVAILABLE or not MATPLOTLIB_AVAILABLE:
+            print("⚠️  Clustering no disponible (scikit-learn o matplotlib faltante)")
             return
         
-        cards = self.load_captured_cards(session["path"])
-        
-        if len(cards) < 10:
-            print(" No hay suficientes cartas para clustering")
+        if len(cards) < 5:
             return
         
-        # Extraer características
-        features = []
-        for card in cards:
-            color_feat = self.extract_color_features(card["image"])
-            if color_feat:
-                features.append([
-                    color_feat["red_ratio"],
-                    color_feat["mean_r"],
-                    color_feat["mean_g"],
-                    color_feat["mean_b"]
-                ])
-        
-        if len(features) < 10:
-            return
-        
-        # Aplicar PCA para visualización
-        pca = PCA(n_components=2)
-        features_pca = pca.fit_transform(features)
-        
-        # Aplicar K-Means clustering
-        kmeans = KMeans(n_clusters=4, random_state=42)
-        clusters = kmeans.fit_predict(features)
-        
-        # Visualizar
-        plt.figure(figsize=(10, 8))
-        scatter = plt.scatter(features_pca[:, 0], features_pca[:, 1], 
-                            c=clusters, cmap='viridis', s=100, alpha=0.7)
-        
-        plt.title(f'Clustering de Cartas - Sesión {session_id}')
-        plt.xlabel('Componente Principal 1')
-        plt.ylabel('Componente Principal 2')
-        plt.colorbar(scatter, label='Cluster')
-        
-        # Guardar gráfico
-        plot_path = os.path.join(session["path"], "clustering_plot.png")
-        plt.savefig(plot_path, dpi=150, bbox_inches='tight')
-        plt.close()
-        
-        print(f" Gráfico de clustering guardado: {plot_path}")
-        
-        return plot_path
+        try:
+            # Extraer características
+            features = []
+            for card in cards:
+                feat = self.extract_color_features(card["image"])
+                if feat:
+                    features.append([
+                        feat["red_ratio"],
+                        feat["mean_r"],
+                        feat["mean_g"],
+                        feat["mean_b"]
+                    ])
+            
+            if len(features) < 5:
+                return
+            
+            # Clustering con K-Means
+            kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+            clusters = kmeans.fit_predict(features)
+            
+            # Reducción de dimensionalidad para visualización
+            pca = PCA(n_components=2)
+            features_2d = pca.fit_transform(features)
+            
+            # Crear gráfico
+            plt.figure(figsize=(10, 6))
+            scatter = plt.scatter(features_2d[:, 0], features_2d[:, 1], 
+                                c=clusters, cmap='viridis', s=50, alpha=0.6)
+            
+            plt.title(f'Clustering de Cartas - {session_id}')
+            plt.xlabel('Componente Principal 1')
+            plt.ylabel('Componente Principal 2')
+            plt.colorbar(scatter)
+            plt.grid(True, alpha=0.3)
+            
+            # Guardar
+            session = next((s for s in self.sessions if s["id"] == session_id), None)
+            if session:
+                plot_path = os.path.join(session["path"], "clustering_report.png")
+                plt.savefig(plot_path, dpi=120, bbox_inches='tight')
+                plt.close()
+                print(f"📈 Gráfico de clustering: {plot_path}")
+            
+        except Exception as e:
+            print(f"⚠️  Error generando clustering: {e}")
 
-# Función principal
 def main():
-    """Función principal del clasificador"""
-    print(" CLASIFICADOR AUTOMÁTICO DE CARTAS")
+    """Función principal simplificada"""
+    print("🎴 CLASIFICADOR DE CARTAS - VERSIÓN SIMPLIFICADA")
     print("=" * 60)
     
     classifier = CardClassifier()
     
     if not classifier.sessions:
-        print(" No hay sesiones de captura disponibles")
-        print("   Ejecuta primero el capturador automático")
+        print("❌ No hay sesiones de captura")
+        print("\n💡 Primero ejecuta el capturador automático")
         return
     
-    print(" Sesiones disponibles:")
-    for i, session in enumerate(classifier.sessions):
-        print(f"   {i+1}. {session['id']}")
+    print("📂 Sesiones disponibles:")
+    for i, session in enumerate(classifier.sessions[:10]):  # Mostrar solo 10
+        raw_path = os.path.join(session["path"], "raw_captures")
+        card_count = len([f for f in os.listdir(raw_path) 
+                         if f.endswith('.png')]) if os.path.exists(raw_path) else 0
+        
+        print(f"   {i+1}. {session['id']} ({card_count} cartas)")
+    
+    if len(classifier.sessions) > 10:
+        print(f"   ... y {len(classifier.sessions) - 10} más")
     
     try:
-        choice = int(input("\nSelecciona una sesión (número): "))
-        if 1 <= choice <= len(classifier.sessions):
-            session_id = classifier.sessions[choice-1]["id"]
-            classifier.auto_classify_session(session_id)
-            classifier.generate_clustering_report(session_id)
+        choice = input("\nSelecciona número o 'todos' para clasificar todo: ")
+        
+        if choice.lower() == 'todos':
+            for session in classifier.sessions:
+                classifier.auto_classify_session(session["id"])
         else:
-            print(" Selección inválida")
-    except ValueError:
-        print(" Entrada inválida")
+            idx = int(choice) - 1
+            if 0 <= idx < len(classifier.sessions):
+                session_id = classifier.sessions[idx]["id"]
+                classifier.auto_classify_session(session_id)
+            else:
+                print("❌ Selección inválida")
+    except Exception as e:
+        print(f"❌ Error: {e}")
 
 if __name__ == "__main__":
     main()
