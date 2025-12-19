@@ -1,0 +1,36 @@
+{
+  "session_info": {
+    "platform": "pokerstars",
+    "strategy": "tight_passive",
+    "start_time": "2025-12-18T21:39:36.134161",
+    "end_time": "2025-12-18T21:39:36.137629"
+  },
+  "session_stats": {
+    "hands_analyzed": 6,
+    "recommendations_given": 0,
+    "actions_taken": {
+      "FOLD": 0,
+      "CHECK": 0,
+      "CALL": 0,
+      "RAISE": 0,
+      "ALL_IN": 0
+    },
+    "win_rate": 0.0,
+    "start_time": "2025-12-18T21:39:36.134161"
+  },
+  "recent_hands": [],
+  "config": {
+    "default_strategy": "gto_basic",
+    "aggression_factor": 0.7,
+    "risk_tolerance": 0.5,
+    "bluff_frequency": 0.25,
+    "min_confidence": 0.6,
+    "preflop_adjustment": 1.0,
+    "postflop_adjustment": 1.0,
+    "position_aware": true,
+    "stack_size_aware": true,
+    "player_count_aware": true,
+    "pot_odds_aware": true,
+    "equity_aware": true
+  }
+}

@@ -199,8 +199,14 @@ class CoachIntegrator:
                 "flop": ["CALL", "CALL", "FOLD", "CALL"],
                 "turn": ["CALL", "FOLD", "FOLD", "CALL"],
                 "river": ["CHECK", "FOLD", "FOLD", "CHECK"]
+            },"UNKNOWN": {
+                "preflop": ["FOLD", "FOLD", "FOLD", "FOLD"],
+                "flop": ["CHECK", "FOLD", "FOLD", "CHECK"],
+                "turn": ["CHECK", "FOLD", "FOLD", "CHECK"],
+                "river": ["CHECK", "FOLD", "FOLD", "CHECK"]
             }
         }
+        
     
     def analyze_hand(self, situation: Dict) -> Dict:
         """
@@ -473,9 +479,17 @@ class CoachIntegrator:
         position_index = {"UTG": 0, "MP": 1, "CO": 2, "BTN": 3, "SB": 2, "BB": 3}
         pos_idx = position_index.get(position, 1)
         
-        # Obtener acción base de las tablas
+                # Obtener acción base de las tablas
         strength = hand_evaluation.get("strength", "UNKNOWN")
         action_table = self.postflop_decisions.get(strength, self.postflop_decisions["UNKNOWN"])
+        
+        # 🔥 CORRECCIÓN: Asegurar que strength existe en las tablas
+        if strength not in self.postflop_decisions:
+            print(f"⚠️  Fuerza de mano desconocida: '{strength}', usando 'UNKNOWN'")
+            strength = "UNKNOWN"
+        
+        action_table = self.postflop_decisions[strength]
+        
         stage_key = "preflop" if stage == "preflop" else "flop"  # Simplificado
         possible_actions = action_table.get(stage_key, ["CHECK", "CHECK", "FOLD", "CHECK"])
         
