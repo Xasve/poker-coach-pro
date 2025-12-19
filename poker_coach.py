@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+print('POKER COACH PRO')
+print('=' * 40)
+print('Sistema verificados:')
+print('1. test_pokerstars.py - Sistema PokerStars')
+print('2. test_ggpoker_simple.py - Sistema GG Poker')
+print('3. test_capture.py - Probar captura')
+print('4. check.py - Verificar sistema')
+print('\nEjecuta: python test_pokerstars.py')
+input('Presiona Enter para salir...')
