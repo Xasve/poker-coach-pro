@@ -11,7 +11,7 @@ print("=" * 60)
 sys.path.insert(0, 'src')
 
 class PokerCoachPro:
-    def __init__(self, platform="pokerstars", stealth_level=2):
+    def __init__(self, platform="pokerstars", stealth_level=1):
         self.platform = platform
         self.stealth_level = stealth_level
         self.running = False
@@ -21,7 +21,7 @@ class PokerCoachPro:
             "start_time": None,
             "captures": 0,
             "tables_detected": 0,
-            "hands_analyzed": 0,  # 🔥 CORREGIDO: era 'hands_analizadas'
+            "hands_analyzed": 0,
             "recommendations_given": 0
         }
         
@@ -75,34 +75,6 @@ class PokerCoachPro:
             return False
     
     def run(self):
-        """Ejecutar el sistema principal"""
-        if not self.initialize_components():
-            print("❌ No se pudieron inicializar componentes")
-            return
-        
-        self.running = True
-        self.stats["start_time"] = datetime.now().isoformat()  # 🔥 Usar string ISO
-        
-        print(f"\n🔧 CONFIGURACIÓN:")
-        print(f"   Plataforma: {self.platform}")
-        print(f"   Nivel sigilo: {self.stealth_level}")
-        print(f"   Delay captura: {self.adapter.capture_delay}s")
-        print(f"   Umbral confianza: {self.config['confidence_threshold']}")
-        
-        print("\n🎯 INSTRUCCIONES:")
-        print("1. Abre PokerStars y siéntate en una mesa")
-        print("2. Asegúrate de que la mesa sea visible")
-        print("3. El sistema analizará automáticamente")
-        print("4. Presiona Ctrl+C para detener")
-        print("\n⏳ Iniciando en 3 segundos...")
-        time.sleep(3)
-        
-        print("\n📡 INICIANDO ANÁLISIS EN TIEMPO REAL...")
-        print("-" * 50)
-        
-        # Variables para estado del juego
-        consecutive_detections = 0
-            def run(self):
         """Ejecutar el sistema principal"""
         if not self.initialize_components():
             print("❌ No se pudieron inicializar componentes")
@@ -172,12 +144,6 @@ class PokerCoachPro:
                         last_detection_time = current_time
                 
                 # Delay entre iteraciones
-                    time.sleep(self.adapter.capture_delay)
-                    consecutive_detections = 0
-                    if self.stats["captures"] % 10 == 0:
-                        print(f"   🔍 Buscando mesa... ({self.stats['captures']} capturas)")
-                
-                # Delay entre iteraciones
                 time.sleep(self.adapter.capture_delay)
                 
         except KeyboardInterrupt:
@@ -189,9 +155,9 @@ class PokerCoachPro:
     
     def analyze_table(self, screenshot):
         """Analizar la mesa de poker"""
-        self.stats["hands_analyzed"] += 1  # 🔥 CORREGIDO
+        self.stats["hands_analyzed"] += 1
         
-        print(f"\n📊 ANÁLISIS #{self.stats['hands_analyzed']}")  # 🔥 CORREGIDO
+        print(f"\n📊 ANÁLISIS #{self.stats['hands_analyzed']}")
         print("   " + "-" * 40)
         
         # 1. Reconocer cartas
@@ -299,7 +265,7 @@ class PokerCoachPro:
         
         stats_file = os.path.join(stats_dir, f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
         
-        # 🔥 CORREGIDO: Asegurar que todos los valores sean JSON serializables
+        # Asegurar que todos los valores sean JSON serializables
         session_stats = {
             "timestamp": datetime.now().isoformat(),  # String ISO
             "runtime_seconds": runtime_seconds,
@@ -322,7 +288,7 @@ class PokerCoachPro:
 
 def main():
     """Función principal"""
-    coach = PokerCoachPro(platform="pokerstars", stealth_level=1)  # 🔥 Nivel 1 para más rápido
+    coach = PokerCoachPro(platform="pokerstars", stealth_level=1)
     coach.run()
 
 if __name__ == "__main__":
