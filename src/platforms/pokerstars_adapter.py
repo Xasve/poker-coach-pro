@@ -1,5 +1,14 @@
-﻿# pokerstars_adapter.py - MÉTODO AÑADIDO
-# ... (código existente)
+import sys
+import os
+import time
+
+# Añadir directorio padre al path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from screen_capture.stealth_capture import StealthScreenCapture
+from screen_capture.table_detector import TableDetector
+from screen_capture.card_recognizer import CardRecognizer
+from screen_capture.text_ocr import TextOCR
 
 class PokerStarsAdapter:
     def __init__(self, stealth_level="MEDIUM"):
@@ -27,7 +36,7 @@ class PokerStarsAdapter:
         return self.capture_system.stop_capture()
     
     def get_table_state(self):
-        """Obtener el estado completo de la mesa (MÉTODO NUEVO)"""
+        """Obtener el estado completo de la mesa"""
         try:
             # 1. Capturar pantalla
             screenshot = self.capture_system.capture_screen()
@@ -91,6 +100,3 @@ class PokerStarsAdapter:
     def analyze_table_state(self):
         """Alias para compatibilidad"""
         return self.get_table_state()
-
-# Añadir import time al inicio del archivo si no está
-import time
