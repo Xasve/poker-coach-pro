@@ -1,43 +1,36 @@
 ﻿import sys
 import os
+import time
+sys.path.insert(0, "src")
+from platforms.pokerstars_adapter import PokerStarsAdapter
+from core.poker_engine import PokerEngine
 
-print(" POKER COACH PRO - SISTEMA PRINCIPAL")
-print("=" * 60)
+adapter = PokerStarsAdapter("LOW")
+engine = PokerEngine()
+adapter.start()
 
-sys.path.insert(0, 'src')
+print(" Sistema iniciado. Analizando PokerStars...")
+print("   Presiona Ctrl+C para detener")
 
 try:
-    from platforms.pokerstars_adapter import PokerStarsAdapter
-    from core.poker_engine import PokerEngine
-    
-    print("✅ Sistema listo")
-    adapter = PokerStarsAdapter(stealth_level="LOW")
-    engine = PokerEngine()
-    
-    print("\n Iniciando... Presiona Ctrl+C para detener")
-    print("=" * 60)
-    
-    adapter.start()
-    import time
-    
-    iteration = 0
     while True:
-        iteration += 1
-        print(f"\n Iteración {iteration}")
-        
-        state = adapter.get_table_state()
-        if state:
-            print(f"   📊 Mesa: {state.get('simulated', 'REAL')}")
-            print(f"    Cartas: {state.get('cards', {})}")
-            print(f"    Pozo: {state.get('pot', '0')}")
+        estado = adapter.get_table_state()
+        if estado:
+            print(f"\n Mesa: {"REAL" if not estado.get("simulated") else "SIMULADA"}")
+            print(f" Cartas: {estado.get("cards", {})}")
+            print(f" Pozo: {estado.get("pot", 0)}")
+            
+            if estado.get("cards"):
+                decision = engine.analyze_hand(
+                    estado["cards"].get("hero", []),
+                    estado["cards"].get("community", []),
+                    int(estado.get("pot", 0)) if str(estado.get("pot", "0")).isdigit() else 0,
+                    "middle"
+                )
+                print(f" Recomendación: {decision.get("action")} ({decision.get("confidence"):.0%})")
         
         time.sleep(2)
-        
 except KeyboardInterrupt:
-    print("\n  Detenido")
+    print("\n Deteniendo...")
+finally:
     adapter.stop()
-    
-except Exception as e:
-    print(f" Error: {e}")
-
-print("\n Fin del programa")

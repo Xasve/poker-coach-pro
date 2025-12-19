@@ -1,0 +1,11 @@
+﻿platform: "pokerstars"
+capture:
+  stealth_level: "LOW"
+  interval: 2.0
+recognition:
+  card_templates_path: "data/card_templates/pokerstars/"
+gto:
+  aggression: 1.2
+  tightness: 0.9
+overlay:
+  enabled: false
