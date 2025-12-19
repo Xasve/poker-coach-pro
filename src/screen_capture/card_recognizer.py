@@ -22,18 +22,22 @@ except ImportError:
             def get_template(self, value, suit):
                 return None
 
+# src/screen_capture/card_recognizer.py - Solo la parte corregida del constructor
 class CardRecognizer:
     def __init__(self, platform="pokerstars", stealth_level=1):
-        self.platform = platform
-        self.stealth_level = stealth_level
+        # 🔥 CORRECCIÓN: Asegurar que platform sea string
+        self.platform = str(platform) if platform else "pokerstars"
+        self.stealth_level = int(stealth_level) if stealth_level else 1
         
-        # 🔥 CORRECCIÓN: Inicializar el template manager correctamente
-        self.template_manager = CardTemplateManager(platform)
+        # 🔥 CORRECCIÓN: Pasar string al template manager
+        self.template_manager = CardTemplateManager(self.platform)
         
         # Umbrales de confianza
         self.confidence_threshold = 0.7
         
-        print(f"🃏 CardRecognizer inicializado para {platform}")
+        print(f"🃏 CardRecognizer inicializado para {self.platform}")
+    
+    # ... (el resto del código permanece igual)
     
     def recognize_cards(self, image, card_positions=None):
         """
