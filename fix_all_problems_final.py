@@ -1,4 +1,20 @@
+#!/usr/bin/env python3
 """
+FIX ALL PROBLEMS - FINAL VERSION
+Corrige todos los problemas encontrados en el sistema Poker Coach Pro
+"""
+import os
+import sys
+import shutil
+
+def fix_card_recognizer():
+    """Corregir CardRecognizer"""
+    print("🔧 Corrigiendo CardRecognizer...")
+    
+    card_file = "src/screen_capture/card_recognizer.py"
+    
+    # Contenido completo corregido de CardRecognizer
+    card_content = '''"""
 Card Recognizer for Poker Coach Pro
 Recognizes poker cards from screen captures
 """
@@ -434,3 +450,426 @@ def test_card_recognizer():
 
 if __name__ == "__main__":
     test_card_recognizer()
+'''
+    
+    # Crear directorio si no existe
+    os.makedirs(os.path.dirname(card_file), exist_ok=True)
+    
+    # Escribir archivo
+    with open(card_file, 'w', encoding='utf-8') as f:
+        f.write(card_content)
+    
+    print("✅ CardRecognizer corregido y guardado")
+    return True
+
+def fix_pokerstars_adapter():
+    """Corregir PokerStars Adapter"""
+    print("\n🔧 Corrigiendo PokerStars Adapter...")
+    
+    adapter_file = "src/platforms/pokerstars_adapter.py"
+    
+    if not os.path.exists(adapter_file):
+        print(f"❌ Archivo no encontrado: {adapter_file}")
+        return False
+    
+    with open(adapter_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Buscar y corregir la línea problemática
+    lines = content.split('\n')
+    fixed_lines = []
+    
+    for line in lines:
+        # Buscar la creación de CardRecognizer
+        if 'CardRecognizer(' in line and ('self.stealth_level' in line or 'stealth_level' in line):
+            # Corregir la línea
+            if 'CardRecognizer(self.platform, self.stealth_level)' in line:
+                fixed_line = line.replace(
+                    'CardRecognizer(self.platform, self.stealth_level)',
+                    'CardRecognizer(platform=self.platform)'
+                )
+                print(f"✅ Línea corregida: {fixed_line}")
+                fixed_lines.append(fixed_line)
+            elif 'CardRecognizer(' in line:
+                # Intentar corregir genéricamente
+                fixed_line = line.split('=')[0] + '= CardRecognizer(platform=self.platform)'
+                print(f"✅ Línea reemplazada: {fixed_line}")
+                fixed_lines.append(fixed_line)
+            else:
+                fixed_lines.append(line)
+        else:
+            fixed_lines.append(line)
+    
+    # Guardar archivo corregido
+    fixed_content = '\n'.join(fixed_lines)
+    
+    with open(adapter_file, 'w', encoding='utf-8') as f:
+        f.write(fixed_content)
+    
+    print("✅ PokerStars Adapter corregido")
+    return True
+
+def fix_ggpoker_adapter():
+    """Corregir GG Poker Adapter si existe"""
+    print("\n🔧 Corrigiendo GG Poker Adapter...")
+    
+    adapter_file = "src/platforms/ggpoker_adapter.py"
+    
+    if not os.path.exists(adapter_file):
+        print(f"⚠️  Archivo no encontrado: {adapter_file} (puede ser normal)")
+        return True  # No es un error si no existe
+    
+    with open(adapter_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Buscar y corregir similar a pokerstars_adapter
+    if 'CardRecognizer(' in content:
+        content = content.replace(
+            'CardRecognizer(self.platform, self.stealth_level)',
+            'CardRecognizer(platform=self.platform)'
+        )
+        
+        with open(adapter_file, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        print("✅ GG Poker Adapter corregido")
+    
+    return True
+
+def create_test_environment():
+    """Crear entorno de prueba completo"""
+    print("\n📁 Creando entorno de prueba...")
+    
+    # Crear directorios necesarios
+    directories = [
+        "debug",
+        "debug_captures",
+        "data/card_templates/pokerstars",
+        "data/card_templates/ggpoker",
+        "logs"
+    ]
+    
+    for directory in directories:
+        os.makedirs(directory, exist_ok=True)
+        print(f"✅ {directory}/")
+    
+    # Crear archivo de prueba simple
+    test_simple = '''#!/usr/bin/env python3
+"""
+TEST SIMPLE - Verificación rápida del sistema
+"""
+import sys
+import os
+sys.path.insert(0, 'src')
+
+print("=" * 60)
+print("🧪 TEST SIMPLE - POKER COACH PRO")
+print("=" * 60)
+
+def test_component(component_name, test_code):
+    print(f"\\n🔧 Testing {component_name}...")
+    try:
+        exec(test_code)
+        print(f"✅ {component_name}: OK")
+        return True
+    except Exception as e:
+        print(f"❌ {component_name}: {e}")
+        return False
+
+# Test 1: StealthScreenCapture
+test1 = """
+from screen_capture.stealth_capture import StealthScreenCapture
+capture = StealthScreenCapture("pokerstars", "MEDIUM")
+print(f"   Platform: {capture.platform}")
+print(f"   Stealth: {capture.stealth_level}")
+"""
+
+# Test 2: CardRecognizer
+test2 = """
+from screen_capture.card_recognizer import CardRecognizer
+recognizer = CardRecognizer(platform="pokerstars")
+print(f"   Platform: {recognizer.platform}")
+print(f"   Templates: {len(recognizer.templates)}")
+"""
+
+# Test 3: TableDetector
+test3 = """
+from screen_capture.table_detector import TableDetector
+detector = TableDetector()
+print(f"   Detector creado")
+"""
+
+# Test 4: PokerEngine
+test4 = """
+from core.poker_engine import PokerEngine
+engine = PokerEngine()
+print(f"   Engine creado")
+"""
+
+# Ejecutar tests
+tests = [
+    ("StealthScreenCapture", test1),
+    ("CardRecognizer", test2),
+    ("TableDetector", test3),
+    ("PokerEngine", test4)
+]
+
+results = []
+for name, code in tests:
+    results.append(test_component(name, code))
+
+# Resumen
+print("\\n" + "=" * 60)
+print("📊 RESUMEN:")
+print("=" * 60)
+
+passed = sum(1 for r in results if r)
+total = len(tests)
+
+print(f"\\n✅ Pasados: {passed}/{total}")
+
+if passed == total:
+    print("\\n🎉 ¡TODOS LOS TESTS PASARON!")
+    print("\\n🚀 El sistema está listo. Ejecuta:")
+    print("   python test_pokerstars.py")
+else:
+    print("\\n⚠️  Algunos tests fallaron")
+    print("\\n💡 Ejecuta: python fix_all_problems_final.py")
+
+print("=" * 60)
+'''
+
+    with open("test_simple.py", 'w', encoding='utf-8') as f:
+        f.write(test_simple)
+    
+    print("✅ test_simple.py creado")
+    return True
+
+def create_final_verification():
+    """Crear script de verificación final"""
+    print("\n📄 Creando verificación final...")
+    
+    verify_content = '''#!/usr/bin/env python3
+"""
+VERIFICACIÓN FINAL - Poker Coach Pro
+Verifica que todos los componentes funcionen correctamente
+"""
+import sys
+import os
+import importlib.util
+
+print("=" * 70)
+print("🔍 VERIFICACIÓN FINAL - POKER COACH PRO")
+print("=" * 70)
+
+sys.path.insert(0, 'src')
+
+def verify_module(module_name, class_name=None):
+    """Verificar que un módulo/clase se pueda importar"""
+    try:
+        if class_name:
+            # Intentar importar clase específica
+            module = __import__(module_name, fromlist=[class_name])
+            cls = getattr(module, class_name)
+            instance = cls()
+            return True, f"{module_name}.{class_name}"
+        else:
+            # Solo verificar módulo
+            __import__(module_name)
+            return True, module_name
+    except ImportError as e:
+        return False, f"{module_name}: {e}"
+    except TypeError as e:
+        return False, f"{module_name}.{class_name}: Error de constructor - {e}"
+    except Exception as e:
+        return False, f"{module_name}: Error inesperado - {e}"
+
+def verify_adapters():
+    """Verificar adaptadores de plataforma"""
+    print("\\n🎯 VERIFICANDO ADAPTADORES:")
+    print("-" * 40)
+    
+    adapters = [
+        ("platforms.pokerstars_adapter", "PokerStarsAdapter"),
+        ("platforms.ggpoker_adapter", "GGPokerAdapter")
+    ]
+    
+    results = []
+    for module, adapter_class in adapters:
+        # Verificar si el archivo existe
+        module_path = f"src/{module.replace('.', '/')}.py"
+        if os.path.exists(module_path):
+            success, message = verify_module(module, adapter_class)
+            if success:
+                print(f"✅ {adapter_class}")
+            else:
+                print(f"❌ {adapter_class}: {message.split(': ')[-1]}")
+            results.append(success)
+        else:
+            print(f"⚠️  {adapter_class}: Archivo no encontrado")
+            results.append(False)
+    
+    return any(results)  # Al menos uno debe funcionar
+
+def verify_screen_capture():
+    """Verificar módulo de captura de pantalla"""
+    print("\\n📷 VERIFICANDO CAPTURA DE PANTALLA:")
+    print("-" * 40)
+    
+    components = [
+        ("screen_capture.stealth_capture", "StealthScreenCapture"),
+        ("screen_capture.card_recognizer", "CardRecognizer"),
+        ("screen_capture.table_detector", "TableDetector")
+    ]
+    
+    all_ok = True
+    for module, component in components:
+        success, message = verify_module(module, component)
+        if success:
+            print(f"✅ {component}")
+        else:
+            print(f"❌ {component}: {message.split(': ')[-1]}")
+            all_ok = False
+    
+    return all_ok
+
+def verify_core():
+    """Verificar componentes core"""
+    print("\\n🧠 VERIFICANDO COMPONENTES CORE:")
+    print("-" * 40)
+    
+    components = [
+        ("core.poker_engine", "PokerEngine")
+    ]
+    
+    all_ok = True
+    for module, component in components:
+        success, message = verify_module(module, component)
+        if success:
+            print(f"✅ {component}")
+        else:
+            print(f"❌ {component}: {message.split(': ')[-1]}")
+            all_ok = False
+    
+    return all_ok
+
+def check_dependencies():
+    """Verificar dependencias"""
+    print("\\n📦 VERIFICANDO DEPENDENCIAS:")
+    print("-" * 40)
+    
+    dependencies = [
+        ("cv2", "opencv-python"),
+        ("mss", "mss"),
+        ("numpy", "numpy"),
+        ("PIL", "Pillow")
+    ]
+    
+    missing = []
+    for import_name, pip_name in dependencies:
+        try:
+            __import__(import_name)
+            print(f"✅ {pip_name}")
+        except ImportError:
+            print(f"❌ {pip_name}")
+            missing.append(pip_name)
+    
+    if missing:
+        print(f"\\n⚠️  Dependencias faltantes: {', '.join(missing)}")
+        print(f"💡 Instalar con: pip install {' '.join(missing)}")
+        return False
+    
+    return True
+
+# Ejecutar verificaciones
+print("\\n🚀 INICIANDO VERIFICACIÓN COMPLETA...")
+
+checks = [
+    ("Dependencias", check_dependencies),
+    ("Captura de pantalla", verify_screen_capture),
+    ("Adaptadores", verify_adapters),
+    ("Componentes Core", verify_core)
+]
+
+results = []
+for check_name, check_func in checks:
+    print(f"\\n🔍 {check_name}...")
+    result = check_func()
+    results.append((check_name, result))
+
+# Resumen
+print("\\n" + "=" * 70)
+print("📊 RESUMEN DE VERIFICACIÓN")
+print("=" * 70)
+
+all_passed = all(result for _, result in results)
+passed_count = sum(1 for _, result in results if result)
+total_count = len(results)
+
+print(f"\\n✅ Verificaciones pasadas: {passed_count}/{total_count}")
+
+if all_passed:
+    print("\\n🎉 ¡TODAS LAS VERIFICACIONES PASARON!")
+    print("\\n🚀 EL SISTEMA ESTÁ LISTO PARA USAR")
+    print("\\n📋 PRÓXIMOS PASOS:")
+    print("   1. Abre PokerStars o GG Poker")
+    print("   2. Ejecuta: python test_pokerstars.py")
+    print("   3. O: python test_ggpoker_simple.py")
+    print("   4. Sigue las instrucciones en pantalla")
+else:
+    print("\\n⚠️  ALGUNAS VERIFICACIONES FALLARON")
+    print("\\n💡 VERIFICACIONES FALLIDAS:")
+    for check_name, result in results:
+        if not result:
+            print(f"   • {check_name}")
+    
+    print("\\n🔧 SOLUCIONES:")
+    print("   1. Ejecuta: python fix_all_problems_final.py")
+    print("   2. Instala dependencias faltantes")
+    print("   3. Verifica la estructura de archivos")
+
+print("\\n" + "=" * 70)
+print("✅ VERIFICACIÓN COMPLETADA")
+print("=" * 70)
+'''
+
+    with open("final_verification.py", 'w', encoding='utf-8') as f:
+        f.write(verify_content)
+    
+    print("✅ final_verification.py creado")
+    return True
+
+def run_final_verification():
+    """Ejecutar verificación final"""
+    print("\n🧪 Ejecutando verificación final...")
+    
+    try:
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, "final_verification.py"],
+            capture_output=False,
+            text=True,
+            timeout=60
+        )
+        
+        return True
+            
+    except Exception as e:
+        print(f"❌ Error ejecutando verificación: {e}")
+        return False
+
+def create_quick_start_guide():
+    """Crear guía de inicio rápido"""
+    print("\n📝 Creando guía de inicio rápido...")
+    
+    guide_content = '''# 🎴 POKER COACH PRO - GUÍA DE INICIO RÁPIDO
+
+## 🚀 INSTALACIÓN Y CONFIGURACIÓN
+
+### 1. Verificar el sistema
+```bash
+# Ejecutar verificación completa
+python final_verification.py
+
+# Si hay errores, reparar:
+python fix_all_problems_final.py
