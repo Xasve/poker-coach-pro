@@ -1,49 +1,9 @@
 capture:
-  capture_interval: 0.5
-  debug_save_captures: false
-  region: null
   stealth_level: MEDIUM
-gto:
-  cache_size: 100
-  engine: basic
-  update_interval: 1.0
-logging:
-  file: logs/poker_coach.log
-  level: INFO
-  max_size_mb: 10
-overlay:
-  enabled: true
-  font_size: 14
-  position: top_right
-  show_gto_suggestions: true
-  show_odds: true
-  show_recommendations: true
-  transparency: 0.9
+  interval: 1.0
+
 platforms:
   default: pokerstars
-  pokerstars:
-    card_template_path: data/card_templates/pokerstars/
-    table_regions:
-      cards_community:
-      - 300
-      - 150
-      - 400
-      - 80
-      cards_hero:
-      - 100
-      - 200
-      - 150
-      - 50
-      pot_region:
-      - 400
-      - 100
-      - 200
-      - 40
-  supported:
-  - pokerstars
-  - ggpoker
-recognition:
-  card_matching_threshold: 0.8
-  ocr_engine: tesseract
-  ocr_language: eng
-  table_detection_confidence: 0.7
+
+overlay:
+  enabled: false
