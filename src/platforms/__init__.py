@@ -1,5 +1,3 @@
-"""
-Archivo: __init__.py
-Ruta: src/platforms/__init__.py
-"""
+"""Módulo del Poker Coach Pro"""
 
+__version__ = "1.0.0"

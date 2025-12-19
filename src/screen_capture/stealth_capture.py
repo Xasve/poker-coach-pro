@@ -1,47 +1,39 @@
-﻿"""
-Stealth Capture para PokerStars
-"""
-import numpy as np
 import mss
+import cv2
+import numpy as np
 import time
-import random
+from typing import Optional, Tuple
 
 class StealthScreenCapture:
-    def __init__(self, platform: str = \"POKERSTARS\", stealth_level: str = \"MEDIUM\"):
-        self.platform = platform
-        self.stealth_level = stealth_level
+    """Captura de pantalla stealth para evitar detección"""
+    
+    def __init__(self, monitor: int = 1):
+        self.monitor = monitor
         self.sct = mss.mss()
-        print(f\"[Stealth Capture] Inicializado para {platform}\")
-        print(f\"[Stealth Capture] Nivel de stealth: {stealth_level}\")
-    
-    def capture(self):
-        \"\"\"Capturar pantalla completa\"\"\"
+        self.last_capture_time = 0
+        self.capture_delay = 0.1
+        
+    def capture_screen(self, region: Optional[Tuple[int, int, int, int]] = None) -> np.ndarray:
+        """Captura pantalla o región específica"""
         try:
-            # Capturar toda la pantalla
-            monitor = self.sct.monitors[1]  # Monitor principal
+            if region:
+                monitor = {
+                    "left": region[0],
+                    "top": region[1],
+                    "width": region[2] - region[0],
+                    "height": region[3] - region[1]
+                }
+            else:
+                monitor = self.sct.monitors[self.monitor]
+            
             screenshot = self.sct.grab(monitor)
+            img = np.array(screenshot)
             
-            # Convertir a numpy array
-            img = np.array(screenshot, dtype=np.uint8)
-            
-            # Añadir variabilidad stealth
-            if self.stealth_level == \"HIGH\":
-                time.sleep(random.uniform(0.1, 0.3))
-            elif self.stealth_level == \"MEDIUM\":
-                time.sleep(random.uniform(0.05, 0.15))
+            if img.shape[2] == 4:
+                img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
             
             return img
             
         except Exception as e:
-            print(f\"[Stealth Capture] Error en captura: {e}\")
-            return None
-    
-    def capture_region(self, region):
-        \"\"\"Capturar región específica\"\"\"
-        try:
-            screenshot = self.sct.grab(region)
-            img = np.array(screenshot, dtype=np.uint8)
-            return img
-        except Exception as e:
-            print(f\"[Stealth Capture] Error capturando región: {e}\")
-            return None
+            print(f"Error capturando pantalla: {e}")
+            return np.zeros((100, 100, 3), dtype=np.uint8)

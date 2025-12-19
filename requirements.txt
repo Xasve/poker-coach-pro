@@ -1,21 +1,14 @@
-# Dependencias principales
+# DEPENDENCIAS PRINCIPALES
 opencv-python>=4.8.0
-numpy>=1.24.0
-pillow>=10.0.0
-pytesseract>=0.3.10
-pandas>=2.0.0
-python-socketio>=5.9.0
-websockets>=12.0
-pyautogui>=0.9.54
 mss>=9.0.1
-psutil>=5.9.0
-tinydb>=4.8.0
+numpy>=1.24.0
 
-# Para Windows
-pywin32>=306
-pypiwin32>=223
+# DEPENDENCIAS OPCIONALES (para funcionalidad completa)
+pygame>=2.5.0        # Para overlay alternativo
+pytesseract>=0.3.10  # Para OCR de texto
+Pillow>=10.0.0       # Para procesamiento de imágenes
+pyautogui>=0.9.54    # Para interacción automática
 
-# Para desarrollo
-pytest>=7.4.0
-black>=23.0.0
-flake8>=6.0.0
+# UTILIDADES
+colorama>=0.4.6      # Colores en consola
+tqdm>=4.66.0         # Barras de progreso
