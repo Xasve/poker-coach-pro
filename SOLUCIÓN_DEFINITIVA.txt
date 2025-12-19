@@ -1,0 +1,29 @@
+﻿# SOLUCIÓN_DEFINITIVA.txt
+# ======================
+# PROBLEMA: 100% cartas negras (♠️) en capturas
+# CAUSA: Mesa PokerStars incorrecta (Dark/Stealth)
+# SOLUCIÓN: Cambiar a mesa "Classic"
+
+COMANDOS EN ORDEN:
+1. python quick_fix.py                    # Limpiar sesiones malas
+2. ABRIR POKERSTARS EN MESA "CLASSIC"     #  CRÍTICO
+3. python detect_coords.py                # Configurar captura
+4. python smart_capture_fixed.py          # Capturar balanceado
+5. python verify_balance.py               # Verificar balance
+6. python main_integrated.py              # Usar sistema
+
+CÓMO SABER SI LA MESA ES CORRECTA?
+ CORRECTA: "NL Holdem Classic", fondo claro, cartas rojas visibles
+ INCORRECTA: Cualquier mesa con "Dark", "Stealth", "Night", fondo oscuro
+
+CONSEJOS:
+ Si no ves cartas rojas, CAMBIA de mesa
+ Usa Print Screen para verificar manualmente
+• Configura PokerStars: Table Appearance -> "Classic"
+• Desactiva "4-Color Deck" si está activado
+
+EMERGENCIA:
+Si sigues teniendo 100% negras después de cambiar de mesa:
+1. python ultra_capture_solution.py -> Opción 3 (dataset artificial)
+2. Usa el dataset artificial para pruebas
+3. Contacta soporte técnico de PokerStars
