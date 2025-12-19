@@ -1,3 +1,7 @@
-"""Módulo Poker Coach Pro"""
+"""
+Módulo de integración para Poker Coach Pro
+"""
 
-__version__ = "1.0.0"
+from .coach_integrator_simple import CoachIntegrator
+
+__all__ = ['CoachIntegrator']

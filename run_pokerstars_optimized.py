@@ -56,7 +56,7 @@ class PokerCoachPro:
         """Inicializar todos los componentes del sistema"""
         try:
             from platforms.pokerstars_adapter import PokerStarsAdapter
-            from integration.coach_integrator import CoachIntegrator
+            from integration.coach_integrator_simple import CoachIntegrator
             
             self.adapter = PokerStarsAdapter(
                 stealth_level=self.config["stealth_level"]

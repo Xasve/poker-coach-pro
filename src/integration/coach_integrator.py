@@ -481,7 +481,12 @@ class CoachIntegrator:
         
                 # Obtener acción base de las tablas
         strength = hand_evaluation.get("strength", "UNKNOWN")
-        action_table = self.postflop_decisions.get(strength, self.postflop_decisions["UNKNOWN"])
+                # 🔥 CORRECCIÓN: Asegurar que strength existe en las tablas
+        if strength not in self.postflop_decisions:
+            print(f"⚠️  Fuerza de mano desconocida: '{strength}', usando 'UNKNOWN'")
+            strength = "UNKNOWN"
+        
+        action_table = self.postflop_decisions[strength]
         
         # 🔥 CORRECCIÓN: Asegurar que strength existe en las tablas
         if strength not in self.postflop_decisions:
