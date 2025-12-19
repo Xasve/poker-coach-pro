@@ -27,7 +27,7 @@ class SessionManager:
                 image_count = 0
                 if os.path.exists(raw_path):
                     image_count = len([f for f in os.listdir(raw_path) 
-                                     if f.endswith(('.png', '.jpg', '.jpeg'))])
+                                    if f.endswith(('.png', '.jpg', '.jpeg'))])
                 
                 # Obtener información de sesión
                 session_info = self.get_session_info(session_path)
@@ -108,7 +108,7 @@ class SessionManager:
         # Confirmación
         session_info = self.get_session_info(session_path)
         image_count = len([f for f in os.listdir(os.path.join(session_path, "raw_captures")) 
-                         if f.endswith(('.png', '.jpg'))]) if os.path.exists(os.path.join(session_path, "raw_captures")) else 0
+                        if f.endswith(('.png', '.jpg'))]) if os.path.exists(os.path.join(session_path, "raw_captures")) else 0
         
         print(f"\n  ELIMINAR SESIÓN:")
         print(f"   ID: {session_id}")

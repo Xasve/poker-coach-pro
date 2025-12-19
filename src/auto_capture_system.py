@@ -134,7 +134,7 @@ class AutoCaptureSystem:
             return 0
         
         sessions = [d for d in os.listdir(base_path) 
-                   if os.path.isdir(os.path.join(base_path, d))]
+                if os.path.isdir(os.path.join(base_path, d))]
         return len(sessions)
     
     def count_templates(self):
@@ -149,7 +149,7 @@ class AutoCaptureSystem:
             suit_path = os.path.join(base_path, suit)
             if os.path.exists(suit_path):
                 count = len([f for f in os.listdir(suit_path) 
-                           if f.endswith(('.png', '.jpg', '.jpeg'))])
+                        if f.endswith(('.png', '.jpg', '.jpeg'))])
                 total += count
         
         return total
@@ -366,7 +366,7 @@ class AutoCaptureSystem:
                 suit_path = os.path.join(templates_path, suit)
                 if os.path.exists(suit_path):
                     count = len([f for f in os.listdir(suit_path) 
-                               if f.endswith(('.png', '.jpg', '.jpeg'))])
+                            if f.endswith(('.png', '.jpg', '.jpeg'))])
                     suit_counts[suit] = count
                     total_templates += count
             

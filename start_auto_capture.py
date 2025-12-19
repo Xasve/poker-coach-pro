@@ -99,7 +99,7 @@ def count_sessions():
         return 0
     
     sessions = [d for d in os.listdir(base_path) 
-               if os.path.isdir(os.path.join(base_path, d))]
+            if os.path.isdir(os.path.join(base_path, d))]
     return len(sessions)
 
 def count_templates():
@@ -114,7 +114,7 @@ def count_templates():
         suit_path = os.path.join(base_path, suit)
         if os.path.exists(suit_path):
             count = len([f for f in os.listdir(suit_path) 
-                       if f.endswith(('.png', '.jpg', '.jpeg'))])
+                    if f.endswith(('.png', '.jpg', '.jpeg'))])
             total += count
     
     return total
@@ -202,7 +202,7 @@ def basic_session_management():
             image_count = 0
             if os.path.exists(raw_path):
                 image_count = len([f for f in os.listdir(raw_path) 
-                                 if f.endswith(('.png', '.jpg'))])
+                                if f.endswith(('.png', '.jpg'))])
             
             # Calcular tamaño
             size_mb = 0
@@ -461,7 +461,7 @@ def install_dependencies():
         opt_response = input("\n¿Instalar scikit-learn y matplotlib? (s/n): ")
         if opt_response.lower() == 's':
             subprocess.run([sys.executable, "-m", "pip", "install", 
-                          "scikit-learn==1.3.2", "matplotlib==3.8.2", "-q"])
+                        "scikit-learn==1.3.2", "matplotlib==3.8.2", "-q"])
         
         print("\n✅ Dependencias instaladas")
     else:
@@ -547,7 +547,7 @@ def generate_reports():
             suit_path = os.path.join(templates_path, suit)
             if os.path.exists(suit_path):
                 count = len([f for f in os.listdir(suit_path) 
-                           if f.endswith(('.png', '.jpg', '.jpeg'))])
+                        if f.endswith(('.png', '.jpg', '.jpeg'))])
                 suit_counts[suit] = count
                 total_templates += count
     

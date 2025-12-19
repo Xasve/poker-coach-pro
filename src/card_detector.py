@@ -46,12 +46,12 @@ class CardDetector:
         
         # Aplicar umbral adaptativo
         binary = cv2.adaptiveThreshold(gray, 255, 
-                                      cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                      cv2.THRESH_BINARY_INV, 11, 2)
+                                    cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                    cv2.THRESH_BINARY_INV, 11, 2)
         
         # Encontrar contornos
         contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, 
-                                      cv2.CHAIN_APPROX_SIMPLE)
+                                    cv2.CHAIN_APPROX_SIMPLE)
         
         cards = []
         for contour in contours:
@@ -96,7 +96,7 @@ class CardDetector:
             
             # Template matching
             result = cv2.matchTemplate(gray_card, template_resized, 
-                                     cv2.TM_CCOEFF_NORMED)
+                                    cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(result)
             
             if max_val > best_score:
