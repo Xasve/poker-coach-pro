@@ -1,0 +1,19 @@
+{
+  "start_time": "2025-12-19T07:51:09.284841",
+  "iterations": 2,
+  "decisions": [
+    {
+      "iteration": 1,
+      "action": "CALL",
+      "confidence": 0.7,
+      "timestamp": "2025-12-19T07:51:09.333744"
+    },
+    {
+      "iteration": 2,
+      "action": "CALL",
+      "confidence": 0.7,
+      "timestamp": "2025-12-19T07:51:12.375502"
+    }
+  ],
+  "errors": 0
+}
