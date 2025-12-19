@@ -1,58 +1,65 @@
-﻿import mss, cv2, numpy as np, os, time
+﻿import os
+import time
+import cv2
+import numpy as np
+from datetime import datetime
 
-print("📸 CAPTURA AUTOMÁTICA DE TEMPLATES DE CARTAS")
-print("="*60)
-print("INSTRUCCIONES:")
-print("1. Abre PokerStars en una mesa")
-print("2. Este script capturará cuando detecte cartas")
-print("3. Mueve el mouse sobre cada carta para nombrarla")
-print("="*60)
+print("📸 CAPTURA DE TEMPLATES DE CARTAS")
+print("=" * 60)
+print("Este script te ayudará a capturar cartas reales de PokerStars")
+print("=" * 60)
 
-template_dir = "data/card_templates/pokerstars_real"
-os.makedirs(f"{template_dir}/hearts", exist_ok=True)
-os.makedirs(f"{template_dir}/diamonds", exist_ok=True)
-os.makedirs(f"{template_dir}/clubs", exist_ok=True)
-os.makedirs(f"{template_dir}/spades", exist_ok=True)
+def create_folders():
+    """Crear estructura de carpetas para templates"""
+    folders = ["hearts", "diamonds", "clubs", "spades", "uncategorized"]
+    
+    for folder in folders:
+        path = f"data/card_templates/pokerstars_real/{folder}"
+        os.makedirs(path, exist_ok=True)
+        print(f"   📁 {path}")
+    
+    print("\n✅ Estructura de carpetas creada")
 
-# Coordenadas aproximadas (ajustar según detección)
-card_regions = [
-    {"name": "hero_1", "pos": [870, 750, 70, 95], "suit": None, "rank": None},
-    {"name": "hero_2", "pos": [950, 750, 70, 95], "suit": None, "rank": None},
-    {"name": "flop_1", "pos": [750, 450, 70, 95], "suit": None, "rank": None},
-    {"name": "flop_2", "pos": [830, 450, 70, 95], "suit": None, "rank": None},
-    {"name": "flop_3", "pos": [910, 450, 70, 95], "suit": None, "rank": None},
-]
+def show_instructions():
+    """Mostrar instrucciones de captura"""
+    print("\n�� INSTRUCCIONES DE CAPTURA:")
+    print("   1. Abre PokerStars en una mesa")
+    print("   2. Juega algunas manos normalmente")
+    print("   3. Las cartas se guardarán automáticamente")
+    print("   4. Luego clasifícalas manualmente en las carpetas")
+    print("\n   💡 CONSEJOS:")
+    print("   • Juega en mesas de poker gratuito para más manos")
+    print("   • Usa diferentes decks para variedad")
+    print("   • Captura cartas en diferentes posiciones")
 
-print(f"\n🎯 Monitoreando {len(card_regions)} posiciones de cartas...")
-print("   Presiona Ctrl+C para terminar")
+def manual_capture_guide():
+    """Guía para captura manual con PrintScreen"""
+    print("\n🖼️  CAPTURA MANUAL (PrintScreen):")
+    print("   1. Presiona PrintScreen cuando veas cartas")
+    print("   2. Abre Paint y pega (Ctrl+V)")
+    print("   3. Recorta cada carta (70x95 píxeles aprox)")
+    print("   4. Guarda como: As_hearts.png, Kd_diamonds.png, etc.")
+    print("   5. Mueve a la carpeta correspondiente")
 
-try:
-    with mss.mss() as sct:
-        capture_count = 0
-        while capture_count < 52:  # Máximo 52 cartas
-            screenshot = np.array(sct.grab(sct.monitors[1]))
-            
-            for card in card_regions:
-                x,y,w,h = card["pos"]
-                if y+h < screenshot.shape[0] and x+w < screenshot.shape[1]:
-                    card_img = screenshot[y:y+h, x:x+w]
-                    
-                    # Detectar si hay carta (basado en bordes/contraste)
-                    gray = cv2.cvtColor(card_img, cv2.COLOR_BGR2GRAY)
-                    edges = cv2.Canny(gray, 50, 150)
-                    edge_ratio = np.sum(edges > 0) / (w*h)
-                    
-                    if edge_ratio > 0.05:  # Posible carta detectada
-                        # Guardar para clasificación manual
-                        filename = f"{template_dir}/uncategorized/card_{capture_count}.png"
-                        os.makedirs(f"{template_dir}/uncategorized", exist_ok=True)
-                        cv2.imwrite(filename, card_img)
-                        capture_count += 1
-                        print(f"📷 Capturada carta #{capture_count}: {filename}")
-            
-            time.sleep(0.5)
-            
-except KeyboardInterrupt:
-    print(f"\n✅ Captura finalizada: {capture_count} cartas guardadas")
-    print(f"📁 Revisa: {template_dir}/uncategorized/")
-    print("💡 Clasifícalas manualmente en hearts/diamonds/clubs/spades")
+def auto_capture_setup():
+    """Configurar captura automática"""
+    print("\n🤖 CAPTURA AUTOMÁTICA (Próxima versión):")
+    print("   Esta funcionalidad está en desarrollo")
+    print("   Por ahora usa la captura manual")
+    print("\n   Para desarrollo avanzado, necesitarás:")
+    print("   • Mejor detección de cartas")
+    print("   • Reconocimiento de palos y valores")
+    print("   • Sistema de clasificación automática")
+
+if __name__ == "__main__":
+    create_folders()
+    show_instructions()
+    manual_capture_guide()
+    auto_capture_setup()
+    
+    print("\n" + "=" * 60)
+    print("🎴 POKER COACH PRO - CAPTURA DE TEMPLATES")
+    print("\n🚀 Comienza capturando cartas manualmente:")
+    print("   1. data/card_templates/pokerstars_real/uncategorized/")
+    print("   2. Luego clasifícalas en subcarpetas")
+    print("\n📞 Para ayuda, consulta la documentación")

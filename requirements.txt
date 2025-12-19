@@ -1,13 +1,22 @@
-# DEPENDENCIAS BÁSICAS
-opencv-python>=4.8.0
-mss>=9.0.1
-numpy>=1.24.0
+﻿# POKER COACH PRO - Requirements
+# Versiones compatibles con Python 3.11+
 
-# DEPENDENCIAS OPCIONALES
-# pygame>=2.5.0        # Para overlay
-# pytesseract>=0.3.10  # Para OCR
-# Pillow>=10.0.0       # Para imágenes
-# pyautogui>=0.9.54    # Para automatización
+# Core
+numpy==1.24.4
+opencv-python==4.9.0.80
 
-# UTILIDADES
-colorama>=0.4.6        # Colores en consola
+# Screen Capture
+mss==9.0.1
+pyautogui==0.9.54
+pillow==10.3.0
+
+# OCR
+pytesseract==0.3.10
+
+# Utils
+pyyaml==6.0.1
+colorama==0.4.6
+
+# Development
+pytest==7.4.3
+black==23.11.0
