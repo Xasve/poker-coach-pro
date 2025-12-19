@@ -5,8 +5,13 @@ import numpy as np
 class StealthScreenCapture:
     """Captura básica de pantalla"""
     
-    def __init__(self):
+    def __init__(self, platform=None, stealth_level=None):
+        """Constructor corregido"""
+        self.platform = platform
+        self.stealth_level = stealth_level
         self.sct = None
+        self.last_capture = 0
+        print(f"📷 Capturador: {platform or 'default'}")
     
     def initialize(self):
         """Inicializar capturador"""
