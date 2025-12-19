@@ -1,119 +1,151 @@
-# calibrate_positions.py - Ajustar posiciones de cartas
+# calibrate_detector.py - Calibrar detector de mesa automáticamente
 import sys
 import os
 import cv2
 import numpy as np
-import json  # 🔥 AÑADE ESTA LÍNEA
+import json
 
-print("🎯 CALIBRACIÓN DE POSICIONES DE CARTAS")
+print("🎨 CALIBRACIÓN AUTOMÁTICA DEL DETECTOR DE MESA")
 print("=" * 60)
 
 sys.path.insert(0, 'src')
 
 try:
+    from screen_capture.table_detector import TableDetector
     from platforms.pokerstars_adapter import PokerStarsAdapter
     
-    # Crear adaptador
+    print("🔧 Inicializando componentes...")
     adapter = PokerStarsAdapter(stealth_level=1)
+    detector = TableDetector()
     
-    print("📸 Capturando pantalla para calibración...")
+    print("\n📸 Capturando pantalla de referencia...")
     screenshot = adapter.capture_table()
     
     if screenshot is None:
         print("❌ No se pudo capturar pantalla")
         exit(1)
     
-    height, width = screenshot.shape[:2]
-    print(f"✅ Captura: {width}x{height}px")
-    
-    # Guardar captura original
+    # Guardar captura para análisis
     cal_dir = "debug/calibration"
     os.makedirs(cal_dir, exist_ok=True)
-    original_path = os.path.join(cal_dir, "original.png")
-    cv2.imwrite(original_path, screenshot)
-    print(f"💾 Original guardado: {original_path}")
     
-    # Mostrar imagen con grid para referencia
-    grid_img = screenshot.copy()
+    capture_path = os.path.join(cal_dir, "detector_calibration.png")
+    cv2.imwrite(capture_path, screenshot)
+    print(f"💾 Captura guardada: {capture_path}")
     
-    # Dibujar grid
-    grid_size = 100
-    for x in range(0, width, grid_size):
-        cv2.line(grid_img, (x, 0), (x, height), (0, 255, 0), 1)
-        cv2.putText(grid_img, str(x), (x, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+    print("\n🔍 Analizando colores en la imagen...")
     
-    for y in range(0, height, grid_size):
-        cv2.line(grid_img, (0, y), (width, y), (0, 255, 0), 1)
-        cv2.putText(grid_img, str(y), (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+    # Convertir a HSV
+    hsv = cv2.cvtColor(screenshot, cv2.COLOR_BGR2HSV)
+    height, width = screenshot.shape[:2]
     
-    grid_path = os.path.join(cal_dir, "grid.png")
-    cv2.imwrite(grid_path, grid_img)
+    # Analizar distribución de colores
+    print("📊 Analizando histograma de colores...")
     
-    print("\n🎮 INSTRUCCIONES DE CALIBRACIÓN:")
-    print("1. Abre la imagen en debug/calibration/grid.png")
-    print("2. Identifica las coordenadas de las cartas:")
-    print("   - Cartas propias (abajo centro)")
-    print("   - Cartas comunitarias (centro)")
-    print("3. Anota las coordenadas (x, y, ancho, alto)")
+    # Calcular histograma de Hue (tono)
+    hist_h = cv2.calcHist([hsv], [0], None, [180], [0, 180])
     
-    # Posiciones por defecto (ajustar según lo que veas)
-    default_positions = {
-        "hole_card_1": (width//2 - 110, height - 150, 71, 96),
-        "hole_card_2": (width//2 + 40, height - 150, 71, 96),
-        "community_1": (width//2 - 180, height//2 - 60, 71, 96),
-        "community_2": (width//2 - 90, height//2 - 60, 71, 96),
-        "community_3": (width//2, height//2 - 60, 71, 96),
-        "community_4": (width//2 + 90, height//2 - 60, 71, 96),
-        "community_5": (width//2 + 180, height//2 - 60, 71, 96)
-    }
+    # Encontrar picos en el histograma (colores dominantes)
+    peaks = []
+    for i in range(1, 179):
+        if hist_h[i] > hist_h[i-1] and hist_h[i] > hist_h[i+1] and hist_h[i] > 1000:
+            peaks.append(i)
     
-    print("\n📏 POSICIONES POR DEFECTO (1080p):")
-    for name, (x, y, w, h) in default_positions.items():
-        print(f"   {name}: ({x}, {y}, {w}, {h})")
+    print(f"   Picos de color encontrados en HUE: {peaks}")
     
-    # Crear imagen con rectángulos en posiciones por defecto
-    rect_img = screenshot.copy()
-    colors = {
-        "hole": (0, 0, 255),      # Rojo para cartas propias
-        "community": (0, 255, 0)  # Verde para comunitarias
-    }
+    # Buscar verdes (HUE ~35-85 en OpenCV)
+    green_peaks = [p for p in peaks if 35 <= p <= 85]
     
-    # Dibujar rectángulos para cartas propias
-    for name in ["hole_card_1", "hole_card_2"]:
-        x, y, w, h = default_positions[name]
-        cv2.rectangle(rect_img, (x, y), (x+w, y+h), colors["hole"], 2)
-        cv2.putText(rect_img, name, (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, colors["hole"], 1)
+    if green_peaks:
+        print(f"   ✅ Picos verdes encontrados: {green_peaks}")
+        
+        # Calibrar rangos basados en los picos
+        avg_green = np.mean(green_peaks)
+        
+        # Rangos recomendados
+        lower_h = max(0, int(avg_green - 15))
+        upper_h = min(180, int(avg_green + 15))
+        
+        print(f"\n🎨 RANGOS RECOMENDADOS:")
+        print(f"   HUE: [{lower_h}, {upper_h}]")
+        print(f"   SATURACIÓN: [40, 255]")
+        print(f"   VALOR: [40, 255]")
+        
+        # Probar detección con nuevos rangos
+        print("\n🧪 Probando detección con rangos actuales...")
+        current_detection = detector.detect(screenshot)
+        print(f"   Detección actual: {'✅' if current_detection else '❌'}")
+        
+        # Crear máscara visual para debug
+        test_lower = np.array([lower_h, 40, 40])
+        test_upper = np.array([upper_h, 255, 255])
+        test_mask = cv2.inRange(hsv, test_lower, test_upper)
+        
+        # Aplicar máscara a la imagen original
+        masked_img = cv2.bitwise_and(screenshot, screenshot, mask=test_mask)
+        
+        # Guardar imagen con máscara
+        mask_path = os.path.join(cal_dir, "green_mask.png")
+        cv2.imwrite(mask_path, masked_img)
+        print(f"💾 Máscara de verde guardada: {mask_path}")
+        
+        # Calcular porcentaje de verde
+        green_pixels = cv2.countNonZero(test_mask)
+        total_pixels = height * width
+        green_percent = (green_pixels / total_pixels) * 100
+        
+        print(f"\n📈 ESTADÍSTICAS:")
+        print(f"   Píxeles verdes: {green_pixels:,}")
+        print(f"   Total píxeles: {total_pixels:,}")
+        print(f"   Porcentaje verde: {green_percent:.2f}%")
+        
+        # Recomendación
+        if green_percent < 1.0:
+            print("\n⚠️  ADVERTENCIA: Poco verde detectado")
+            print("   Posibles causas:")
+            print("   1. PokerStars no está visible")
+            print("   2. Usas un tema oscuro/diferente")
+            print("   3. La mesa está minimizada")
+            print("\n   Solución: Abre PokerStars en una mesa verde clásica")
+        elif green_percent > 30.0:
+            print("\n✅ ¡Mucho verde detectado! El detector debería funcionar bien.")
+        else:
+            print(f"\n📊 Verde moderado detectado ({green_percent:.1f}%)")
+            print("   El detector debería funcionar con ajustes menores.")
+        
+        # Crear archivo de configuración
+        config = {
+            "calibration_date": "auto-generated",
+            "screen_resolution": f"{width}x{height}",
+            "detected_green_percent": green_percent,
+            "recommended_hue_range": [int(lower_h), int(upper_h)],
+            "current_threshold": 0.015,
+            "notes": "Ajustar green_threshold en table_detector.py si es necesario"
+        }
+        
+        config_path = os.path.join(cal_dir, "detector_config.json")
+        with open(config_path, 'w') as f:
+            json.dump(config, f, indent=2)
+        
+        print(f"\n💾 Configuración guardada: {config_path}")
+        
+    else:
+        print("❌ No se encontraron picos verdes en la imagen")
+        print("\n🔧 POSIBLES SOLUCIONES:")
+        print("1. Asegúrate de que PokerStars esté ABIERTO y VISIBLE")
+        print("2. Usa el tema CLÁSICO (verde) de PokerStars")
+        print("3. Si usas tema oscuro, necesitamos ajustar el detector")
+        print("4. La captura está en: debug/calibration/detector_calibration.png")
+        
+        # Sugerir ajuste manual
+        print("\n🎯 AJUSTE MANUAL REQUERIDO:")
+        print("   Edita: src/screen_capture/table_detector.py")
+        print("   Busca 'lower_green1' y 'upper_green1'")
+        print("   Ajusta los valores según el color de tu mesa")
     
-    # Dibujar rectángulos para cartas comunitarias
-    for name in ["community_1", "community_2", "community_3", "community_4", "community_5"]:
-        x, y, w, h = default_positions[name]
-        cv2.rectangle(rect_img, (x, y), (x+w, y+h), colors["community"], 2)
-        cv2.putText(rect_img, name, (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, colors["community"], 1)
-    
-    rect_path = os.path.join(cal_dir, "default_positions.png")
-    cv2.imwrite(rect_path, rect_img)
-    print(f"\n💾 Imagen con posiciones guardada: {rect_path}")
-    
-    print("\n🔧 PARA AJUSTAR POSICIONES:")
-    print("1. Si los rectángulos no coinciden con las cartas,")
-    print("2. Edita el archivo: src/platforms/pokerstars_adapter.py")
-    print("3. Busca las funciones recognize_hole_cards y recognize_community_cards")
-    print("4. Ajusta las coordenadas en las listas card_positions")
-    
-    # Crear archivo de configuración de posiciones
-    position_config = {
-        "screen_resolution": f"{width}x{height}",
-        "positions": default_positions,
-        "card_size": {"width": 71, "height": 96},
-        "instructions": "Ajustar coordenadas si los rectángulos no alinean con las cartas"
-    }
-    
-    config_path = os.path.join(cal_dir, "position_config.json")
-    with open(config_path, 'w') as f:
-        json.dump(position_config, f, indent=2)
-    
-    print(f"\n📋 Configuración guardada: {config_path}")
-    print("\n🎯 Siguiente: Ejecuta 'python test_real_capture.py' para probar")
+    print("\n" + "=" * 60)
+    print("🎯 CALIBRACIÓN COMPLETADA")
+    print("\n📝 Siguiente paso: Ejecuta 'python run_pokerstars_optimized.py'")
     
 except Exception as e:
     print(f"❌ Error: {e}")

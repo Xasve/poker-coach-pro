@@ -1,4 +1,4 @@
-# run_pokerstars_optimized.py - Sistema completo optimizado
+# run_pokerstars_optimized.py - Sistema completo optimizado (CORREGIDO)
 import sys
 import os
 import time
@@ -21,7 +21,7 @@ class PokerCoachPro:
             "start_time": None,
             "captures": 0,
             "tables_detected": 0,
-            "hands_analyzed": 0,
+            "hands_analyzed": 0,  # 🔥 CORREGIDO: era 'hands_analizadas'
             "recommendations_given": 0
         }
         
@@ -81,7 +81,7 @@ class PokerCoachPro:
             return
         
         self.running = True
-        self.stats["start_time"] = datetime.now()
+        self.stats["start_time"] = datetime.now().isoformat()  # 🔥 Usar string ISO
         
         print(f"\n🔧 CONFIGURACIÓN:")
         print(f"   Plataforma: {self.platform}")
@@ -101,7 +101,6 @@ class PokerCoachPro:
         print("-" * 50)
         
         # Variables para estado del juego
-        last_table_state = None
         consecutive_detections = 0
         
         try:
@@ -121,11 +120,12 @@ class PokerCoachPro:
                     consecutive_detections += 1
                     self.stats["tables_detected"] += 1
                     
+                    print(f"✅ Mesa detectada ({consecutive_detections}/{self.config['min_table_detections']})")
+                    
                     # Solo analizar después de varias detecciones consecutivas
                     if consecutive_detections >= self.config["min_table_detections"]:
                         self.analyze_table(screenshot)
-                    else:
-                        print(f"   🔍 Mesa detectada ({consecutive_detections}/{self.config['min_table_detections']})")
+                        consecutive_detections = 0  # Resetear después de analizar
                 
                 else:
                     consecutive_detections = 0
@@ -137,14 +137,16 @@ class PokerCoachPro:
                 
         except KeyboardInterrupt:
             print("\n\n🛑 Sistema detenido por el usuario")
+        except Exception as e:
+            print(f"\n⚠️  Error durante ejecución: {e}")
         finally:
             self.shutdown()
     
     def analyze_table(self, screenshot):
         """Analizar la mesa de poker"""
-        self.stats["hands_analyzed"] += 1
+        self.stats["hands_analyzed"] += 1  # 🔥 CORREGIDO
         
-        print(f"\n📊 ANÁLISIS #{self.stats['hands_analizadas']}")
+        print(f"\n📊 ANÁLISIS #{self.stats['hands_analyzed']}")  # 🔥 CORREGIDO
         print("   " + "-" * 40)
         
         # 1. Reconocer cartas
@@ -158,17 +160,26 @@ class PokerCoachPro:
         pot_size = 100  # Placeholder
         print(f"   💰 Bote: ${pot_size}")
         
-        # 3. Preparar situación para análisis
+        # 3. Determinar etapa del juego
+        stage = "preflop"
+        if len(community_cards) >= 5:
+            stage = "river"
+        elif len(community_cards) >= 4:
+            stage = "turn"
+        elif len(community_cards) >= 3:
+            stage = "flop"
+        
+        # 4. Preparar situación para análisis
         situation = {
             "hole_cards": hole_cards,
             "community_cards": community_cards,
             "pot_size": pot_size,
-            "position": "late",  # Placeholder
-            "players": 6,  # Placeholder
-            "stage": "flop" if len(community_cards) >= 3 else "preflop"
+            "position": "BTN",  # Placeholder - en versión real detectar posición
+            "players": 6,
+            "stage": stage
         }
         
-        # 4. Obtener recomendación del coach
+        # 5. Obtener recomendación del coach
         try:
             recommendation = self.coach.analyze_hand(situation)
             
@@ -194,7 +205,6 @@ class PokerCoachPro:
     
     def show_overlay(self, action, confidence):
         """Mostrar recomendación en overlay (simulado)"""
-        # En versión final, esto activaría el overlay GUI real
         action_symbols = {
             "FOLD": "❌",
             "CHECK": "⏸️",
@@ -213,8 +223,12 @@ class PokerCoachPro:
         # Calcular tiempo de ejecución
         end_time = datetime.now()
         if self.stats["start_time"]:
-            runtime = end_time - self.stats["start_time"]
-            runtime_seconds = runtime.total_seconds()
+            try:
+                start_time = datetime.fromisoformat(self.stats["start_time"])
+                runtime = end_time - start_time
+                runtime_seconds = runtime.total_seconds()
+            except:
+                runtime_seconds = 0
         else:
             runtime_seconds = 0
         
@@ -240,23 +254,30 @@ class PokerCoachPro:
         
         stats_file = os.path.join(stats_dir, f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
         
+        # 🔥 CORREGIDO: Asegurar que todos los valores sean JSON serializables
         session_stats = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now().isoformat(),  # String ISO
             "runtime_seconds": runtime_seconds,
-            **self.stats,
+            "captures": self.stats["captures"],
+            "tables_detected": self.stats["tables_detected"],
+            "hands_analyzed": self.stats["hands_analyzed"],
+            "recommendations_given": self.stats["recommendations_given"],
             "config": self.config
         }
         
-        with open(stats_file, 'w') as f:
-            json.dump(session_stats, f, indent=2)
+        try:
+            with open(stats_file, 'w') as f:
+                json.dump(session_stats, f, indent=2)
+            print(f"\n💾 Estadísticas guardadas: {stats_file}")
+        except Exception as e:
+            print(f"⚠️  No se pudieron guardar estadísticas: {e}")
         
-        print(f"\n💾 Estadísticas guardadas: {stats_file}")
         print("\n🎯 Poker Coach Pro - Sesión finalizada")
         print("=" * 60)
 
 def main():
     """Función principal"""
-    coach = PokerCoachPro(platform="pokerstars", stealth_level=2)
+    coach = PokerCoachPro(platform="pokerstars", stealth_level=1)  # 🔥 Nivel 1 para más rápido
     coach.run()
 
 if __name__ == "__main__":
