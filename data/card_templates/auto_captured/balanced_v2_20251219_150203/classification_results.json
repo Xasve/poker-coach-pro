@@ -1,0 +1,13 @@
+{
+  "session": "balanced_v2_20251219_150203",
+  "total_cards": 100,
+  "distribution": {
+    "hearts": 20,
+    "diamonds": 20,
+    "clubs": 30,
+    "spades": 30
+  },
+  "red_percentage": 40.0,
+  "detection_method": "ADAPTIVE_FORCED",
+  "timestamp": "2025-12-19T15:02:52.198745"
+}

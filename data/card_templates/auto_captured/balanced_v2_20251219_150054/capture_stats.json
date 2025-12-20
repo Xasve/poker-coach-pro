@@ -1,0 +1,12 @@
+{
+  "total": 20,
+  "hearts": 4,
+  "diamonds": 4,
+  "clubs": 6,
+  "spades": 6,
+  "red_percentage": 40.0,
+  "start_time": "2025-12-19T15:00:54.191053",
+  "target_red_percentage": 35,
+  "detection_method": "ADAPTIVE_FORCED",
+  "end_time": "2025-12-19T15:01:26.593517"
+}
