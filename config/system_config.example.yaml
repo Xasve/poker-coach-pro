@@ -1,0 +1,124 @@
+﻿# config/system_config.example.yaml
+# Configuración de ejemplo para Poker Coach Pro v4.0
+
+system:
+  name: "Poker Coach Pro"
+  version: "4.0"
+  mode: "development"  # development, testing, production
+  debug: false
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+
+paths:
+  data: "data/"
+  templates: "data/templates/cards/"
+  datasets: "data/datasets/"
+  models: "data/models/"
+  config: "config/"
+  logs: "logs/"
+  docs: "docs/"
+
+capture:
+  engine: "smart_capture"  # smart_capture, quick_capture, stealth_capture
+  interval_ms: 200
+  region: "auto"  # auto, or specify x,y,width,height
+  save_samples: false
+  
+  color_detection:
+    enabled: true
+    profiles: "config/profiles/color_profiles.json"
+    default: "classic"
+    calibration_samples: 5
+
+ocr:
+  engine: "card_ocr"
+  confidence_threshold: 0.7
+  tesseract_path: "C:/Program Files/Tesseract-OCR/tesseract.exe"
+  
+  augmentation:
+    enabled: true
+    target_per_class: 50
+    rotation_limit: 15
+    brightness_contrast: true
+
+gto:
+  engine: "advanced_gto"
+  model_path: "data/models/gto_model.json"
+  min_confidence: 0.65
+  learning_enabled: true
+  
+  analysis:
+    hand_strength_weight: 0.4
+    position_weight: 0.3
+    pot_odds_weight: 0.2
+    stack_size_weight: 0.1
+
+ui:
+  overlay:
+    enabled: true
+    position: "top_right"
+    transparency: 0.9
+    always_on_top: true
+    width: 300
+    height: 180
+    
+  colors:
+    background: "#1a1a1a"
+    text: "#ffffff"
+    accent: "#00ff88"
+    raise: "#00ff88"
+    call: "#ffff00"
+    fold: "#ff4444"
+    check: "#8888ff"
+
+pokerstars:
+  table_types: ["classic", "dark", "stealth"]
+  default_resolution: "1920x1080"
+  regions_file: "config/profiles/pokerstars_coords.json"
+  
+  detection:
+    method: "template_matching"
+    confidence: 0.8
+    auto_detect: true
+
+performance:
+  max_threads: 4
+  cache_enabled: true
+  cache_size: 100
+  monitoring: true
+  
+  optimization:
+    lazy_loading: true
+    background_processing: true
+    memory_limit_mb: 1024
+
+logging:
+  console: true
+  file: true
+  max_files: 10
+  max_size_mb: 10
+  
+  directories:
+    sessions: "logs/sessions/"
+    decisions: "logs/decisions/"
+    errors: "logs/errors/"
+    performance: "logs/performance/"
+
+development:
+  simulate_capture: false
+  skip_ocr: false
+  fast_mode: false
+  
+  testing:
+    run_on_start: false
+    save_results: true
+
+#  ADVERTENCIA IMPORTANTE
+disclaimer: |
+  ESTE SOFTWARE ES PARA FINES EDUCATIVOS Y DE APRENDIZAJE SOLAMENTE.
+  
+   Verifica los Términos de Servicio de PokerStars antes de usar
+   No uses en juegos de dinero real sin permiso explícito
+   Úsalo de manera responsable y ética
+   Respeta las reglas de cada sala de poker
+
+  El autor no se hace responsable del uso inapropiado de este software.
