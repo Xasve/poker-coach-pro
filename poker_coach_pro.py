@@ -1,289 +1,278 @@
-﻿# poker_coach_pro.py - Sistema principal unificado y organizado
-"""
-🎴 POKER COACH PRO - SISTEMA PRINCIPAL UNIFICADO
-Versión: 4.0 (Organizada y Limpia)
-"""
-
+﻿# poker_coach_pro.py - Actualizado para estructura correcta
 import os
 import sys
 import argparse
-from pathlib import Path
 
 # Añadir src al path
 sys.path.insert(0, "src")
 
 class PokerCoachPro:
-    """Sistema principal unificado de Poker Coach Pro"""
+    """Sistema principal unificado - Versión corregida"""
     
     def __init__(self):
         self.version = "4.0"
         self.project_name = "Poker Coach Pro"
-        self.author = "Poker Coach Team"
         
-        print(f"🎴 {self.project_name} v{self.version}")
+        print(f" {self.project_name} v{self.version}")
         print("=" * 70)
-        print("📦 Sistema organizado y optimizado")
+        print(" Sistema organizado y optimizado")
         print("=" * 70)
+        
+        # Verificar estructura
+        self.check_structure()
+    
+    def check_structure(self):
+        """Verificar estructura básica"""
+        print("\n VERIFICANDO ESTRUCTURA...")
+        
+        required_files = [
+            ("src/core/main_system.py", "Módulo principal"),
+            ("config/system_config.yaml", "Configuración"),
+            ("requirements.txt", "Dependencias")
+        ]
+        
+        for file_path, description in required_files:
+            if os.path.exists(file_path):
+                print(f"    {description}")
+            else:
+                print(f"   ❌ {description} - FALTANTE")
     
     def show_menu(self):
         """Mostrar menú principal"""
         print("\n🎮 MENÚ PRINCIPAL:")
         print("=" * 50)
-        print("1. 🎴 Sistema Principal - Análisis en tiempo real")
-        print("2. 🎨 Optimizar - Calibración y configuración")
-        print("3. 📊 Herramientas - Utilidades del sistema")
-        print("4. 🧪 Pruebas - Verificación y testing")
-        print("5. 📚 Documentación - Guías y ayuda")
-        print("6. ⚙️  Configuración - Ajustes del sistema")
-        print("7. 🚪 Salir")
+        print("1.  Sistema Principal - Análisis en tiempo real")
+        print("2.  Optimizar - Calibración y configuración")
+        print("3.  Herramientas - Utilidades del sistema")
+        print("4.  Pruebas - Verificación y testing")
+        print("5.  Documentación - Guías y ayuda")
+        print("6.   Configuración - Ajustes del sistema")
+        print("7.  Salir")
         print("=" * 50)
     
     def run_main_system(self):
-        """Ejecutar sistema principal de análisis"""
+        """Ejecutar sistema principal de análisis - CORREGIDO"""
         try:
+            # Importar desde la ubicación correcta
             from core.main_system import PokerCoachProV2
+            
+            print("\n CARGANDO SISTEMA PRINCIPAL...")
             system = PokerCoachProV2()
             system.interactive_mode_v2()
+            
         except ImportError as e:
-            print(f"❌ Error cargando sistema principal: {e}")
-            print("💡 Ejecuta: python -m src.core.main_system")
+            print(f"\n Error cargando sistema principal: {e}")
+            print("\n SOLUCIÓN RÁPIDA:")
+            print("1. Verifica que src/core/main_system.py existe")
+            print("2. Ejecuta este comando para probar:")
+            print('   python -c "import sys; sys.path.insert(0, \"src\"); from core.main_system import PokerCoachProV2; print(\" Importación exitosa\")"')
     
     def run_optimization(self):
         """Ejecutar herramientas de optimización"""
-        print("\n🔧 HERRAMIENTAS DE OPTIMIZACIÓN:")
+        print("\n HERRAMIENTAS DE OPTIMIZACIÓN:")
         print("=" * 50)
-        print("1. 🎨 Optimizador de color")
-        print("2. 🔍 Mejorador OCR")
-        print("3. 📸 Calibración de captura")
-        print("4. ⚙️  Configuración PokerStars")
-        print("5. ↩️  Volver al menú principal")
         
-        choice = input("\n👉 Selecciona opción (1-5): ").strip()
+        # Buscar archivos de optimización
+        optimization_files = [
+            "color_optimizer.py",
+            "ocr_enhancer.py",
+            "smart_capture_fixed_v2.py",
+            "detect_coords.py"
+        ]
         
-        if choice == "1":
-            self.run_color_optimizer()
-        elif choice == "2":
-            self.run_ocr_enhancer()
-        elif choice == "3":
-            self.run_capture_calibration()
-        elif choice == "4":
-            self.run_pokerstars_config()
-        elif choice == "5":
+        found_tools = []
+        for i, tool in enumerate(optimization_files, 1):
+            if os.path.exists(tool):
+                found_tools.append((i, tool))
+                print(f"{i}.   {tool}")
+        
+        print(f"{len(found_tools)+1}.   Volver al menú principal")
+        
+        if not found_tools:
+            print("\n  No se encontraron herramientas de optimización")
             return
-        else:
-            print("❌ Opción no válida")
-    
-    def run_color_optimizer(self):
-        """Ejecutar optimizador de color"""
-        try:
-            from analysis.color_optimizer import ColorOptimizer
-            optimizer = ColorOptimizer()
-            optimizer.interactive_calibration()
-        except ImportError as e:
-            print(f"❌ Error cargando optimizador: {e}")
-            print("💡 Asegúrate de que src/analysis/color_optimizer.py existe")
-    
-    def run_ocr_enhancer(self):
-        """Ejecutar mejorador OCR"""
-        try:
-            from analysis.ocr_enhancer import OCR_Enhancer
-            enhancer = OCR_Enhancer()
-            
-            # Verificar si hay dataset
-            dataset_path = "data/templates/cards"
-            if not os.path.exists(dataset_path):
-                print(f"❌ Dataset no encontrado: {dataset_path}")
-                print("💡 Captura dataset primero con: python -m src.capture.smart_capture")
-                return
-            
-            # Analizar dataset
-            stats = enhancer.analyze_dataset(dataset_path)
-            
-            print(f"\n📊 Dataset actual: {stats['total_images']} imágenes")
-            
-            # Preguntar qué hacer
-            print("\n🎯 OPCIONES OCR:")
-            print("1. Analizar dataset actual")
-            print("2. Balancear con data augmentation")
-            print("3. Crear split entrenamiento/validación")
-            
-            choice = input("\n👉 Selecciona opción (1-3): ").strip()
-            
-            if choice == "1":
-                print(f"\n📈 Distribución:")
-                for suit, count in stats['by_suit'].items():
-                    if count > 0:
-                        percentage = stats['suit_distribution'].get(suit, 0)
-                        print(f"   {suit:10} {count:4} imágenes ({percentage:5.1f}%)")
-            
-            elif choice == "2":
-                target_path = "data/datasets/augmented"
-                target_count = int(input("Objetivo por clase (default 50): ") or "50")
-                enhancer.balance_dataset(dataset_path, target_path, target_count)
-            
-            elif choice == "3":
-                enhancer.create_training_validation_split(dataset_path)
-            
-        except ImportError as e:
-            print(f"❌ Error cargando mejorador OCR: {e}")
-    
-    def run_capture_calibration(self):
-        """Ejecutar calibración de captura"""
-        print("\n📸 CALIBRACIÓN DE CAPTURA")
-        print("=" * 50)
         
         try:
-            from capture.smart_capture import main as smart_capture_main
-            print("Ejecutando captura inteligente...")
-            smart_capture_main()
-        except ImportError:
-            print("💡 Ejecuta: python -m src.capture.smart_capture")
-    
-    def run_pokerstars_config(self):
-        """Configurar PokerStars"""
-        try:
-            from utils.coordinates_detector import main as coords_main
-            coords_main()
-        except ImportError:
-            print("💡 Ejecuta: python -m src.utils.coordinates_detector")
+            choice = input("\n Selecciona opción: ").strip()
+            choice_num = int(choice)
+            
+            if 1 <= choice_num <= len(found_tools):
+                tool_index = choice_num - 1
+                script_name = found_tools[tool_index][1]
+                self.run_script(script_name)
+            elif choice_num == len(found_tools) + 1:
+                return
+            else:
+                print(" Opción no válida")
+        except ValueError:
+            print(" Ingresa un número válido")
     
     def run_tools(self):
         """Ejecutar herramientas del sistema"""
-        print("\n🔧 HERRAMIENTAS DEL SISTEMA:")
+        print("\n HERRAMIENTAS DEL SISTEMA:")
         print("=" * 50)
-        print("1. 📊 Verificador de balance")
-        print("2. 🩺 Diagnóstico del sistema")
-        print("3. 📁 Gestor de sesiones")
-        print("4. 🎯 Asistente PokerStars")
-        print("5. ↩️  Volver al menú principal")
         
-        choice = input("\n👉 Selecciona opción (1-5): ").strip()
+        # Buscar herramientas comunes
+        tool_files = [
+            "verify_balance.py",
+            "diagnostic.py", 
+            "session_manager.py",
+            "pokerstars_assistant.py"
+        ]
         
-        tool_mappings = {
-            "1": ("utils.balance_checker", "main"),
-            "2": ("utils.diagnostic", "main"),
-            "3": ("utils.session_manager", "main"),
-            "4": ("utils.pokerstars_assistant", "main")
-        }
+        found_tools = []
+        for i, tool in enumerate(tool_files, 1):
+            if os.path.exists(tool):
+                found_tools.append((i, tool))
+                
+                # Nombres amigables
+                friendly_names = {
+                    "verify_balance.py": " Verificador de balance",
+                    "diagnostic.py": " Diagnóstico del sistema",
+                    "session_manager.py": " Gestor de sesiones",
+                    "pokerstars_assistant.py": " Asistente PokerStars"
+                }
+                
+                name = friendly_names.get(tool, tool)
+                print(f"{i}. {name}")
         
-        if choice in tool_mappings:
-            module_path, func_name = tool_mappings[choice]
-            try:
-                module = __import__(f"src.{module_path}", fromlist=[func_name])
-                getattr(module, func_name)()
-            except ImportError as e:
-                print(f"❌ Error cargando herramienta: {e}")
-        elif choice == "5":
+        print(f"{len(found_tools)+1}.   Volver al menú principal")
+        
+        if not found_tools:
+            print("\n  No se encontraron herramientas")
             return
+        
+        try:
+            choice = input("\n Selecciona opción: ").strip()
+            choice_num = int(choice)
+            
+            if 1 <= choice_num <= len(found_tools):
+                tool_index = choice_num - 1
+                script_name = found_tools[tool_index][1]
+                self.run_script(script_name)
+            elif choice_num == len(found_tools) + 1:
+                return
+            else:
+                print(" Opción no válida")
+        except ValueError:
+            print(" Ingresa un número válido")
+    
+    def run_script(self, script_name):
+        """Ejecutar un script específico"""
+        if os.path.exists(script_name):
+            print(f"\n Ejecutando: {script_name}")
+            os.system(f"python {script_name}")
         else:
-            print("❌ Opción no válida")
+            print(f" Script no encontrado: {script_name}")
     
     def run_tests(self):
         """Ejecutar pruebas del sistema"""
-        print("\n🧪 PRUEBAS DEL SISTEMA:")
+        print("\n PRUEBAS DEL SISTEMA:")
         print("=" * 50)
-        print("1. 🧪 Pruebas rápidas (unitarias)")
-        print("2. 🔍 Pruebas de integración")
-        print("3. ⚡ Pruebas de rendimiento")
-        print("4. 📋 Verificación inicial")
-        print("5. ↩️  Volver al menú principal")
         
-        choice = input("\n👉 Selecciona opción (1-5): ").strip()
+        test_files = [
+            "final_tests.py",
+            "quick_test.py",
+            "startup_check.py"
+        ]
         
-        test_mappings = {
-            "1": ("tests.unit.quick_test", "run_quick_tests"),
-            "2": ("tests.integration.final_tests", "run_comprehensive_tests"),
-            "4": ("tests.integration.startup_check", "main")
-        }
-        
-        if choice in test_mappings:
-            module_path, func_name = test_mappings[choice]
-            try:
-                # Importar dinámicamente
-                import importlib.util
+        found_tests = []
+        for i, test in enumerate(test_files, 1):
+            if os.path.exists(test):
+                found_tests.append((i, test))
                 
-                script_path = f"{module_path.replace('.', '/')}.py"
-                if not os.path.exists(script_path):
-                    print(f"❌ Archivo no encontrado: {script_path}")
-                    return
+                friendly_names = {
+                    "final_tests.py": " Pruebas completas",
+                    "quick_test.py": " Pruebas rápidas", 
+                    "startup_check.py": " Verificación inicial"
+                }
                 
-                spec = importlib.util.spec_from_file_location(module_path, script_path)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                
-                if hasattr(module, func_name):
-                    getattr(module, func_name)()
-                else:
-                    module.main()  # Intentar llamar a main()
-                    
-            except Exception as e:
-                print(f"❌ Error ejecutando pruebas: {e}")
-                import traceback
-                traceback.print_exc()
+                name = friendly_names.get(test, test)
+                print(f"{i}. {name}")
         
-        elif choice == "3":
-            print("🚧 Pruebas de rendimiento en desarrollo...")
+        print(f"{len(found_tests)+1}.   Volver al menú principal")
         
-        elif choice == "5":
+        if not found_tests:
+            print("\n  No se encontraron pruebas")
             return
         
-        else:
-            print("❌ Opción no válida")
+        try:
+            choice = input("\n Selecciona opción: ").strip()
+            choice_num = int(choice)
+            
+            if 1 <= choice_num <= len(found_tests):
+                test_index = choice_num - 1
+                script_name = found_tests[test_index][1]
+                self.run_script(script_name)
+            elif choice_num == len(found_tests) + 1:
+                return
+            else:
+                print(" Opción no válida")
+        except ValueError:
+            print(" Ingresa un número válido")
     
     def show_documentation(self):
         """Mostrar documentación"""
-        print("\n📚 DOCUMENTACIÓN:")
+        print("\n DOCUMENTACIÓN:")
         print("=" * 50)
         
-        docs = {
-            "Guía Principal": "docs/README.md",
-            "Guía de Continuación": "docs/guides/CONTINUATION_GUIDE.md",
-            "Guía Final": "docs/guides/FINAL_GUIDE.md"
-        }
+        doc_files = [
+            "README.md",
+            "POKERSTARS_GUIDE.txt",
+            "SOLUCIÓN_DEFINITIVA.txt"
+        ]
         
-        print("\n📖 Documentación disponible:")
-        for i, (title, path) in enumerate(docs.items(), 1):
-            if os.path.exists(path):
-                print(f"{i}. {title}")
+        print("\n Documentación disponible:")
+        for doc in doc_files:
+            if os.path.exists(doc):
+                print(f"    {doc}")
             else:
-                print(f"{i}. {title} (no disponible)")
+                print(f"    {doc} (no encontrado)")
         
-        choice = input("\n👉 Selecciona documento (1-3) o Enter para volver: ").strip()
+        print("\n Directorio docs/:")
+        if os.path.exists("docs"):
+            $docs = Get-ChildItem "docs" -File | Select-Object -ExpandProperty Name
+            foreach ($doc in $docs) {
+                print(f"    docs/{$doc}")
+            }
         
-        if choice == "1" and os.path.exists(docs["Guía Principal"]):
-            os.system(f"type {docs['Guía Principal']} | more")
-        elif choice == "2" and os.path.exists(docs["Guía de Continuación"]):
-            os.system(f"type {docs['Guía de Continuación']} | more")
-        elif choice == "3" and os.path.exists(docs["Guía Final"]):
-            os.system(f"type {docs['Guía Final']} | more")
+        input("\n Presiona Enter para continuar...")
     
     def show_configuration(self):
         """Mostrar configuración del sistema"""
-        print("\n⚙️  CONFIGURACIÓN DEL SISTEMA:")
+        print("\n  CONFIGURACIÓN DEL SISTEMA:")
         print("=" * 50)
         
-        config_path = "config/system_config.yaml"
-        if os.path.exists(config_path):
-            print("📄 Configuración actual:")
-            with open(config_path, 'r') as f:
-                content = f.readlines()[:20]  # Mostrar primeras 20 líneas
-                for line in content:
-                    print(f"   {line.rstrip()}")
-            
-            print("\n💡 Para editar configuración completa:")
-            print(f"   Edita el archivo: {config_path}")
-        else:
-            print("❌ Archivo de configuración no encontrado")
-            print("💡 Crea uno con: cp config/system_config.example.yaml config/system_config.yaml")
+        print("\n ESTRUCTURA ACTUAL:")
         
-        input("\n👉 Presiona Enter para continuar...")
+        $dirs = @("src", "data", "config", "logs", "docs", "tests")
+        foreach ($dir in $dirs) {
+            if (Test-Path $dir) {
+                $itemCount = (Get-ChildItem $dir -Recurse -File | Measure-Object).Count
+                Write-Host "    $dir ($itemCount archivos)"
+            } else {
+                Write-Host "    $dir (no existe)"
+            }
+        }
+        
+        print("\n  ARCHIVOS DE CONFIGURACIÓN:")
+        $configFiles = @("config/system_config.yaml", "requirements.txt")
+        foreach ($file in $configFiles) {
+            if (Test-Path $file) {
+                Write-Host "    $file"
+            } else {
+                Write-Host "    $file (no encontrado)"
+            }
+        }
+        
+        input("\n Presiona Enter para continuar...")
     
     def interactive_mode(self):
         """Modo interactivo principal"""
         while True:
             try:
                 self.show_menu()
-                choice = input("\n👉 Selecciona opción (1-7): ").strip()
+                choice = input("\n Selecciona opción (1-7): ").strip()
                 
                 if choice == "1":
                     self.run_main_system()
@@ -298,18 +287,16 @@ class PokerCoachPro:
                 elif choice == "6":
                     self.show_configuration()
                 elif choice == "7":
-                    print("\n👋 ¡Hasta luego! 🎴")
+                    print("\n Hasta luego! ")
                     break
                 else:
-                    print("❌ Opción no válida")
+                    print(" Opción no válida")
             
             except KeyboardInterrupt:
-                print("\n\n⏹️  Interrumpido por usuario")
+                print("\n\n  Interrumpido por usuario")
                 break
             except Exception as e:
-                print(f"❌ Error: {e}")
-                import traceback
-                traceback.print_exc()
+                print(f" Error: {e}")
     
     def cli_mode(self, args):
         """Modo línea de comandos"""
@@ -319,15 +306,15 @@ class PokerCoachPro:
             self.run_optimization()
         elif args.mode == "test":
             self.run_tests()
-        elif args.mode == "capture":
-            self.run_capture_calibration()
+        elif args.mode == "tools":
+            self.run_tools()
         elif args.mode == "config":
             self.show_configuration()
 
 def main():
     """Función principal"""
     parser = argparse.ArgumentParser(description="Poker Coach Pro - Sistema organizado")
-    parser.add_argument("--mode", choices=["main", "optimize", "test", "capture", "config", "interactive"],
+    parser.add_argument("--mode", choices=["main", "optimize", "test", "tools", "config", "interactive"],
                        default="interactive", help="Modo de ejecución")
     parser.add_argument("--version", action="store_true", help="Mostrar versión")
     
@@ -337,7 +324,7 @@ def main():
     poker_coach = PokerCoachPro()
     
     if args.version:
-        print(f"🎴 Poker Coach Pro v{poker_coach.version}")
+        print(f" Poker Coach Pro v{poker_coach.version}")
         return
     
     if args.mode == "interactive":
