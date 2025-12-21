@@ -1,0 +1,39 @@
+{
+  "timestamp": "2025-12-21T12:35:37.522759",
+  "total_tests": 5,
+  "passed_tests": 2,
+  "failed_tests": 3,
+  "success_rate": 40.0,
+  "results": [
+    {
+      "test": "Verificaci\u00f3n del sistema",
+      "success": false,
+      "message": "Falta archivo: final_integration.py",
+      "time": 0.000274658203125
+    },
+    {
+      "test": "Prueba de captura",
+      "success": true,
+      "message": "Captura exitosa: (1920, 1080)",
+      "time": 0.4813072681427002
+    },
+    {
+      "test": "Prueba de detecci\u00f3n de color",
+      "success": false,
+      "message": "Error detecci\u00f3n color: No module named 'cv2'",
+      "time": 0.006156444549560547
+    },
+    {
+      "test": "Prueba de rendimiento",
+      "success": false,
+      "message": "Error rendimiento: No module named 'cv2'",
+      "time": 0.025846242904663086
+    },
+    {
+      "test": "Prueba de integraci\u00f3n",
+      "success": true,
+      "message": "M\u00f3dulos principales importables",
+      "time": 0.01829838752746582
+    }
+  ]
+}
