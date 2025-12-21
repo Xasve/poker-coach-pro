@@ -1,0 +1,76 @@
+{
+  "classic": {
+    "red_lower": [
+      0,
+      139,
+      139
+    ],
+    "red_upper": [
+      164,
+      255,
+      212
+    ],
+    "red_lower2": [
+      160,
+      139,
+      139
+    ],
+    "red_upper2": [
+      180,
+      255,
+      212
+    ],
+    "saturation_threshold": 159,
+    "brightness_threshold": 151,
+    "calibrated_at": "2025-12-21T08:41:12.179401",
+    "sample_count": 165146
+  },
+  "dark": {
+    "red_lower": [
+      0,
+      120,
+      40
+    ],
+    "red_upper": [
+      15,
+      255,
+      200
+    ],
+    "red_lower2": [
+      165,
+      120,
+      40
+    ],
+    "red_upper2": [
+      180,
+      255,
+      200
+    ],
+    "saturation_threshold": 60,
+    "brightness_threshold": 40
+  },
+  "stealth": {
+    "red_lower": [
+      0,
+      80,
+      30
+    ],
+    "red_upper": [
+      20,
+      220,
+      180
+    ],
+    "red_lower2": [
+      170,
+      80,
+      30
+    ],
+    "red_upper2": [
+      180,
+      220,
+      180
+    ],
+    "saturation_threshold": 40,
+    "brightness_threshold": 50
+  }
+}
