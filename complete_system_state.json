@@ -3,7 +3,7 @@
     "color_calibration": true,
     "learning_system": true,
     "training_plan": true,
-    "last_updated": "2025-12-21T15:06:12.071176"
+    "last_updated": "2025-12-21T17:04:27.180507"
   },
   "color_calibration": {
     "classic": {
@@ -44,24 +44,24 @@
       },
       "color_analysis": {
         "red_low": {
+          "percentage": 0.05,
+          "pixel_count": 30
+        },
+        "red_high": {
           "percentage": 0.0,
           "pixel_count": 0
         },
-        "red_high": {
-          "percentage": 0.02,
-          "pixel_count": 14
-        },
         "black": {
-          "percentage": 60.11,
-          "pixel_count": 36064
+          "percentage": 18.22,
+          "pixel_count": 10933
         },
         "green": {
           "percentage": 0.0,
-          "pixel_count": 0
+          "pixel_count": 3
         },
         "blue": {
-          "percentage": 0.0,
-          "pixel_count": 0
+          "percentage": 49.07,
+          "pixel_count": 29443
         }
       },
       "optimized_thresholds": {
@@ -72,4 +72,301 @@
             100
           ],
           "upper": [
-            
+            5,
+            255,
+            255
+          ],
+          "lower2": [
+            170,
+            100,
+            100
+          ],
+          "upper2": [
+            177,
+            255,
+            255
+          ]
+        },
+        "black": {
+          "lower": [
+            0,
+            0,
+            0
+          ],
+          "upper": [
+            180,
+            255,
+            50
+          ]
+        }
+      },
+      "calibration_time": "2025-12-21T17:04:27.235884"
+    },
+    "dark": {
+      "theme_info": {
+        "name": "Dark Theme",
+        "card_region": [
+          100,
+          100,
+          300,
+          200
+        ],
+        "expected_colors": {
+          "red": {
+            "lower": [
+              0,
+              150,
+              150
+            ],
+            "upper": [
+              10,
+              255,
+              255
+            ]
+          },
+          "black": {
+            "lower": [
+              0,
+              0,
+              0
+            ],
+            "upper": [
+              180,
+              100,
+              100
+            ]
+          }
+        }
+      },
+      "color_analysis": {
+        "red_low": {
+          "percentage": 0.05,
+          "pixel_count": 30
+        },
+        "red_high": {
+          "percentage": 0.0,
+          "pixel_count": 0
+        },
+        "black": {
+          "percentage": 18.22,
+          "pixel_count": 10933
+        },
+        "green": {
+          "percentage": 0.0,
+          "pixel_count": 3
+        },
+        "blue": {
+          "percentage": 49.07,
+          "pixel_count": 29443
+        }
+      },
+      "optimized_thresholds": {
+        "red": {
+          "lower": [
+            0,
+            100,
+            100
+          ],
+          "upper": [
+            5,
+            255,
+            255
+          ],
+          "lower2": [
+            170,
+            100,
+            100
+          ],
+          "upper2": [
+            177,
+            255,
+            255
+          ]
+        },
+        "black": {
+          "lower": [
+            0,
+            0,
+            0
+          ],
+          "upper": [
+            180,
+            255,
+            50
+          ]
+        }
+      },
+      "calibration_time": "2025-12-21T17:04:27.270163"
+    },
+    "stealth": {
+      "theme_info": {
+        "name": "Stealth Theme",
+        "card_region": [
+          100,
+          100,
+          300,
+          200
+        ],
+        "expected_colors": {
+          "red": {
+            "lower": [
+              0,
+              120,
+              120
+            ],
+            "upper": [
+              20,
+              255,
+              255
+            ]
+          },
+          "black": {
+            "lower": [
+              0,
+              0,
+              0
+            ],
+            "upper": [
+              180,
+              150,
+              80
+            ]
+          }
+        }
+      },
+      "color_analysis": {
+        "red_low": {
+          "percentage": 0.05,
+          "pixel_count": 30
+        },
+        "red_high": {
+          "percentage": 0.0,
+          "pixel_count": 0
+        },
+        "black": {
+          "percentage": 18.22,
+          "pixel_count": 10935
+        },
+        "green": {
+          "percentage": 0.0,
+          "pixel_count": 3
+        },
+        "blue": {
+          "percentage": 49.07,
+          "pixel_count": 29443
+        }
+      },
+      "optimized_thresholds": {
+        "red": {
+          "lower": [
+            0,
+            100,
+            100
+          ],
+          "upper": [
+            5,
+            255,
+            255
+          ],
+          "lower2": [
+            170,
+            100,
+            100
+          ],
+          "upper2": [
+            177,
+            255,
+            255
+          ]
+        },
+        "black": {
+          "lower": [
+            0,
+            0,
+            0
+          ],
+          "upper": [
+            180,
+            255,
+            50
+          ]
+        }
+      },
+      "calibration_time": "2025-12-21T17:04:27.310308"
+    }
+  },
+  "learning_metrics": {
+    "games_played": 0,
+    "decisions_made": 0,
+    "correct_decisions": 0,
+    "win_rate": 0.0,
+    "learning_curve": [],
+    "improvement_rate": -0.0039999999999995595,
+    "last_success_rate": 0.4819999999999518
+  },
+  "training_plan": {
+    "week_1": {
+      "focus": "Fundamentos Preflop",
+      "daily_hours": 2,
+      "objectives": [
+        "Memorizar rangos GTO por posición",
+        "Cálculo instantáneo de odds",
+        "Decisiones preflop en <2 segundos"
+      ],
+      "success_metrics": {
+        "winrate_target": "+15%",
+        "accuracy_target": "80%",
+        "speed_target": "2s/decision"
+      }
+    },
+    "week_2": {
+      "focus": "Juego Postflop",
+      "daily_hours": 3,
+      "objectives": [
+        "Lectura básica de manos",
+        "Tamaños de apuesta óptimos",
+        "Manejo de diferentes texturas"
+      ],
+      "success_metrics": {
+        "winrate_target": "+25%",
+        "accuracy_target": "85%",
+        "speed_target": "3s/decision"
+      }
+    },
+    "week_3": {
+      "focus": "Estrategia Avanzada",
+      "daily_hours": 4,
+      "objectives": [
+        "Juego GTO balanceado",
+        "Detección y explotación de leaks",
+        "Manejo de variantes de juego"
+      ],
+      "success_metrics": {
+        "winrate_target": "+35%",
+        "accuracy_target": "90%",
+        "speed_target": "2.5s/decision"
+      }
+    },
+    "week_4": {
+      "focus": "Nivel Élite",
+      "daily_hours": 3,
+      "objectives": [
+        "Meta-juego avanzado",
+        "Explotación máxima",
+        "Juego multi-mesa eficiente"
+      ],
+      "success_metrics": {
+        "winrate_target": "+40%+",
+        "accuracy_target": "92%+",
+        "speed_target": "2s/decision"
+      }
+    }
+  },
+  "timestamp": "2025-12-21T17:34:27.944550",
+  "version": "2.0",
+  "components": [
+    "Color Calibration",
+    "Rapid Learning",
+    "Turbo Training"
+  ]
+}
