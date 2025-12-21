@@ -1,0 +1,49 @@
+{
+  "system": "Rapid Learning Poker Bot",
+  "version": "2.0",
+  "learning_phases": [
+    {
+      "phase": "Fundamentals",
+      "duration": "1-2 horas",
+      "focus": [
+        "Preflop ranges",
+        "Positional awareness",
+        "Pot odds"
+      ],
+      "expected_improvement": "+15% winrate"
+    },
+    {
+      "phase": "Intermediate",
+      "duration": "3-5 horas",
+      "focus": [
+        "Hand reading",
+        "Bet sizing",
+        "Bluff detection"
+      ],
+      "expected_improvement": "+25% winrate"
+    },
+    {
+      "phase": "Advanced",
+      "duration": "8+ horas",
+      "focus": [
+        "Game theory",
+        "Exploitative play",
+        "Metagame"
+      ],
+      "expected_improvement": "+40% winrate"
+    }
+  ],
+  "learning_strategies": {
+    "reinforcement_learning": "Aprende de recompensas/pérdidas",
+    "imitation_learning": "Copia a jugadores expertos",
+    "simulation_learning": "Práctica masiva en simulación",
+    "meta_learning": "Optimiza su propio aprendizaje"
+  },
+  "quick_tips": [
+    " Enfócate en situaciones preflop primero (70% del EV)",
+    " Usa el sistema ensemble para decisiones críticas",
+    " Analiza hands perdidas para máximo aprendizaje",
+    " Sesiones cortas diarias > una sesión larga semanal",
+    " Varía los tipos de mesas para aprendizaje generalizado"
+  ]
+}
