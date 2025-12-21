@@ -1,0 +1,46 @@
+{
+  "date": "2025-12-21",
+  "week": 1,
+  "focus": "Fundamentos Preflop",
+  "schedule": [
+    {
+      "time": "09:00-10:00",
+      "activity": "Revisión teoría",
+      "intensity": "medium"
+    },
+    {
+      "time": "10:00-11:30",
+      "activity": "Simulación masiva",
+      "intensity": "high"
+    },
+    {
+      "time": "11:30-12:30",
+      "activity": "Análisis de errores",
+      "intensity": "high"
+    },
+    {
+      "time": "14:00-15:30",
+      "activity": "Juego real/parcial",
+      "intensity": "medium"
+    },
+    {
+      "time": "15:30-16:30",
+      "activity": "Imitación expertos",
+      "intensity": "low"
+    },
+    {
+      "time": "17:00-18:00",
+      "activity": "Meta-aprendizaje",
+      "intensity": "medium"
+    }
+  ],
+  "daily_objectives": [
+    "Memorizar rangos GTO por posición",
+    "Cálculo instantáneo de odds"
+  ],
+  "success_criteria": {
+    "winrate_target": "+15%",
+    "accuracy_target": "80%",
+    "speed_target": "2s/decision"
+  }
+}

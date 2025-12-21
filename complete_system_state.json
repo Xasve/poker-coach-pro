@@ -1,0 +1,75 @@
+{
+  "system_status": {
+    "color_calibration": true,
+    "learning_system": true,
+    "training_plan": true,
+    "last_updated": "2025-12-21T15:06:12.071176"
+  },
+  "color_calibration": {
+    "classic": {
+      "theme_info": {
+        "name": "Classic Theme",
+        "card_region": [
+          100,
+          100,
+          300,
+          200
+        ],
+        "expected_colors": {
+          "red": {
+            "lower": [
+              0,
+              100,
+              100
+            ],
+            "upper": [
+              10,
+              255,
+              255
+            ]
+          },
+          "black": {
+            "lower": [
+              0,
+              0,
+              0
+            ],
+            "upper": [
+              180,
+              255,
+              50
+            ]
+          }
+        }
+      },
+      "color_analysis": {
+        "red_low": {
+          "percentage": 0.0,
+          "pixel_count": 0
+        },
+        "red_high": {
+          "percentage": 0.02,
+          "pixel_count": 14
+        },
+        "black": {
+          "percentage": 60.11,
+          "pixel_count": 36064
+        },
+        "green": {
+          "percentage": 0.0,
+          "pixel_count": 0
+        },
+        "blue": {
+          "percentage": 0.0,
+          "pixel_count": 0
+        }
+      },
+      "optimized_thresholds": {
+        "red": {
+          "lower": [
+            0,
+            100,
+            100
+          ],
+          "upper": [
+            

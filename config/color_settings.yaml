@@ -1,0 +1,294 @@
+classic:
+  calibration_time: '2025-12-21T15:06:12.147691'
+  color_analysis:
+    black:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - &id001 !!python/object/apply:numpy.dtype
+        args:
+        - f8
+        - false
+        - true
+        state: !!python/tuple
+        - 3
+        - <
+        - null
+        - null
+        - null
+        - -1
+        - -1
+        - 0
+      - !!binary |
+        rkfhehQOTkA=
+      pixel_count: 36064
+    blue:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        AAAAAAAAAAA=
+      pixel_count: 0
+    green:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        AAAAAAAAAAA=
+      pixel_count: 0
+    red_high:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        exSuR+F6lD8=
+      pixel_count: 14
+    red_low:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        AAAAAAAAAAA=
+      pixel_count: 0
+  optimized_thresholds:
+    black:
+      lower:
+      - 0
+      - 0
+      - 0
+      upper:
+      - 180
+      - 255
+      - 50
+    red:
+      lower:
+      - 0
+      - 100
+      - 100
+      lower2:
+      - !!python/object/apply:numpy._core.multiarray.scalar
+        - &id002 !!python/object/apply:numpy.dtype
+          args:
+          - i8
+          - false
+          - true
+          state: !!python/tuple
+          - 3
+          - <
+          - null
+          - null
+          - null
+          - -1
+          - -1
+          - 0
+        - !!binary |
+          qwAAAAAAAAA=
+      - 100
+      - 100
+      upper:
+      - !!python/object/apply:numpy._core.multiarray.scalar
+        - *id002
+        - !!binary |
+          BQAAAAAAAAA=
+      - 255
+      - 255
+      upper2:
+      - 180
+      - 255
+      - 255
+  theme_info:
+    card_region: &id003 !!python/tuple
+    - 100
+    - 100
+    - 300
+    - 200
+    expected_colors:
+      black:
+        lower:
+        - 0
+        - 0
+        - 0
+        upper:
+        - 180
+        - 255
+        - 50
+      red:
+        lower:
+        - 0
+        - 100
+        - 100
+        upper:
+        - 10
+        - 255
+        - 255
+    name: Classic Theme
+dark:
+  calibration_time: '2025-12-21T15:06:12.185046'
+  color_analysis:
+    black:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        rkfhehQOTkA=
+      pixel_count: 36064
+    blue:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        AAAAAAAAAAA=
+      pixel_count: 0
+    green:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        AAAAAAAAAAA=
+      pixel_count: 0
+    red_high:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        exSuR+F6lD8=
+      pixel_count: 14
+    red_low:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        AAAAAAAAAAA=
+      pixel_count: 0
+  optimized_thresholds:
+    black:
+      lower:
+      - 0
+      - 0
+      - 0
+      upper:
+      - 180
+      - 255
+      - 50
+    red:
+      lower:
+      - 0
+      - 100
+      - 100
+      lower2:
+      - !!python/object/apply:numpy._core.multiarray.scalar
+        - *id002
+        - !!binary |
+          qwAAAAAAAAA=
+      - 100
+      - 100
+      upper:
+      - !!python/object/apply:numpy._core.multiarray.scalar
+        - *id002
+        - !!binary |
+          BQAAAAAAAAA=
+      - 255
+      - 255
+      upper2:
+      - 180
+      - 255
+      - 255
+  theme_info:
+    card_region: *id003
+    expected_colors:
+      black:
+        lower:
+        - 0
+        - 0
+        - 0
+        upper:
+        - 180
+        - 100
+        - 100
+      red:
+        lower:
+        - 0
+        - 150
+        - 150
+        upper:
+        - 10
+        - 255
+        - 255
+    name: Dark Theme
+stealth:
+  calibration_time: '2025-12-21T15:06:12.223658'
+  color_analysis:
+    black:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        rkfhehQOTkA=
+      pixel_count: 36064
+    blue:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        AAAAAAAAAAA=
+      pixel_count: 0
+    green:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        AAAAAAAAAAA=
+      pixel_count: 0
+    red_high:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        exSuR+F6lD8=
+      pixel_count: 14
+    red_low:
+      percentage: !!python/object/apply:numpy._core.multiarray.scalar
+      - *id001
+      - !!binary |
+        AAAAAAAAAAA=
+      pixel_count: 0
+  optimized_thresholds:
+    black:
+      lower:
+      - 0
+      - 0
+      - 0
+      upper:
+      - 180
+      - 255
+      - 50
+    red:
+      lower:
+      - 0
+      - 100
+      - 100
+      lower2:
+      - 170
+      - 100
+      - 100
+      upper:
+      - !!python/object/apply:numpy._core.multiarray.scalar
+        - *id002
+        - !!binary |
+          BQAAAAAAAAA=
+      - 255
+      - 255
+      upper2:
+      - !!python/object/apply:numpy._core.multiarray.scalar
+        - *id002
+        - !!binary |
+          rwAAAAAAAAA=
+      - 255
+      - 255
+  theme_info:
+    card_region: *id003
+    expected_colors:
+      black:
+        lower:
+        - 0
+        - 0
+        - 0
+        upper:
+        - 180
+        - 150
+        - 80
+      red:
+        lower:
+        - 0
+        - 120
+        - 120
+        upper:
+        - 20
+        - 255
+        - 255
+    name: Stealth Theme

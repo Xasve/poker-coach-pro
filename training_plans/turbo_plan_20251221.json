@@ -1,0 +1,70 @@
+{
+  "plan_name": "Turbo Training - 30 días a élite",
+  "start_date": "2025-12-21T15:06:12.071176",
+  "total_training_hours": 84,
+  "weekly_breakdown": {
+    "week_1": {
+      "focus": "Fundamentos Preflop",
+      "daily_hours": 2,
+      "objectives": [
+        "Memorizar rangos GTO por posición",
+        "Cálculo instantáneo de odds",
+        "Decisiones preflop en <2 segundos"
+      ],
+      "success_metrics": {
+        "winrate_target": "+15%",
+        "accuracy_target": "80%",
+        "speed_target": "2s/decision"
+      }
+    },
+    "week_2": {
+      "focus": "Juego Postflop",
+      "daily_hours": 3,
+      "objectives": [
+        "Lectura básica de manos",
+        "Tamaños de apuesta óptimos",
+        "Manejo de diferentes texturas"
+      ],
+      "success_metrics": {
+        "winrate_target": "+25%",
+        "accuracy_target": "85%",
+        "speed_target": "3s/decision"
+      }
+    },
+    "week_3": {
+      "focus": "Estrategia Avanzada",
+      "daily_hours": 4,
+      "objectives": [
+        "Juego GTO balanceado",
+        "Detección y explotación de leaks",
+        "Manejo de variantes de juego"
+      ],
+      "success_metrics": {
+        "winrate_target": "+35%",
+        "accuracy_target": "90%",
+        "speed_target": "2.5s/decision"
+      }
+    },
+    "week_4": {
+      "focus": "Nivel Élite",
+      "daily_hours": 3,
+      "objectives": [
+        "Meta-juego avanzado",
+        "Explotación máxima",
+        "Juego multi-mesa eficiente"
+      ],
+      "success_metrics": {
+        "winrate_target": "+40%+",
+        "accuracy_target": "92%+",
+        "speed_target": "2s/decision"
+      }
+    }
+  },
+  "expected_outcomes": {
+    "winrate_improvement": "+40-50%",
+    "accuracy_improvement": "+30-40%",
+    "speed_improvement": "3-5x más rápido",
+    "completion_time": "30 días"
+  },
+  "generated_date": "2025-12-21T15:06:12.071176"
+}
