@@ -15,6 +15,42 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 import warnings
 warnings.filterwarnings('ignore')
+class NumpyJSONEncoder(json.JSONEncoder):
+    """Encoder personalizado para manejar tipos NumPy en JSON"""
+    
+    def default(self, obj):
+        if isinstance(obj, (np.integer, np.int8, np.int16, np.int32, np.int64,
+                           np.uint8, np.uint16, np.uint32, np.uint64)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float16, np.float32, np.float64)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, np.bool_):
+            return bool(obj)
+        elif isinstance(obj, np.complexfloating):
+            return {'real': obj.real, 'imag': obj.imag}
+        elif hasattr(obj, '__dict__'):
+            return self._clean_dict(obj.__dict__)
+        elif isinstance(obj, dict):
+            return self._clean_dict(obj)
+        elif isinstance(obj, (list, tuple, set)):
+            return [self.default(item) for item in obj]
+        else:
+            return super().default(obj)
+    
+    def _clean_dict(self, d):
+        """Limpiar diccionario recursivamente"""
+        result = {}
+        for key, value in d.items():
+            if isinstance(value, dict):
+                result[key] = self._clean_dict(value)
+            elif isinstance(value, (list, tuple, set)):
+                result[key] = [self.default(item) for item in value]
+            else:
+                result[key] = self.default(value)
+        return result
+
 
 # ============================================================================
 # PARTE 1: SISTEMA DE CALIBRACIÓN DE COLOR PARA POKERSTARS
@@ -786,7 +822,7 @@ class PokerCoachProCompleteSystem:
         
         state_path = 'complete_system_state.json'
         with open(state_path, 'w', encoding='utf-8') as f:
-            json.dump(complete_state, f, indent=2, ensure_ascii=False)
+            json.dump(complete_state, f, indent=2, ensure_ascii=False, cls=NumpyJSONEncoder)
         
         print(f" Estado completo guardado: {state_path}")
         
