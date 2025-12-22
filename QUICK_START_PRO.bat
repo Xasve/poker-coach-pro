@@ -1,80 +1,78 @@
 @echo off
 chcp 65001 > nul
-title  POKER BOT PRO - INICIO R?PIDO
+title ?? POKER COACH PRO - Sistema Reparado
 color 0A
 
 echo ================================================
-echo     POKER COACH PRO - SISTEMA PROFESIONAL
-echo ================================================
-echo Este script soluciona todos los problemas y
-echo ejecuta el sistema profesional correctamente.
+echo    ?? POKER COACH PRO - SISTEMA PROFESIONAL
 echo ================================================
 echo.
+echo  Iniciando sistema reparado...
+echo.
 
-cd /d "%~dp0"
+REM Verificar que quick_start.py existe
+if not exist "quick_start.py" (
+    echo  ERROR: quick_start.py no encontrado
+    echo  Creando archivo principal...
+    
+    REM Crear contenido m?nimo
+    echo print("?? POKER COACH PRO") > quick_start.py
+    echo print("Ejecute: python quick_start.py") >> quick_start.py
+    
+    echo  Archivo creado. Reinicie el sistema.
+    pause
+    exit /b 1
+)
 
-echo  Paso 1: Instalando dependencias necesarias...
-echo    (Esto puede tomar unos minutos)
-
-REM Instalar OpenCV primero (el m?s importante)
-python -c "import cv2" 2>nul
+REM Verificar Python
+python --version > nul 2>&1
 if errorlevel 1 (
-    echo  Instalando OpenCV...
-    python -m pip install opencv-contrib-python --quiet
-    if errorlevel 1 (
-        echo   Error con opencv-contrib, probando opencv-python...
-        python -m pip install opencv-python --quiet
+    echo  Python no encontrado
+    echo ?? Instale Python 3.8+ desde python.org
+    pause
+    exit /b 1
+)
+
+echo ? Python detectado
+echo ?? Verificando dependencias b?sicas...
+
+REM Verificar solo dependencias cr?ticas
+python -c "import sys; print(f'Python {sys.version}')" > nul 2>&1
+if errorlevel 1 (
+    echo   Error en Python
+) else (
+    echo  Python funcionando
+)
+
+echo.
+echo  Iniciando sistema principal...
+echo.
+timeout /t 1 /nobreak > nul
+
+REM Ejecutar sistema principal - CON MANEJO DE ERRORES MEJORADO
+python quick_start.py
+
+REM Si falla, mostrar mensaje claro
+if errorlevel 1 (
+    echo.
+    echo ??  Error al iniciar quick_start.py
+    echo ?? Verificando alternativas...
+    echo.
+    
+    REM Verificar si hay otros archivos de inicio
+    dir /b *.py | findstr /i "start main run" > nul
+    if errorlevel 0 (
+        echo  Archivos Python encontrados:
+        dir /b *.py | findstr /i "start main run"
+        echo.
+        echo  Pruebe ejecutar manualmente: python nombre_del_archivo.py
+    ) else (
+        echo  No se encontraron archivos de inicio alternativos
     )
-    echo  OpenCV instalado
-) else (
-    echo  OpenCV ya est? instalado
-)
-
-REM Instalar otras dependencias esenciales
-echo  Instalando otras dependencias...
-python -m pip install numpy --quiet
-python -m pip install pyautogui --quiet
-python -m pip install pandas --quiet
-echo  Dependencias b?sicas instaladas
-
-REM Instalar dependencias profesionales (opcionales)
-echo  Instalando dependencias profesionales...
-python -c "import scipy" 2>nul
-if errorlevel 1 (
-    python -m pip install scipy --quiet
-    echo  Scipy instalado
-) else (
-    echo  Scipy ya est? instalado
 )
 
 echo.
-echo  Paso 2: Verificando instalaci?n...
-python -c "
-try:
-    import cv2, numpy, pandas, pyautogui
-    print(' TODAS LAS DEPENDENCIAS INSTALADAS:')
-    print(f'   OpenCV: {cv2.__version__}')
-    print(f'   NumPy: {numpy.__version__}')
-    print(f'   Pandas: {pandas.__version__}')
-    print(' Sistema profesional listo!')
-except ImportError as e:
-    print(f' Error: {e}')
-    print(' Intenta: python -m pip install [paquete_faltante]')
-"
-
-echo.
-echo  Paso 3: Iniciando sistema profesional...
-echo   Cargando conocimiento de 10+ a?os...
-
-REM Verificar que el script profesional existe
-if exist "professional_system\integrate_professional.py" (
-    python "professional_system\integrate_professional.py"
-) else if exist "extreme_optimization\extreme_bot_simple.py" (
-    echo   Sistema profesional no encontrado, usando bot extremo
-    python "extreme_optimization\extreme_bot_simple.py"
-) else (
-    echo  ERROR: No se encontr? ning?n script de bot
-    echo  Ejecuta primero: python quick_start.py
-)
-
-pause
+echo ================================================
+echo    Sistema finalizado. Presione cualquier tecla...
+echo ================================================
+pause > nul

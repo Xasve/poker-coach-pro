@@ -1,81 +1,65 @@
 @echo off
 chcp 65001 > nul
-title  POKER BOT PROFESIONAL - EJECUCI?N SEGURA
-color 0A
+title  POKER COACH PRO - Ejecutor Principal
+color 0B
 
 echo ================================================
-echo    ?? POKER COACH PRO - SISTEMA REPARADO
-echo ================================================
-echo Este archivo soluciona todos los errores previos
-echo y ejecuta el sistema correctamente.
+echo    ?? POKER COACH PRO - EJECUTOR PRINCIPAL
 echo ================================================
 echo.
-
-REM Verificar Python
-python --version 2>nul
-if errorlevel 1 (
-    echo  Python no encontrado
-    echo  Instala Python 3.11 desde python.org
-    pause
-    exit /b 1
-)
-
-echo  Python detectado
-
-REM Verificar OpenCV (error m?s com?n)
-echo  Verificando OpenCV (cv2)...
-python -c "import cv2" 2>nul
-if errorlevel 1 (
-    echo   OpenCV no encontrado. Instalando...
-    echo  Esto puede tomar unos minutos...
-    python -m pip install opencv-contrib-python --quiet
-    if errorlevel 1 (
-        echo ? Error instalando OpenCV
-        echo ?? Intenta: python -m pip install opencv-python
-        pause
-        exit /b 1
-    )
-    echo ? OpenCV instalado
-) else (
-    echo ? OpenCV ya est? instalado
-)
-
-REM Verificar otras dependencias importantes
-echo ?? Verificando otras dependencias...
-python -c "import numpy" 2>nul
-if errorlevel 1 (
-    echo  Instalando NumPy...
-    python -m pip install numpy --quiet
-)
-
-python -c "import pyautogui" 2>nul
-if errorlevel 1 (
-    echo  Instalando PyAutoGUI...
-    python -m pip install pyautogui --quiet
-)
-
-REM Ejecutar sistema
+echo ?? OPCIONES DE EJECUCI?N:
 echo.
-echo  Iniciando Poker Bot Professional...
-echo   Por favor espera...
+echo 1. Sistema principal unificado (quick_start.py)
+echo 2. Bot profesional
+echo 3. Sistema de aprendizaje
+echo 4. Verificar sistema
+echo 5. Reparar problemas
+echo 6. Salir
+echo.
 
-REM Intentar diferentes scripts en orden de prioridad
-if exist "professional_system\integrate_professional.py" (
-    echo  Usando sistema profesional completo...
-    python "professional_system\integrate_professional.py"
-) else if exist "extreme_optimization\extreme_bot_simple.py" (
-    echo  Usando bot extremo optimizado...
-    python "extreme_optimization\extreme_bot_simple.py"
-) else if exist "quick_start.py" (
-    echo  Usando sistema original...
+set /p choice="Seleccione opci?n (1-6): "
+
+if "%choice%"=="1" (
+    echo  Iniciando sistema principal...
     python quick_start.py
+) else if "%choice%"=="2" (
+    echo ?? Iniciando bot profesional...
+    if exist "PROFESSIONAL_BOT_FIXED.bat" (
+        call PROFESSIONAL_BOT_FIXED.bat
+    ) else (
+        echo ? Bot profesional no encontrado
+        pause
+    )
+) else if "%choice%"=="3" (
+    echo  Iniciando sistema de aprendizaje...
+    if exist "complete_poker_learning_system.py" (
+        python complete_poker_learning_system.py
+    ) else (
+        echo  Sistema de aprendizaje no encontrado
+        pause
+    )
+) else if "%choice%"=="4" (
+    echo ?? Verificando sistema...
+    if exist "VERIFY_SYSTEM.py" (
+        python VERIFY_SYSTEM.py
+    ) else (
+        echo ? Verificador no encontrado
+        pause
+    )
+) else if "%choice%"=="5" (
+    echo  Reparando problemas...
+    if exist "FIX_ALL_PROBLEMS.ps1" (
+        powershell -ExecutionPolicy Bypass -File FIX_ALL_PROBLEMS.ps1
+    ) else (
+        echo  Reparador no encontrado
+        pause
+    )
+) else if "%choice%"=="6" (
+    echo  Saliendo...
+    timeout /t 1 /nobreak > nul
+    exit /b 0
 ) else (
-    echo  ERROR: No se encontr? ning?n script ejecutable
-    echo  Archivos en el directorio:
-    dir /b *.py
-    echo  Aseg?rate de estar en la carpeta poker-coach-pro
+    echo ? Opci?n no v?lida
+    pause
+    call %0
 )
-
-echo.
-echo  Programa finalizado
-pause
