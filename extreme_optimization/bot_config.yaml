@@ -1,0 +1,116 @@
+﻿# CONFIGURACIÓN DEL BOT EXTREMO
+# Archivo: bot_config.yaml
+
+# ==================== CONFIGURACIÓN GENERAL ====================
+general:
+  bot_name: "PokerBot Extreme"
+  version: "2.0 Reparado"
+  author: "Ethan"
+  created_date: "2024-12-21"
+  
+  # Modo de operación
+  operation_mode: "extreme"  # extreme, balanced, safe
+  enable_logging: true
+  save_progress: true
+
+# ==================== CONFIGURACIÓN DE VELOCIDAD ====================
+speed:
+  # Tiempos de reacción (en segundos)
+  target_reaction_time: 0.05     # 50ms objetivo
+  min_reaction_time: 0.02        # 20ms mínimo
+  max_reaction_time: 0.10        # 100ms máximo
+  
+  # Optimizaciones
+  parallel_processing: true      # Procesamiento paralelo
+  thread_count: 4                # Número de hilos
+  use_gpu_if_available: true     # Usar GPU
+  
+  # Cache
+  enable_cache: true
+  cache_size: 10000              # 10,000 entradas de cache
+  precompute_strategies: true
+
+# ==================== CONFIGURACIÓN DE RECURSOS ====================
+resources:
+  # Límites de recursos
+  max_memory_mb: 500             # 500MB máximo
+  max_cpu_percent: 70            # 70% máximo de CPU
+  
+  # Optimización automática
+  auto_optimize: true
+  cleanup_interval: 60           # Limpiar cada 60 segundos
+  gc_collection: "aggressive"    # Recolección agresiva
+  
+  # Prioridad del sistema
+  process_priority: "high"       # high, normal, low
+
+# ==================== CONFIGURACIÓN DE DETECCIÓN ====================
+detection:
+  # Captura de pantalla
+  capture_method: "fast"         # fast, accurate, balanced
+  capture_region: "auto"         # auto o coordenadas
+  capture_fps: 30                # Frames por segundo
+  
+  # Procesamiento de imagen
+  image_quality: "medium"        # high, medium, low
+  resize_images: true
+  target_width: 800
+  target_height: 600
+  
+  # Detección de color
+  color_detection: "fast"
+  red_threshold: 150
+  black_threshold: 100
+  confidence_threshold: 0.7
+
+# ==================== CONFIGURACIÓN DE DECISIONES ====================
+decisions:
+  # Estrategia
+  strategy: "aggressive"         # aggressive, balanced, conservative
+  risk_tolerance: 0.8            # 0.0 a 1.0
+  
+  # Rangos de mano
+  preflop_raise_range: "22+,A2s+,K9s+,QTs+,JTs,T9s,98s,87s,76s,65s,54s,A2o+,KTo+,QTo+,JTo"
+  preflop_call_range: "22+,A2s+,K9s+,Q9s+,J9s+,T9s,98s,87s,76s,65s,54s,A2o+,K9o+,Q9o+,J9o+,T9o"
+  
+  # Tamaños de apuesta
+  bet_sizing:
+    preflop_raise: "3bb"
+    preflop_3bet: "9bb"
+    cbet_flop: "0.75"
+    cbet_turn: "0.75"
+    river_value: "0.67"
+  
+  # Bluffing
+  bluff_frequency: 0.25          # 25% de bluffs
+  bluff_spots: ["dry_flop", "turn_complete", "river_miss"]
+
+# ==================== CONFIGURACIÓN DE APRENDIZAJE ====================
+learning:
+  # Parámetros de aprendizaje
+  learning_rate: 0.3
+  exploration_rate: 0.1
+  discount_factor: 0.95
+  
+  # Entrenamiento
+  training_enabled: true
+  batch_size: 100
+  memory_size: 10000
+  
+  # Guardado automático
+  auto_save: true
+  save_interval: 1000            # Guardar cada 1000 decisiones
+
+# ==================== CONFIGURACIÓN DE SEGURIDAD ====================
+security:
+  # Advertencias (solo informativas)
+  safety_warnings: true
+  rate_limit_warnings: false     # Desactivado en modo extremo
+  
+  # Uso responsable
+  educational_purposes_only: true
+  check_terms_of_service: true
+  
+  # Configuración de emergencia
+  emergency_stop_key: "F12"
+  max_runtime_hours: 24
