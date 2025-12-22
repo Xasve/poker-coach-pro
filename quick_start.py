@@ -524,3 +524,4 @@ if __name__ == "__main__":
         print(" Ejecute VERIFY_SYSTEM.py para diagnosticar")
         input("Presione Enter para salir...")
         sys.exit(1)
+

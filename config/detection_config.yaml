@@ -1,0 +1,168 @@
+﻿#  CONFIGURACIÓN DE DETECCIÓN Y ANÁLISIS
+
+# Configuración del sistema OCR
+ocr:
+  enabled: true
+  method: "tesseract_template"  # tesseract, template, hybrid
+  confidence_threshold: 0.75
+  min_card_area: 800
+  max_card_area: 3000
+  
+  # Colores para detección
+  colors:
+    card_background: [240, 240, 220]  # Color de fondo de carta
+    text_color: [30, 30, 30]          # Color del texto
+    heart_diamond: [200, 50, 50]      # Rojo para 
+    spade_club: [30, 30, 30]          # Negro para 
+  
+  # Rangos de detección
+  detection_ranges:
+    rank_height: [20, 40]     # Altura del texto de rango
+    suit_height: [15, 30]     # Altura del símbolo de palo
+    card_aspect_ratio: [1.3, 1.5]  # Relación aspecto carta
+
+# Configuración de PokerStars
+pokerstars:
+  theme: "classic"  # classic, dark, stealth
+  table_regions:
+    hero_cards: [[0.4, 0.7], [0.6, 0.7]]  # Posiciones relativas
+    community_cards: [[0.3, 0.4], [0.5, 0.4], [0.7, 0.4]]
+    pot_area: [0.5, 0.3]
+    action_buttons: [[0.4, 0.8], [0.5, 0.8], [0.6, 0.8]]  # Fold, Call, Raise
+  
+  calibration:
+    auto_calibrate: true
+    calibration_file: "config/pokerstars_calibration.json"
+    update_on_change: true
+
+# Configuración de IA y análisis
+ai_analysis:
+  decision_engine: "gto_exploitative"  # gto_pure, gto_exploitative, neural
+  reaction_time_target: 50  # ms
+  analysis_depth: "standard"  # quick, standard, deep
+  
+  gto_settings:
+    preflop_ranges:
+      utg: ["AA", "KK", "QQ", "JJ", "AK", "AQ"]
+      mp: ["TT", "99", "AJ", "KQ"]
+      co: ["88", "77", "AT", "KJ", "QJ"]
+      btn: ["66", "55", "A9", "KT", "QT", "JT"]
+      sb: ["44", "33", "A8", "K9", "Q9", "J9"]
+      bb: ["22", "A2", "K8", "Q8", "J8"]
+    
+    postflop_strategy:
+      cbet_frequency: 0.65
+      bluff_frequency: 0.25
+      value_bet_threshold: 0.60
+      pot_control_threshold: 0.40
+  
+  learning:
+    enabled: true
+    adapt_to_opponents: true
+    update_frequency: 100  # manos
+    save_learning_data: true
+
+# Configuración de rendimiento
+performance:
+  capture_fps: 10
+  analysis_threads: 2
+  max_memory_mb: 500
+  use_gpu: false
+  cache_size: 10000
+  
+  optimization:
+    enable_cache: true
+    precompute_equities: true
+    parallel_processing: true
+    minimize_latency: true
+
+# Configuración de overlay
+overlay:
+  enabled: true
+  position: [10, 10]  # x, y
+  size: [400, 300]    # width, height
+  transparency: 0.85
+  
+  display_elements:
+    detected_cards: true
+    gto_decision: true
+    hand_strength: true
+    pot_odds: true
+    equity: true
+    opponent_range: true
+    action_timer: true
+  
+  colors:
+    background: [20, 20, 20, 200]
+    text: [255, 255, 255, 255]
+    good_decision: [50, 200, 50, 255]
+    bad_decision: [200, 50, 50, 255]
+    neutral_decision: [200, 200, 50, 255]
+
+# Configuración de logs y monitoreo
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  save_screenshots: true
+  screenshot_quality: 85  # porcentaje
+  log_decisions: true
+  log_errors: true
+  
+  analytics:
+    track_performance: true
+    save_session_stats: true
+    generate_reports: true
+
+# Configuración de seguridad
+safety:
+  max_hands_per_hour: 1000
+  auto_break_minutes: 60
+  loss_limit_bb: -100
+  win_limit_bb: 200
+  
+  detection_avoidance:
+    random_delays: false
+    human_like_movements: false
+    pattern_variation: true
+
+# Configuración multi-mesa
+multi_table:
+  enabled: false
+  max_tables: 4
+  switch_delay_ms: 100
+  
+  layout:
+    grid_columns: 2
+    grid_rows: 2
+    table_spacing: 20
+
+# Hotkeys
+hotkeys:
+  enable_hotkeys: true
+  start_stop: "F5"
+  pause_resume: "F6"
+  screenshot: "F7"
+  toggle_overlay: "Ctrl+O"
+  quick_fold: "Ctrl+F"
+  quick_call: "Ctrl+C"
+  quick_raise: "Ctrl+R"
+
+# Debug
+debug:
+  enable: false
+  show_detection_regions: false
+  log_detection_process: false
+  save_failed_detections: true
+  test_mode: false
+
+#  ADVERTENCIA
+disclaimer: |
+  ESTE SOFTWARE ES SOLO PARA FINES EDUCATIVOS Y DE INVESTIGACIÓN.
+  El uso en juegos de dinero real puede violar los Términos de Servicio.
+  Verifique siempre las leyes y regulaciones locales.
+  El usuario asume toda la responsabilidad.
+
+# Notas
+notes: |
+  Configuración generada automáticamente.
+  Para calibración completa, ejecute el calibrador.
+  Ajuste los valores según su configuración específica.
