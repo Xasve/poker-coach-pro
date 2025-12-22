@@ -104,3 +104,4 @@ if __name__ == "__main__":
     else:
         check_system()
         print("\n Para reparación automática: python verify_system.py fix")
+

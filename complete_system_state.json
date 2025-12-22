@@ -3,7 +3,7 @@
     "color_calibration": true,
     "learning_system": true,
     "training_plan": true,
-    "last_updated": "2025-12-21T17:04:27.180507"
+    "last_updated": "2025-12-21T22:09:50.855999"
   },
   "color_calibration": {
     "classic": {
@@ -44,24 +44,24 @@
       },
       "color_analysis": {
         "red_low": {
-          "percentage": 0.05,
-          "pixel_count": 30
+          "percentage": 0.23,
+          "pixel_count": 139
         },
         "red_high": {
           "percentage": 0.0,
           "pixel_count": 0
         },
         "black": {
-          "percentage": 18.22,
-          "pixel_count": 10933
+          "percentage": 92.12,
+          "pixel_count": 55275
         },
         "green": {
-          "percentage": 0.0,
-          "pixel_count": 3
+          "percentage": 0.38,
+          "pixel_count": 229
         },
         "blue": {
-          "percentage": 49.07,
-          "pixel_count": 29443
+          "percentage": 1.25,
+          "pixel_count": 750
         }
       },
       "optimized_thresholds": {
@@ -82,7 +82,7 @@
             100
           ],
           "upper2": [
-            177,
+            178,
             255,
             255
           ]
@@ -100,7 +100,7 @@
           ]
         }
       },
-      "calibration_time": "2025-12-21T17:04:27.235884"
+      "calibration_time": "2025-12-21T22:09:50.952790"
     },
     "dark": {
       "theme_info": {
@@ -140,24 +140,24 @@
       },
       "color_analysis": {
         "red_low": {
-          "percentage": 0.05,
-          "pixel_count": 30
+          "percentage": 0.23,
+          "pixel_count": 139
         },
         "red_high": {
           "percentage": 0.0,
           "pixel_count": 0
         },
         "black": {
-          "percentage": 18.22,
-          "pixel_count": 10933
+          "percentage": 92.05,
+          "pixel_count": 55232
         },
         "green": {
-          "percentage": 0.0,
-          "pixel_count": 3
+          "percentage": 0.4,
+          "pixel_count": 243
         },
         "blue": {
-          "percentage": 49.07,
-          "pixel_count": 29443
+          "percentage": 1.25,
+          "pixel_count": 750
         }
       },
       "optimized_thresholds": {
@@ -178,7 +178,7 @@
             100
           ],
           "upper2": [
-            177,
+            175,
             255,
             255
           ]
@@ -196,7 +196,7 @@
           ]
         }
       },
-      "calibration_time": "2025-12-21T17:04:27.270163"
+      "calibration_time": "2025-12-21T22:09:50.998035"
     },
     "stealth": {
       "theme_info": {
@@ -236,24 +236,24 @@
       },
       "color_analysis": {
         "red_low": {
-          "percentage": 0.05,
-          "pixel_count": 30
+          "percentage": 0.23,
+          "pixel_count": 139
         },
         "red_high": {
           "percentage": 0.0,
           "pixel_count": 0
         },
         "black": {
-          "percentage": 18.22,
-          "pixel_count": 10935
+          "percentage": 92.12,
+          "pixel_count": 55271
         },
         "green": {
-          "percentage": 0.0,
-          "pixel_count": 3
+          "percentage": 0.39,
+          "pixel_count": 233
         },
         "blue": {
-          "percentage": 49.07,
-          "pixel_count": 29443
+          "percentage": 1.25,
+          "pixel_count": 750
         }
       },
       "optimized_thresholds": {
@@ -274,7 +274,7 @@
             100
           ],
           "upper2": [
-            177,
+            175,
             255,
             255
           ]
@@ -292,7 +292,7 @@
           ]
         }
       },
-      "calibration_time": "2025-12-21T17:04:27.310308"
+      "calibration_time": "2025-12-21T22:09:51.038854"
     }
   },
   "learning_metrics": {
@@ -301,8 +301,8 @@
     "correct_decisions": 0,
     "win_rate": 0.0,
     "learning_curve": [],
-    "improvement_rate": -0.0039999999999995595,
-    "last_success_rate": 0.4819999999999518
+    "improvement_rate": 0.0,
+    "last_success_rate": 0.5119999999999488
   },
   "training_plan": {
     "week_1": {
@@ -362,7 +362,7 @@
       }
     }
   },
-  "timestamp": "2025-12-21T17:34:27.944550",
+  "timestamp": "2025-12-21T22:39:52.091160",
   "version": "2.0",
   "components": [
     "Color Calibration",

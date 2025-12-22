@@ -1,40 +1,190 @@
-﻿# config/system_config.yaml - Configuración básica
+﻿#  POKER COACH PRO - CONFIGURACIÓN DEL SISTEMA
+# Este archivo controla todas las configuraciones del sistema
+
 system:
   name: "Poker Coach Pro"
-  version: "4.0"
-  mode: "development"  # development, testing, production
-  
-capture:
-  engine: "smart_capture"
-  interval_ms: 200
-  adaptive_color: true
-  
-ocr:
-  confidence_threshold: 0.7
-  tesseract_path: "C:/Program Files/Tesseract-OCR/tesseract.exe"
-  
-gto:
-  engine: "advanced_gto"
-  min_confidence: 0.65
-  
-ui:
-  overlay:
+  version: "2.1.0"
+  mode: "professional"
+  auto_update: true
+  language: "es"
+
+performance:
+  reaction_time_target: 50  # ms - objetivo de tiempo de reacción
+  max_cpu_usage: 70        # porcentaje máximo de uso de CPU
+  max_memory_mb: 500       # MB - límite de memoria
+  cache_size: 10000        # número de decisiones en caché
+  parallel_processing: true
+  gpu_acceleration: false
+
+detection:
+  card_detection:
     enabled: true
-    position: "top_right"
-    transparency: 0.9
+    method: "ocr_template"  # ocr, template, hybrid, ocr_template
+    confidence_threshold: 0.75
+    theme: "classic"        # classic, dark, stealth
+    update_templates: true
+    
+  table_detection:
+    enabled: true
+    auto_calibrate: true
+    calibration_file: "config/pokerstars_calibration.json"
+    
+  action_detection:
+    enabled: true
+    detect_fold: true
+    detect_call: true
+    detect_raise: true
+    detect_check: true
+    detect_allin: true
+
+pokerstars:
+  theme: "classic"
+  table_size: "normal"      # normal, zoom, fastforward
+  auto_detect_theme: true
+  preferred_tables: 4       # mesas simultáneas objetivo
   
-paths:
-  data: "data/"
-  templates: "data/templates/cards/"
-  models: "data/models/"
-  config: "config/"
-  logs: "logs/"
+  calibration:
+    card_positions:
+      hero: [[500, 600], [580, 600]]
+      community: [[400, 300], [480, 300], [560, 300], [640, 300], [720, 300]]
+    button_positions:
+      fold: [450, 650]
+      call: [550, 650]
+      raise: [650, 650]
+    chip_colors:
+      white: [255, 255, 255]
+      red: [200, 50, 50]
+      blue: [50, 100, 200]
+      green: [50, 150, 50]
+      black: [30, 30, 30]
+
+gto:
+  strategy: "exploitative"  # pure, exploitative, tag, lag
+  ranges:
+    preflop:
+      early: ["AA", "KK", "QQ", "JJ", "AK", "AQ"]
+      middle: ["TT", "99", "AJ", "KQ", "KJ", "QJ"]
+      late: ["88", "77", "66", "AT", "KT", "QT", "JT", "T9"]
+    postflop:
+      aggression_factor: 0.65
+      bluff_frequency: 0.25
+      value_bet_threshold: 0.60
   
+  learning:
+    enabled: true
+    adapt_to_opponents: true
+    update_frequency: 100   # actualizar cada 100 manos
+
+overlay:
+  enabled: true
+  transparency: 0.85
+  position: [10, 10]        # posición en pantalla [x, y]
+  size: [400, 300]          # tamaño [ancho, alto]
+  
+  display:
+    show_cards: true
+    show_odds: true
+    show_gto_decision: true
+    show_hand_strength: true
+    show_pot_odds: true
+    show_opponent_range: true
+    show_equity: true
+    
+  colors:
+    background: [20, 20, 20, 200]
+    text: [255, 255, 255, 255]
+    good_action: [50, 200, 50, 255]
+    bad_action: [200, 50, 50, 255]
+    neutral_action: [200, 200, 50, 255]
+
+learning_system:
+  enabled: true
+  experience_years: 10      # años de experiencia simulada
+  hands_analyzed: 8500000   # manos en base de conocimiento
+  
+  training:
+    auto_train: true
+    training_plans:
+      - name: "Fundamentos Preflop"
+        duration_days: 7
+        focus: "rangos por posición"
+        
+      - name: "Juego Postflop"
+        duration_days: 14
+        focus: "continuación, barrel, valor"
+        
+      - name: "Lectura de Manos"
+        duration_days: 10
+        focus: "rango de oponentes, eliminación"
+        
+      - name: "Manejo de Bote"
+        duration_days: 7
+        focus: "tamaño de apuestas, gestión"
+  
+  improvement:
+    track_progress: true
+    generate_reports: true
+    weak_spot_detection: true
+
 logging:
-  level: "INFO"
-  console_output: true
-  file_output: true
+  level: "INFO"            # DEBUG, INFO, WARNING, ERROR
+  save_screenshots: true
+  screenshot_folder: "logs/screenshots"
+  max_log_files: 10
+  log_decisions: true
+  log_errors: true
+
+safety:
+  max_hands_per_hour: 1000
+  auto_break_every: 60     # minutos
+  loss_limit: -100         # límite de pérdida en BB
+  win_limit: 200           # límite de ganancia en BB
+  anti_detection: true
+  random_delays: false     # retrasos aleatorios (solo educativo)
+
+multi_table:
+  enabled: true
+  max_tables: 4
+  table_switch_delay: 100  # ms entre mesas
+  priority_tables: true    # priorizar mesas con acción
   
+  layout:
+    grid_columns: 2
+    grid_rows: 2
+    spacing: 20
+
+hotkeys:
+  enable_hotkeys: true
+  start_stop: "F5"
+  pause_resume: "F6"
+  take_screenshot: "F7"
+  show_hide_overlay: "Ctrl+O"
+  quick_fold: "Ctrl+F"
+  quick_call: "Ctrl+C"
+  quick_raise: "Ctrl+R"
+
+debug:
+  enable_debug_mode: false
+  show_detection_areas: false
+  log_detection_process: false
+  save_failed_detections: true
+  test_mode: false
+
+#  ADVERTENCIA: Solo para fines educativos
 disclaimer: |
-  ESTE SOFTWARE ES PARA FINES EDUCATIVOS Y DE APRENDIZAJE SOLAMENTE.
-  Verifica los Términos de Servicio antes de usar.
+  ESTE SOFTWARE ES SOLO PARA FINES EDUCATIVOS Y DE INVESTIGACIÓN.
+  El uso en juegos de dinero real puede violar los Términos de Servicio.
+  El usuario asume toda la responsabilidad por el uso de este software.
+  Verifique siempre las leyes y regulaciones locales antes de usar.
+
+# Notas del usuario (puede editar libremente)
+user_notes: |
+  Calibración realizada: 2024-01-15
+  Tema: PokerStars Classic
+  Mesas probadas: 2
+  Precisión estimada: 85%
+  
+  Ajustes personalizados:
+  - Mayor agresión en posición tardía
+  - Bluff frequency reducida a 20%
+  - Overlay en posición superior derecha
