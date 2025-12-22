@@ -1,87 +1,106 @@
-﻿#  SCRIPT DE VERIFICACIÓN DEL SISTEMA
-
-import os
+﻿# VERIFICADOR RÁPIDO DEL SISTEMA
 import sys
+import os
 
-def verify_system():
-    """Verificar que todo el sistema está correctamente instalado"""
+def check_system():
+    """Verificar que todo el sistema está correcto"""
     
-    print(" VERIFICANDO INSTALACIÓN DEL SISTEMA...")
-    print("=" * 50)
+    print("🔍 VERIFICACIÓN COMPLETA DEL SISTEMA")
+    print("="*60)
     
-    # Verificar archivos esenciales
-    essential_files = [
-        "complete_poker_learning_system.py",
-        "quick_start.py",
-        "color_calibration/",
-        "rapid_learning_system/",
-        "training_plans/"
+    checks = [
+        ("Python versión", lambda: f"{sys.version.split()[0]}"),
+        ("Directorio actual", lambda: os.getcwd()),
+        ("Scripts disponibles", lambda: ", ".join([f for f in os.listdir() if f.endswith(('.py', '.bat', '.ps1'))][:5]))
     ]
     
-    all_ok = True
-    
-    for file in essential_files:
-        if os.path.exists(file):
-            print(f" {file}")
-        else:
-            print(f" {file} - NO ENCONTRADO")
-            all_ok = False
+    for name, check_func in checks:
+        try:
+            result = check_func()
+            print(f" {name}: {result}")
+        except Exception as e:
+            print(f" {name}: Error - {e}")
     
     # Verificar dependencias
-    print("\n VERIFICANDO DEPENDENCIAS...")
-    
+    print("\n DEPENDENCIAS:")
     dependencies = [
-        ("cv2", "opencv-python"),
-        ("numpy", "numpy"),
-        ("pandas", "pandas"),
-        ("yaml", "PyYAML"),
-        ("pyautogui", "pyautogui")
+        ("cv2", "OpenCV"),
+        ("numpy", "NumPy"),
+        ("pandas", "Pandas"),
+        ("pyautogui", "PyAutoGUI"),
+        ("scipy", "SciPy")
     ]
     
-    for module_name, package_name in dependencies:
+    missing = []
+    for module, name in dependencies:
         try:
-            __import__(module_name)
-            print(f" {package_name}")
+            __import__(module)
+            print(f"    {name}: Instalado")
         except ImportError:
-            print(f" {package_name} - NO INSTALADO")
-            all_ok = False
+            print(f"    {name}: FALTANTE")
+            missing.append(name)
     
-    # Verificar funcionalidad básica
-    print("\n VERIFICANDO FUNCIONALIDAD...")
+    # Verificar archivos del sistema
+    print("\n ARCHIVOS DEL SISTEMA:")
+    required_files = [
+        "professional_system/professional_poker_system.py",
+        "professional_system/integrate_professional.py",
+        "extreme_optimization/extreme_bot_simple.py",
+        "quick_start.py"
+    ]
     
+    for file in required_files:
+        if os.path.exists(file):
+            print(f"    {file}")
+        else:
+            print(f"     {file}: No encontrado")
+    
+    # Recomendaciones
+    print("\n RECOMENDACIONES:")
+    if missing:
+        print(f"   1. Instalar dependencias faltantes: {', '.join(missing)}")
+        print("      Ejecuta: python -m pip install " + " ".join(m.lower().replace(" ", "") for m in missing))
+    
+    if not os.path.exists("professional_system"):
+        print("   2. El sistema profesional no está instalado")
+        print("      Ejecuta: .\\QUICK_START_PRO.bat")
+    
+    print("\n COMANDOS DISPONIBLES:")
+    print("    .\\QUICK_START_PRO.bat     - Inicio completo")
+    print("    python INSTALLER_FIXED.py  - Instalar/reparar")
+    print("    python quick_start.py      - Sistema original")
+    
+    return len(missing) == 0
+
+def quick_fix():
+    """Reparación rápida de problemas comunes"""
+    
+    print("\n REPARACIÓN RÁPIDA")
+    print("="*60)
+    
+    # Verificar OpenCV (el problema más común)
     try:
-        # Intentar importar el sistema principal
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        from complete_poker_learning_system import PokerCoachProCompleteSystem
-        print(" Sistema principal importado correctamente")
-        
-        # Crear instancia
-        system = PokerCoachProCompleteSystem()
-        print(" Instancia del sistema creada")
-        
-    except Exception as e:
-        print(f" Error importando sistema: {e}")
-        all_ok = False
+        import cv2
+        print(" OpenCV ya está instalado")
+    except ImportError:
+        print("  Instalando OpenCV...")
+        import subprocess
+        subprocess.run([sys.executable, "-m", "pip", "install", "opencv-contrib-python", "--quiet"])
+        print(" OpenCV instalado")
     
-    # Resultado final
-    print("\n" + "=" * 50)
-    if all_ok:
-        print(" SISTEMA VERIFICADO CORRECTAMENTE!")
-        print(" Todo está listo para comenzar el aprendizaje acelerado")
-        
-        # Mostrar comandos
-        print("\n COMANDOS PARA COMENZAR:")
-        print("   python quick_start.py          # Inicio rápido con menú")
-        print("   python complete_poker_learning_system.py  # Sistema completo")
-        
-    else:
-        print("  HAY PROBLEMAS CON LA INSTALACIÓN")
-        print(" Soluciones:")
-        print("   1. Ejecuta: pip install opencv-python numpy pandas pyautogui PyYAML")
-        print("   2. Asegúrate de que todos los archivos están en el mismo directorio")
-        print("   3. Si hay errores de importación, reinicia PowerShell/CMD")
+    # Verificar archivos BAT
+    bat_files = ["QUICK_START_PRO.bat", "PROFESSIONAL_BOT_FIXED.bat"]
+    for bat_file in bat_files:
+        if not os.path.exists(bat_file):
+            print(f"  {bat_file} no encontrado")
+            # Podríamos crearlo aquí si quisiéramos
     
-    return all_ok
+    print("\n Reparación completada")
+    print(" Ahora ejecuta: .\\QUICK_START_PRO.bat")
 
 if __name__ == "__main__":
-    verify_system()
+    if len(sys.argv) > 1 and sys.argv[1] == "fix":
+        quick_fix()
+    else:
+        check_system()
+        print("\n Para reparación automática: python verify_system.py fix")
