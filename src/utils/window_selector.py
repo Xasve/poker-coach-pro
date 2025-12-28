@@ -1,4 +1,4 @@
-﻿import tkinter as tk
+﻿import tkinter as tk\nfrom tkinter import messagebox
 from tkinter import ttk
 import pyautogui
 import mss
@@ -127,7 +127,7 @@ class WindowSelector:
         self.status_label.config(text=f" Ventana '{window_name}' capturada", fg="green")
         
         # Mostrar mensaje para definir áreas
-        tk.messagebox.showinfo("Definir Áreas", 
+        messagebox.showinfo("Definir Áreas", 
                               "Ahora define las áreas importantes:\n\n" +
                               "1. Haz clic en 'Definir' junto a 'Mesa completa'\n" +
                               "2. Dibuja un rectángulo alrededor de toda la mesa\n" +
@@ -180,7 +180,7 @@ class WindowSelector:
         for area_id, coords in self.regions.items():
             summary += f"{self.areas[area_id]['label']}: {coords}\n"
         
-        tk.messagebox.showinfo("Configuración Guardada", summary)
+        messagebox.showinfo("Configuración Guardada", summary)
         self.root.destroy()
     
     def run(self):
