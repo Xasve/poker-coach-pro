@@ -1,15 +1,32 @@
-# Dependencias principales de Poker Coach Pro
-# Generado autom�ticamente por analyze_deps.py
+# DEPENDENCIAS POKER COACH PRO
+# ============================
+# Archivo regenerado automáticamente - NO EDITAR MANUALMENTE A MENOS QUE SEAS EXPERTO
 
-colorama
-matplotlib
-numpy
+# PROCESAMIENTO DE IMAGEN Y CAPTURA
 opencv-python
-pandas
+opencv-python>=4.8.0
 pillow
+pillow>=10.0.0
+numpy
+numpy>=1.24.0
+mss>=9.0.1
 pyautogui
+pyautogui>=0.9.54
+
+# OCR Y RECONOCIMIENTO
 pytesseract
+pytesseract>=0.3.10
+
+# UTILIDADES Y FRAMEWORKS
+colorama
+colorama>=0.4.6
 pyyaml
-scikit-learn
+pyyaml>=6.0
 tqdm
-﻿# Dependencias para Poker Coach Pro con NumPy 2.3.5
+tqdm>=4.66.0
+pandas
+pandas>=2.0.0
+scikit-learn
+scikit-learn>=1.3.0
+matplotlib
+matplotlib>=3.7.0

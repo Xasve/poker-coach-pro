@@ -1,0 +1,15 @@
+# Dependencias principales de Poker Coach Pro
+# Generado automáticamente por analyze_deps.py
+
+colorama
+matplotlib
+numpy
+opencv-python
+pandas
+pillow
+pyautogui
+pytesseract
+pyyaml
+scikit-learn
+tqdm
+ï»¿# Dependencias para Poker Coach Pro con NumPy 2.3.5
