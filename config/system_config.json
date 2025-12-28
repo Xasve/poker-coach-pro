@@ -1,0 +1,28 @@
+{
+  "system": {
+    "name": "Poker Coach Pro",
+    "version": "1.0.0",
+    "python_version": "3.11",
+    "status": "active"
+  },
+  "pokerstars": {
+    "calibrated": false,
+    "table_position": {
+      "x1": 100,
+      "y1": 100,
+      "x2": 900,
+      "y2": 700
+    },
+    "last_calibration": null
+  },
+  "gto": {
+    "aggression_level": "medium",
+    "ranges_path": "data/gto_ranges",
+    "confidence_threshold": 0.75
+  },
+  "ocr": {
+    "tesseract_path": null,
+    "confidence": 0.8,
+    "enabled": false
+  }
+}
