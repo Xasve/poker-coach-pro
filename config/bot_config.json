@@ -1,0 +1,14 @@
+{
+  "scan_interval": 1.0,
+  "confidence_threshold": 0.7,
+  "auto_bet_sizes": {
+    "preflop_raise": 3.0,
+    "cbet_flop": 0.67,
+    "turn_bet": 0.75,
+    "river_bet": 0.85
+  },
+  "table_settings": {
+    "theme": "classic",
+    "scan_region": null
+  }
+}
