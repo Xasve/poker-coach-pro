@@ -1,30 +1,13 @@
 {
-  "window_name": "[ACTUAL] PokerStars Game Window",
-  "regions": {
-    "mesa": [
-      100,
-      100,
-      800,
-      600
-    ],
-    "cartas_jugador": [
-      400,
-      500,
-      150,
-      50
-    ],
-    "cartas_mesa": [
-      300,
-      300,
-      400,
-      80
-    ],
-    "pozo": [
-      350,
-      250,
-      200,
-      40
-    ]
-  },
-  "screen_resolution": "1920x1080"
+  "table_region": [
+    7,
+    80,
+    1907,
+    944
+  ],
+  "timestamp": "2025-12-28T19:11:12.504223",
+  "screen_resolution": [
+    1920,
+    1080
+  ]
 }
