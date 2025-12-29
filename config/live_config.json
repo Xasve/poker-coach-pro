@@ -1,0 +1,14 @@
+{
+    "mode": "assistant",
+    "scan_interval": 1.0,
+    "save_screenshots": true,
+    "screenshot_path": "debug_screenshots",
+    "log_level": "INFO",
+    "default_region": [0, 0, 1920, 1080],
+    "confidence_threshold": 0.6,
+    "auto_calibrate": true,
+    "show_debug_info": true,
+    "hand_history_size": 100,
+    "gto_strategy": "advanced",
+    "risk_tolerance": "medium"
+}
