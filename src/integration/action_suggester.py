@@ -150,7 +150,7 @@ class ActionSuggester:
                 confidence = 0.7
                 reasoning = "Mano jugable, ver siguiente carta"
         
-        else:  adjusted_strength >= 0.7
+        else:  # adjusted_strength >= 0.7
             if "RAISE" in available_actions:
                 action = "RAISE"
                 confidence = 0.85
