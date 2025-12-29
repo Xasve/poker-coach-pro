@@ -1,4 +1,5 @@
-﻿import tkinter as tk\nfrom tkinter import messagebox
+﻿import tkinter as tk
+from tkinter import messagebox
 from tkinter import ttk
 import pyautogui
 import mss
