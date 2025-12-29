@@ -1,0 +1,15 @@
+{
+  "thresholds": {
+    "buttons_active": 67.8861874559549,
+    "cards_bright_preflop": 55.67619694397283,
+    "cards_bright_flop": 47.110628183361634,
+    "cards_bright_turn": 38.54505942275043,
+    "min_button_area": 1000
+  },
+  "calibration_time": "2025-12-28T19:36:06.906616",
+  "measurements": {
+    "cards": 42.82784380305603,
+    "buttons": 45.25745830396993,
+    "table": 39.90145942288899
+  }
+}
